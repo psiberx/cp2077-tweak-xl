@@ -32,6 +32,10 @@ void Vendor::RED4extProvider::LogError(const std::string& aMessage)
     m_sdk->logger->Error(m_plugin, aMessage.c_str());
 }
 
+void Vendor::RED4extProvider::LogFlush()
+{
+}
+
 bool Vendor::RED4extProvider::HookAttach(uintptr_t aAddress, void* aCallback)
 {
     return m_sdk->hooking->Attach(m_plugin, reinterpret_cast<void*>(aAddress), aCallback, nullptr);

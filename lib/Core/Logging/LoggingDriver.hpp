@@ -12,6 +12,7 @@ public:
     virtual void LogInfo(const std::string& aMessage) = 0;
     virtual void LogWarning(const std::string& aMessage) = 0;
     virtual void LogError(const std::string& aMessage) = 0;
+    virtual void LogFlush() = 0;
 
     template<typename... Args>
     constexpr void LogInfo(std::string_view aFormat, Args&&... aArgs)

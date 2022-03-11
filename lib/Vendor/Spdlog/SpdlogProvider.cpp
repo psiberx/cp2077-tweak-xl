@@ -27,15 +27,20 @@ Vendor::SpdlogProvider::SpdlogProvider(Vendor::SpdlogProvider::Options&& aOption
 
 void Vendor::SpdlogProvider::LogInfo(const std::string& aMessage)
 {
-    spdlog::info(aMessage);
+    spdlog::default_logger_raw()->info(aMessage);
 }
 
 void Vendor::SpdlogProvider::LogWarning(const std::string& aMessage)
 {
-    spdlog::warn(aMessage);
+    spdlog::default_logger_raw()->warn(aMessage);
 }
 
 void Vendor::SpdlogProvider::LogError(const std::string& aMessage)
 {
-    spdlog::error(aMessage);
+    spdlog::default_logger_raw()->error(aMessage);
+}
+
+void Vendor::SpdlogProvider::LogFlush()
+{
+    spdlog::default_logger_raw()->flush();
 }

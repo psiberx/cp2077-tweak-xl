@@ -25,6 +25,8 @@ protected:
         GetLoggingDriver().LogError(fmt::vformat(aFormat, fmt::make_format_args(std::forward<Args>(aArgs)...)));
     }
 
+    static void LogFlush();
+
     static LoggingDriver& GetLoggingDriver();
 
 private:
