@@ -38,7 +38,7 @@ void App::TweakExecutor::ExecuteAll()
     }
     catch (...)
     {
-        LogError("An unknown error occured while trying to execute tweaks.");
+        LogError("An unknown error occurred while trying to execute tweaks.");
     }
 }
 
@@ -111,7 +111,7 @@ bool App::TweakExecutor::Execute(const RED4ext::CClass* aTweakClass)
     }
     catch (...)
     {
-        LogError("An unknown error occured.");
+        LogError("An unknown error occurred.");
         return false;
     }
 

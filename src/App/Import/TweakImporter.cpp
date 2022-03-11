@@ -45,7 +45,7 @@ void App::TweakImporter::ImportDir(const std::filesystem::path& aDir)
     }
     catch (...)
     {
-        LogError("An unknown error occured while trying to import tweaks.");
+        LogError("An unknown error occurred while trying to import tweaks.");
     }
 }
 
@@ -102,7 +102,7 @@ bool App::TweakImporter::ReadTweakFile(App::TweakBatch& aBatch, const std::files
     }
     catch (...)
     {
-        LogError("An unknown error occured.");
+        LogError("An unknown error occurred.");
         return false;
     }
 
