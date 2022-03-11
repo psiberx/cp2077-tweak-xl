@@ -53,3 +53,11 @@ bool Core::Runtime::IsASI(HMODULE aHandle)
 {
     return Core::ModuleImage(aHandle).IsASI();
 }
+
+bool Core::Runtime::IsEXE(std::wstring_view aName)
+{
+    if (s_host)
+        return s_host->GetPath().filename() == aName;
+
+    return Core::HostImage().GetPath().filename() == aName;
+}

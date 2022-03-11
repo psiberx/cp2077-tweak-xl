@@ -1,41 +1,52 @@
 #include "App/Application.hpp"
 #include "Core/Facades/Hook.hpp"
 #include "Core/Facades/Runtime.hpp"
+#include "Core/Runtime/OwnerMutex.hpp"
 #include "Engine/Raws.hpp"
 
 namespace
 {
-using App::Application;
+Core::UniquePtr<App::Application> g_app;
+Core::UniquePtr<Core::OwnerMutex> g_mutex;
 
-Core::UniquePtr<Application> g_app;
+constexpr auto MutexName = "TweakXL-Owner";
 }
 
 // ASI
 
-BOOL APIENTRY DllMain(HMODULE aHandle, DWORD aReason, LPVOID aReserved)
+BOOL APIENTRY DllMain(HMODULE aHandle, DWORD aReason, LPVOID)
 {
+    static const bool s_isASI = Core::Runtime::IsASI(aHandle) && Core::Runtime::IsEXE(L"Cyberpunk2077.exe");
+
     switch (aReason) // NOLINT(hicpp-multiway-paths-covered)
     {
     case DLL_PROCESS_ATTACH:
     {
         DisableThreadLibraryCalls(aHandle);
 
-        if (Core::Runtime::IsASI(aHandle))
+        if (s_isASI)
         {
-            g_app = Core::MakeUnique<Application>(aHandle);
+            g_mutex = Core::MakeUnique<Core::OwnerMutex>(MutexName);
 
-            Core::Hook::Before<Engine::Raw::Main>(+[] {
-                g_app->Bootstrap();
-            });
+            if (g_mutex->Obtain())
+            {
+                g_app = Core::MakeUnique<App::Application>(aHandle);
+
+                Core::Hook::Before<Engine::Raw::Main>(+[] {
+                    g_app->Bootstrap();
+                });
+            }
         }
         break;
     }
     case DLL_PROCESS_DETACH:
     {
-        if (Core::Runtime::IsASI(aHandle))
+        if (s_isASI && g_mutex->IsOwner())
         {
             g_app->Shutdown();
             g_app = nullptr;
+
+            g_mutex->Release();
         }
         break;
     }
@@ -53,14 +64,24 @@ RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::
     {
     case RED4ext::EMainReason::Load:
     {
-        g_app = Core::MakeUnique<Application>(aHandle, aSdk);
-        g_app->Bootstrap();
+        g_mutex = Core::MakeUnique<Core::OwnerMutex>(MutexName);
+
+        if (g_mutex->Obtain())
+        {
+            g_app = Core::MakeUnique<App::Application>(aHandle, aSdk);
+            g_app->Bootstrap();
+        }
         break;
     }
     case RED4ext::EMainReason::Unload:
     {
-        g_app->Shutdown();
-        g_app = nullptr;
+        if (g_mutex->IsOwner())
+        {
+            g_app->Shutdown();
+            g_app = nullptr;
+
+            g_mutex->Release();
+        }
         break;
     }
     }

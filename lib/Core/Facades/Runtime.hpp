@@ -14,4 +14,5 @@ void Initialize(const Core::HostImage& aHost, const Core::ModuleImage& aModule);
 [[nodiscard]] std::string GetModuleName();
 [[nodiscard]] bool IsASI();
 [[nodiscard]] bool IsASI(HMODULE aHandle);
+[[nodiscard]] bool IsEXE(std::wstring_view aName);
 }
