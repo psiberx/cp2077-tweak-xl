@@ -9,7 +9,7 @@ namespace
 Core::UniquePtr<App::Application> g_app;
 Core::UniquePtr<Core::OwnerMutex> g_mutex;
 
-constexpr auto MutexName = "TweakXL-Owner";
+constexpr auto MutexName = L"TweakXL-Owner";
 }
 
 // ASI
@@ -47,6 +47,7 @@ BOOL APIENTRY DllMain(HMODULE aHandle, DWORD aReason, LPVOID)
             g_app = nullptr;
 
             g_mutex->Release();
+            g_mutex = nullptr;
         }
         break;
     }
@@ -81,6 +82,7 @@ RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::
             g_app = nullptr;
 
             g_mutex->Release();
+            g_mutex = nullptr;
         }
         break;
     }
