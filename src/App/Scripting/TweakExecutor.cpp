@@ -30,7 +30,7 @@ void App::TweakExecutor::ExecuteAll()
         for (const auto* tweakClass : tweakClasses)
             Execute(tweakClass);
 
-        LogInfo("Execution complete.");
+        LogInfo("Execution completed.");
     }
     catch (const std::exception& ex)
     {
@@ -62,7 +62,7 @@ void App::TweakExecutor::Execute(RED4ext::CName aTweakName)
     ScriptedManager scopedManager(m_manager);
 
     if (Execute(tweakClass))
-        LogInfo("Execution complete.");
+        LogInfo("Execution completed.");
 }
 
 bool App::TweakExecutor::Execute(const RED4ext::CClass* aTweakClass)

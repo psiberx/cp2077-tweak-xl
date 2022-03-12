@@ -121,7 +121,7 @@ bool App::TweakImporter::ExecuteBatch(App::TweakBatch& aBatch)
 
     aBatch.Dispatch();
 
-    LogInfo("Import complete.");
+    LogInfo("Import completed.");
 
     return true;
 }
