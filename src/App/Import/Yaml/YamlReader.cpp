@@ -6,7 +6,6 @@ constexpr auto AttrSymbol = '$';
 constexpr auto TypeAttrKey = "$type";
 constexpr auto ValueAttrKey = "$value";
 constexpr auto BaseAttrKey = "$base";
-constexpr auto CopyAttrKey = "$copy";
 
 constexpr auto InlineSeparator = "__";
 constexpr auto IndexSeparator = "_";
@@ -17,6 +16,10 @@ constexpr auto ArrayAppendOnceOp = RED4ext::FNV1a64("!append-once");
 constexpr auto ArrayAppendFromOp = RED4ext::FNV1a64("!append-from");
 
 constexpr auto UIIconType = RED4ext::CName("gamedataUIIcon_Record");
+constexpr auto StringType = RED4ext::CName("String");
+
+constexpr auto LocKeyPrefix = "LocKey#";
+constexpr auto LocKeyPrefixLength = std::char_traits<char>::length(LocKeyPrefix);
 
 constexpr auto LegacyGroupsNodeKey = "groups";
 constexpr auto LegacyMembersNodeKey = "members";
@@ -307,7 +310,6 @@ void App::YamlReader::HandleRecordNode(App::TweakBatch& aBatch, const std::strin
                 inlineName.append(InlineSeparator);
                 inlineName.append(nodeKey);
 
-                // TODO: Refactoring
                 // Special handling for UIIcon
                 if (propInfo->foreignType->GetName() == UIIconType)
                 {
@@ -340,6 +342,19 @@ void App::YamlReader::HandleRecordNode(App::TweakBatch& aBatch, const std::strin
 
             if (HandleRelativeChanges(aBatch, propPath, propName, nodeData, propInfo->elementType))
                 continue;
+        }
+
+        // Special handling for LocKey# strings
+        else if (propInfo->type->GetName() == StringType && nodeData.IsScalar())
+        {
+            auto& nodeValue = nodeData.Scalar();
+
+            if (nodeValue.starts_with(LocKeyPrefix) &&
+                nodeValue.find_first_not_of("0123456789", LocKeyPrefixLength) != std::string::npos)
+            {
+                const auto wrapper = Engine::LocKeyWrapper(nodeValue.substr(LocKeyPrefixLength).c_str());
+                nodeData = std::string(LocKeyPrefix).append(std::to_string(wrapper.primaryKey));
+            }
         }
 
         const auto propValue = m_converter.Convert(propInfo->type, nodeData);
