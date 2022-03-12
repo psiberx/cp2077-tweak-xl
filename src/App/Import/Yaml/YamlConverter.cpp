@@ -267,13 +267,13 @@ Core::SharedPtr<RED4ext::EulerAngles> App::YamlConverter::Convert(const YAML::No
 {
     if (aNode.IsMap())
     {
-        if (aStrict && (!aNode["Roll"] || !aNode["Pitch"] || !aNode["Yaw"]))
+        if (aStrict && (!aNode["roll"] || !aNode["pitch"] || !aNode["yaw"]))
             return nullptr;
 
         auto value = Core::MakeShared<RED4ext::EulerAngles>();
-        value->Roll = aNode["Roll"].as<float>(0.0f);
-        value->Pitch = aNode["Pitch"].as<float>(0.0f);
-        value->Yaw = aNode["Yaw"].as<float>(0.0f);
+        value->Roll = aNode["roll"].as<float>(0.0f);
+        value->Pitch = aNode["pitch"].as<float>(0.0f);
+        value->Yaw = aNode["yaw"].as<float>(0.0f);
 
         return value;
     }
@@ -286,13 +286,13 @@ Core::SharedPtr<RED4ext::Vector3> App::YamlConverter::Convert(const YAML::Node& 
 {
     if (aNode.IsMap())
     {
-        if (aStrict && (!aNode["X"] || !aNode["Y"] || !aNode["Z"]))
+        if (aStrict && (!aNode["x"] || !aNode["y"] || !aNode["z"]))
             return nullptr;
 
         auto value = Core::MakeShared<RED4ext::Vector3>();
-        value->X = aNode["X"].as<float>(0.0f);
-        value->Y = aNode["Y"].as<float>(0.0f);
-        value->Z = aNode["Z"].as<float>(0.0f);
+        value->X = aNode["x"].as<float>(0.0f);
+        value->Y = aNode["y"].as<float>(0.0f);
+        value->Z = aNode["z"].as<float>(0.0f);
 
         return value;
     }
@@ -305,12 +305,12 @@ Core::SharedPtr<RED4ext::Vector2> App::YamlConverter::Convert(const YAML::Node& 
 {
     if (aNode.IsMap())
     {
-        if (aStrict && (!aNode["X"] || !aNode["Y"]))
+        if (aStrict && (!aNode["x"] || !aNode["y"]))
             return nullptr;
 
         auto value = Core::MakeShared<RED4ext::Vector2>();
-        value->X = aNode["X"].as<float>(0.0f);
-        value->Y = aNode["Y"].as<float>(0.0f);
+        value->X = aNode["x"].as<float>(0.0f);
+        value->Y = aNode["y"].as<float>(0.0f);
 
         return value;
     }
@@ -323,14 +323,14 @@ Core::SharedPtr<RED4ext::Color> App::YamlConverter::Convert(const YAML::Node& aN
 {
     if (aNode.IsMap())
     {
-        if (aStrict && (!aNode["Red"] || !aNode["Green"] || !aNode["Blue"] || !aNode["Alpha"]))
+        if (aStrict && (!aNode["red"] || !aNode["green"] || !aNode["blue"] || !aNode["alpha"]))
             return nullptr;
 
         auto value = Core::MakeShared<RED4ext::Color>();
-        value->Red = aNode["Red"].as<uint8_t>(0);
-        value->Green = aNode["Green"].as<uint8_t>(0);
-        value->Blue = aNode["Blue"].as<uint8_t>(0);
-        value->Alpha = aNode["Alpha"].as<uint8_t>(0);
+        value->Red = aNode["red"].as<uint8_t>(0);
+        value->Green = aNode["green"].as<uint8_t>(0);
+        value->Blue = aNode["blue"].as<uint8_t>(0);
+        value->Alpha = aNode["alpha"].as<uint8_t>(0);
 
         return value;
     }
@@ -353,7 +353,7 @@ Core::SharedPtr<RED4ext::DynArray<E>> App::YamlConverter::ConvertArray(const YAM
             {
                 const auto value = Convert<E>(item);
 
-                // Abort of first incompatible element
+                // Abort on first incompatible element
                 if (!value)
                     return nullptr;
 
