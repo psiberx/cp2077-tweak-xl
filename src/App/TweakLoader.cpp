@@ -5,7 +5,7 @@
 #include "TweakDB/Manager.hpp"
 #include "TweakDB/Raws.hpp"
 
-void App::TweakLoader::Bootstrap()
+void App::TweakLoader::OnBootstrap()
 {
     HookAfter<TweakDB::Raw::LoadTweakDB>(&OnLoadTweakDB);
 }

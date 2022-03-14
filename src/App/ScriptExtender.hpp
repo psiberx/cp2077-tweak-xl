@@ -6,7 +6,6 @@ namespace App
 {
 class ScriptExtender : public Core::Feature
 {
-public:
-    void Bootstrap() override;
+    void OnBootstrap() override;
 };
 }

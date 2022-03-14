@@ -4,7 +4,7 @@
 #include "Scripting/ScriptedInterface.hpp"
 #include "Scripting/ScriptedManager.hpp"
 
-void App::ScriptExtender::Bootstrap()
+void App::ScriptExtender::OnBootstrap()
 {
     Engine::RTTIRegistrar::RegisterPending();
 }

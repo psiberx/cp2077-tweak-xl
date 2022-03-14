@@ -10,10 +10,8 @@ class TweakLoader : public Core::Feature
     , public Core::HookingAgent
     , public Core::LoggingAgent
 {
-public:
-    void Bootstrap() override;
+    void OnBootstrap() override;
 
-private:
     static void OnLoadTweakDB(RED4ext::TweakDB* aTweakDB, RED4ext::CString& aPath);
 };
 }

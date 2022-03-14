@@ -26,4 +26,9 @@ bool ParseInt(const std::string& aIn, T& aOut, int aRadix = 10)
     aOut = static_cast<T>(out);
     return true;
 }
+
+inline bool IsNumeric(const std::string& aIn, size_t aStart = 0)
+{
+    return aIn.find_first_not_of("0123456789", aStart) == std::string::npos;
+}
 };
