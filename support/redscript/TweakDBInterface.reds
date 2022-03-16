@@ -9,10 +9,10 @@ public final static native func GetRecord(path: TweakDBID) -> ref<TweakDBRecord>
 public final static native func GetRecords(type: CName) -> array<ref<TweakDBRecord>>;
 
 @addMethod(TweakDBInterface)
-public final static native func GetRecordCount(type: CName) -> Int32;
+public final static native func GetRecordCount(type: CName) -> Uint32;
 
 @addMethod(TweakDBInterface)
-public final static native func GetRecordByIndex(type: CName, index: Int32) -> ref<TweakDBRecord>;
+public final static native func GetRecordByIndex(type: CName, index: Uint32) -> ref<TweakDBRecord>;
 
 @addMethod(TweakDBInterface)
 public final static func GetRecords(keys: array<TweakDBID>) -> array<ref<TweakDBRecord>> {
@@ -24,4 +24,13 @@ public final static func GetRecords(keys: array<TweakDBID>) -> array<ref<TweakDB
     }
   }
   return records;
+}
+
+@addMethod(TweakDBInterface)
+public final static func GetRecordIDs(type: CName) -> array<TweakDBID> {
+  let ids: array<TweakDBID>;
+  for record in TweakDBInterface.GetRecords(type) {
+    ArrayPush(ids, record.GetID());
+  }
+  return ids;
 }

@@ -27,7 +27,7 @@ void App::ScriptedInterface::GetFlat(RED4ext::IScriptable*, RED4ext::CStackFrame
 }
 
 void App::ScriptedInterface::GetRecord(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame,
-                                      RecordHandle* aRet, RED4ext::CRTTIHandleType* aRetType)
+                                       RecordHandle* aRet, RED4ext::CRTTIHandleType* aRetType)
 {
     RED4ext::TweakDBID recordID;
 
@@ -51,7 +51,7 @@ void App::ScriptedInterface::GetRecord(RED4ext::IScriptable*, RED4ext::CStackFra
 }
 
 void App::ScriptedInterface::GetRecords(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame,
-                                       RecordArray* aRet, RED4ext::CRTTIBaseArrayType* aRetType)
+                                        RecordArray* aRet, RED4ext::CRTTIBaseArrayType* aRetType)
 {
     RED4ext::CName recordTypeName;
 
@@ -69,7 +69,7 @@ void App::ScriptedInterface::GetRecords(RED4ext::IScriptable*, RED4ext::CStackFr
     aRetType->Assign(aRet, &records);
 }
 
-void App::ScriptedInterface::GetRecordCount(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, int32_t* aRet, void*)
+void App::ScriptedInterface::GetRecordCount(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, uint32_t* aRet, void*)
 {
     RED4ext::CName recordTypeName;
 
@@ -85,10 +85,10 @@ void App::ScriptedInterface::GetRecordCount(RED4ext::IScriptable*, RED4ext::CSta
 }
 
 void App::ScriptedInterface::GetRecordByIndex(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame,
-                                             RecordHandle* aRet, RED4ext::CRTTIHandleType* aRetType)
+                                              RecordHandle* aRet, RED4ext::CRTTIHandleType* aRetType)
 {
     RED4ext::CName recordTypeName;
-    int32_t recordIndex;
+    uint32_t recordIndex;
 
     RED4ext::GetParameter(aFrame, &recordTypeName);
     RED4ext::GetParameter(aFrame, &recordIndex);

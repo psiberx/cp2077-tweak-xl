@@ -20,7 +20,7 @@ private:
                           RED4ext::CRTTIHandleType* aRetType);
     static void GetRecords(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, RecordArray* aRet,
                            RED4ext::CRTTIBaseArrayType* aRetType);
-    static void GetRecordCount(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, int32_t* aRet, void*);
+    static void GetRecordCount(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, uint32_t* aRet, void*);
     static void GetRecordByIndex(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, RecordHandle* aRet,
                                  RED4ext::CRTTIHandleType* aRetType);
 
