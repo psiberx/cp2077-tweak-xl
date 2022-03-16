@@ -114,8 +114,8 @@ Core::SharedPtr<RED4ext::TweakDBID> App::YamlConverter::Convert(const YAML::Node
 
         if (str.length() == DebugLength && str.starts_with(DebugPrefix) && str.ends_with(DebugSuffix))
         {
-            uint32_t hash = std::strtol(str.substr(DebugHashPos, DebugHashSize).c_str(), nullptr, 16);
-            uint8_t len = std::strtol(str.substr(DebugLenPos, DebugLenSize).c_str(), nullptr, 16);
+            auto hash = Util::Str::ParseInt<uint32_t>(str.substr(DebugHashPos, DebugHashSize), 16);
+            auto len = Util::Str::ParseInt<uint8_t>(str.substr(DebugLenPos, DebugLenSize), 16);
 
             return Core::MakeShared<RED4ext::TweakDBID>(hash, len);
         }

@@ -263,7 +263,7 @@ void App::YamlReader::HandleRecordNode(App::TweakBatch& aBatch, const std::strin
 
         if (!propInfo)
         {
-            LogError("{}: Unknown property [{}:{}].", aPath, recordInfo->shortName, nodeKey);
+            LogError("{}: Unknown property [{}].[{}].", aPath, recordInfo->shortName, nodeKey);
             continue;
         }
 

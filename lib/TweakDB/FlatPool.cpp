@@ -114,11 +114,13 @@ void TweakDB::FlatPool::Initialize()
     {
         auto flatLockR = std::shared_lock<RED4ext::SharedMutex>(m_tweakDb->mutex00);
 
-        int32_t offset = RED4ext::AlignUp(m_offsetEnd, 8ull);
+        constexpr auto FlatVFTSize = 8u;
+        constexpr auto FlatAlignment = 8u;
 
+        auto offset = RED4ext::AlignUp(static_cast<uint32_t>(m_offsetEnd), FlatAlignment);
         while (offset < offsetEnd)
         {
-            const auto data = GetFlatData(offset);
+            const auto data = GetFlatData(static_cast<int32_t>(offset));
             const auto poolKey = data.type->GetName();
 
             auto poolIt = m_pools.find(poolKey);
@@ -135,8 +137,9 @@ void TweakDB::FlatPool::Initialize()
             if (!pool.contains(hash))
                 pool.emplace(hash, offset);
 
-            // Step {vft + size} aligned by {max(align, 8)}
-            offset += RED4ext::AlignUp(8 + data.type->GetSize(), std::max(data.type->GetAlignment(), 8u));
+            // Step {vft + data_size} aligned by {max(data_align, 8)}
+            offset += RED4ext::AlignUp(FlatVFTSize + data.type->GetSize(),
+                                       std::max(FlatAlignment, data.type->GetAlignment()));
         }
 
         SyncBuffer();
