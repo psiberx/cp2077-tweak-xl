@@ -8,9 +8,26 @@ constexpr auto Name = L"TweakXL";
 constexpr auto Author = L"psiberx";
 
 constexpr auto Version = []() {
+    auto version = semver::version(0, 1, 0);
+
     const std::string_view tag = "${GIT_TAG}";
-    return tag[0] == 'v'
-        ? semver::from_string_noexcept(tag.substr(1))
-        : semver::version(0, 1, 0);
+    if (tag[0] == 'v')
+    {
+        const size_t appendix = tag.find('-');
+        if (appendix == std::string::npos)
+        {
+            // v1.2.0 => 1.2.0
+            version.from_string(tag.substr(1));
+        }
+        else
+        {
+            // v1.2.0-3-gc1234ba => 1.2.1-beta
+            version.from_string(tag.substr(1, appendix - 1));
+            version.prerelease_type = semver::prerelease::beta;
+            version.patch++;
+        }
+    }
+
+    return version;
 }();
 }

@@ -75,5 +75,5 @@ void App::TweakLoader::ExecuteTweak(RED4ext::CName aName)
 
 RED4ext::CString App::TweakLoader::Version()
 {
-    return Project::Version->to_string().c_str();
+    return Project::Version.to_string().c_str();
 }

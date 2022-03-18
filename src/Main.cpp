@@ -94,7 +94,7 @@ RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::PluginInfo* aInfo)
 {
     aInfo->name = Project::Name;
     aInfo->author = Project::Author;
-    aInfo->version = RED4EXT_SEMVER(Project::Version->major, Project::Version->minor, Project::Version->patch);
+    aInfo->version = RED4EXT_SEMVER(Project::Version.major, Project::Version.minor, Project::Version.patch);
     aInfo->runtime = RED4EXT_RUNTIME_LATEST;
     aInfo->sdk = RED4EXT_SDK_LATEST;
 }
