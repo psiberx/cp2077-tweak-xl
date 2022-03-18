@@ -3,13 +3,12 @@
 #include "Core/Facades/Runtime.hpp"
 #include "Core/Runtime/OwnerMutex.hpp"
 #include "Engine/Raws.hpp"
+#include "Project.hpp"
 
 namespace
 {
 Core::UniquePtr<App::Application> g_app;
 Core::UniquePtr<Core::OwnerMutex> g_mutex;
-
-constexpr auto MutexName = L"TweakXL-Owner";
 }
 
 // ASI
@@ -26,7 +25,7 @@ BOOL APIENTRY DllMain(HMODULE aHandle, DWORD aReason, LPVOID)
 
         if (s_isASI)
         {
-            g_mutex = Core::MakeUnique<Core::OwnerMutex>(MutexName);
+            g_mutex = Core::MakeUnique<Core::OwnerMutex>(Project::Name);
 
             if (g_mutex->Obtain())
             {
@@ -65,7 +64,7 @@ RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::
     {
     case RED4ext::EMainReason::Load:
     {
-        g_mutex = Core::MakeUnique<Core::OwnerMutex>(MutexName);
+        g_mutex = Core::MakeUnique<Core::OwnerMutex>(Project::Name);
 
         if (g_mutex->Obtain())
         {
@@ -89,6 +88,15 @@ RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::
     }
 
     return true;
+}
+
+RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::PluginInfo* aInfo)
+{
+    aInfo->name = Project::Name;
+    aInfo->author = Project::Author;
+    aInfo->version = RED4EXT_SEMVER(Project::Version->major, Project::Version->minor, Project::Version->patch);
+    aInfo->runtime = RED4EXT_RUNTIME_LATEST;
+    aInfo->sdk = RED4EXT_SDK_LATEST;
 }
 
 RED4EXT_C_EXPORT uint32_t RED4EXT_CALL Supports()

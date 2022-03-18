@@ -1,0 +1,16 @@
+#pragma once
+
+#include <semver.hpp>
+
+namespace Project
+{
+constexpr auto Name = L"TweakXL";
+constexpr auto Author = L"psiberx";
+
+constexpr auto Version = []() {
+    const std::string_view tag = "${GIT_TAG}";
+    return tag[0] == 'v'
+        ? semver::from_string_noexcept(tag.substr(1))
+        : semver::version(0, 1, 0);
+}();
+}
