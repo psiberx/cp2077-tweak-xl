@@ -27,7 +27,7 @@ void App::TweakExecutor::ExecuteAll()
 
         ScriptedManager scopedManager(m_manager);
 
-        for (const auto* tweakClass : tweakClasses)
+        for (auto* tweakClass : tweakClasses)
             Execute(tweakClass);
 
         LogInfo("Execution completed.");
@@ -65,42 +65,29 @@ void App::TweakExecutor::Execute(RED4ext::CName aTweakName)
         LogInfo("Execution completed.");
 }
 
-bool App::TweakExecutor::Execute(const RED4ext::CClass* aTweakClass)
+bool App::TweakExecutor::Execute(RED4ext::CClass* aTweakClass)
 {
     try
     {
         auto applyCallback = aTweakClass->GetFunction(ApplyCallbackName);
 
-        if (!applyCallback)
+        if (!applyCallback || applyCallback->flags.hasUndefinedBody)
         {
             LogError(R"(Tweak class "{}" doesn't have "{}" method.)", ApplyCallbackName);
             return false;
         }
 
-        // Allocate memory...
-        auto tweakInstance = aTweakClass->AllocInstance();
+        auto tweakHandle = ScriptableTweak::NewInstance(aTweakClass);
 
-        if (!tweakInstance)
+        if (!tweakHandle)
         {
-            LogError(R"(Tweak instance "{}" cannot be allocated.)", aTweakClass->GetName().ToString());
+            LogError(R"(Tweak instance "{}" cannot be constructed.)", aTweakClass->GetName().ToString());
             return false;
         }
 
         LogInfo(R"(Executing "{}"...)", aTweakClass->GetName().ToString());
 
-        // Construct raw instance...
-        aTweakClass->ConstructCls(tweakInstance);
-
-        // Construct handle...
-        auto scriptable = reinterpret_cast<RED4ext::ISerializable*>(tweakInstance);
-        auto handle = RED4ext::Handle<RED4ext::ISerializable>(scriptable);
-
-        // Assign handle to the instance...
-        // This is required for instance to be recognized by scripting engine.
-        // Without this reference scripted `this` will always be null.
-        scriptable->ref = RED4ext::WeakHandle(handle);
-
-        auto stack = RED4ext::CStack(tweakInstance);
+        auto stack = RED4ext::CStack(tweakHandle.instance);
 
         applyCallback->Execute(&stack);
     }

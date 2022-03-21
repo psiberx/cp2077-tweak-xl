@@ -15,7 +15,7 @@ public:
     void Execute(RED4ext::CName aTweakName);
 
 private:
-    bool Execute(const RED4ext::CClass* aTweakClass);
+    bool Execute(RED4ext::CClass* aTweakClass);
 
     TweakDB::Manager& m_manager;
     RED4ext::CRTTISystem* m_rtti;
