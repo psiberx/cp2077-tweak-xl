@@ -20,7 +20,7 @@ enum Name: uint64_t
     CName = (uint64_t) RED4ext::CName("CName"),
     TweakDBID = (uint64_t) RED4ext::CName("TweakDBID"),
     LocKey = (uint64_t) RED4ext::CName("gamedataLocKeyWrapper"),
-    CResource = (uint64_t) RED4ext::CName("raRef:CResource"),
+    Resource = (uint64_t) RED4ext::CName("raRef:CResource"),
     Quaternion = (uint64_t) RED4ext::CName("Quaternion"),
     EulerAngles = (uint64_t) RED4ext::CName("EulerAngles"),
     Vector3 = (uint64_t) RED4ext::CName("Vector3"),
@@ -33,7 +33,7 @@ enum Name: uint64_t
     CNameArray = (uint64_t) RED4ext::CName("array:CName"),
     TweakDBIDArray = (uint64_t) RED4ext::CName("array:TweakDBID"),
     LocKeyArray = (uint64_t) RED4ext::CName("array:gamedataLocKeyWrapper"),
-    CResourceArray = (uint64_t) RED4ext::CName("array:raRef:CResource"),
+    ResourceArray = (uint64_t) RED4ext::CName("array:raRef:CResource"),
     QuaternionArray = (uint64_t) RED4ext::CName("array:Quaternion"),
     EulerAnglesArray = (uint64_t) RED4ext::CName("array:EulerAngles"),
     Vector3Array = (uint64_t) RED4ext::CName("array:Vector3"),
@@ -56,6 +56,12 @@ bool IsForeignKey(const RED4ext::CBaseRTTIType* aType);
 
 bool IsForeignKeyArray(RED4ext::CName aTypeName);
 bool IsForeignKeyArray(const RED4ext::CBaseRTTIType* aType);
+
+bool IsResRefToken(RED4ext::CName aTypeName);
+bool IsResRefToken(const RED4ext::CBaseRTTIType* aType);
+
+bool IsResRefTokenArray(RED4ext::CName aTypeName);
+bool IsResRefTokenArray(const RED4ext::CBaseRTTIType* aType);
 
 RED4ext::CName GetArrayType(RED4ext::CName aTypeName);
 RED4ext::CName GetArrayType(const RED4ext::CBaseRTTIType* aType);

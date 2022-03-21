@@ -425,9 +425,9 @@ Core::SharedPtr<void> App::YamlConverter::Convert(RED4ext::CName aTypeName, cons
     case TweakDB::RTDB::EFlatType::LocKeyArray:
         return ConvertArray<Engine::LocKeyWrapper>(aNode);
 
-    case TweakDB::RTDB::EFlatType::CResource:
+    case TweakDB::RTDB::EFlatType::Resource:
         return Convert<Engine::ResourceAsyncReference>(aNode);
-    case TweakDB::RTDB::EFlatType::CResourceArray:
+    case TweakDB::RTDB::EFlatType::ResourceArray:
         return ConvertArray<Engine::ResourceAsyncReference>(aNode);
 
     case TweakDB::RTDB::EFlatType::Quaternion:
@@ -489,7 +489,7 @@ std::pair<RED4ext::CName, Core::SharedPtr<void>> App::YamlConverter::Convert(con
             return { TweakDB::RTDB::EFlatType::LocKey, value };
 
         if (Convert<Engine::ResourceAsyncReference>(aNode, value, true))
-            return { TweakDB::RTDB::EFlatType::CResource, value };
+            return { TweakDB::RTDB::EFlatType::Resource, value };
 
         break;
     }

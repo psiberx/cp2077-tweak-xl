@@ -7,8 +7,6 @@
 namespace
 {
 constexpr size_t DataOffsetSize = 3;
-constexpr RED4ext::CName ResRefWrapperTypeName = "redResourceReferenceScriptToken";
-constexpr RED4ext::CName ResRefArrayTypeName = "array:redResourceReferenceScriptToken";
 }
 
 TweakDB::Reflection::Reflection()
@@ -89,9 +87,6 @@ Core::SharedPtr<TweakDB::Reflection::RecordInfo> TweakDB::Reflection::CollectRec
         recordInfo->props.insert(parentInfo->props.begin(), parentInfo->props.end());
     }
 
-    static RED4ext::CBaseRTTIType* s_ResRefWrapperType = m_rtti->GetType(ResRefWrapperTypeName);
-    static RED4ext::CBaseRTTIType* s_ResRefArrayType = m_rtti->GetType(ResRefArrayTypeName);
-
     const auto baseOffset = aType->parent->size;
 
     for (uint32_t funcIndex = 0u; funcIndex < aType->funcs.size; ++funcIndex)
@@ -147,11 +142,11 @@ Core::SharedPtr<TweakDB::Reflection::RecordInfo> TweakDB::Reflection::CollectRec
             }
             case RED4ext::ERTTIType::Array:
             {
-                if (returnType == s_ResRefArrayType)
+                if (RTDB::IsResRefTokenArray(returnType))
                 {
-                    propInfo->type = m_rtti->GetType(TweakDB::RTDB::EFlatType::CResourceArray);
+                    propInfo->type = m_rtti->GetType(TweakDB::RTDB::EFlatType::ResourceArray);
                     propInfo->isArray = true;
-                    propInfo->elementType = m_rtti->GetType(RTDB::EFlatType::CResource);
+                    propInfo->elementType = m_rtti->GetType(RTDB::EFlatType::Resource);
 
                     // Skip related functions:
                     // func Get[Prop]Count()
@@ -183,9 +178,9 @@ Core::SharedPtr<TweakDB::Reflection::RecordInfo> TweakDB::Reflection::CollectRec
             }
             default:
             {
-                if (returnType == s_ResRefWrapperType)
+                if (RTDB::IsResRefToken(returnType))
                 {
-                    propInfo->type = m_rtti->GetType(TweakDB::RTDB::EFlatType::CResource);
+                    propInfo->type = m_rtti->GetType(TweakDB::RTDB::EFlatType::Resource);
                 }
                 else
                 {

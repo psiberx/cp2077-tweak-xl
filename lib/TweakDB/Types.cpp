@@ -11,6 +11,8 @@
 namespace
 {
 constexpr RED4ext::CName BaseRecordTypeName = "gamedataTweakDBRecord";
+constexpr RED4ext::CName ResRefTokenTypeName = "redResourceReferenceScriptToken";
+constexpr RED4ext::CName ResRefTokenArrayTypeName = "array:redResourceReferenceScriptToken";
 constexpr const char* RecordTypePrefix = "gamedata";
 constexpr const char* RecordTypeSuffix = "_Record";
 constexpr size_t RecordTypePrefixLength = std::char_traits<char>::length(RecordTypePrefix);
@@ -28,7 +30,7 @@ bool TweakDB::RTDB::IsFlatType(RED4ext::CName aTypeName)
     case EFlatType::CName:
     case EFlatType::TweakDBID:
     case EFlatType::LocKey:
-    case EFlatType::CResource:
+    case EFlatType::Resource:
     case EFlatType::Quaternion:
     case EFlatType::EulerAngles:
     case EFlatType::Vector3:
@@ -41,7 +43,7 @@ bool TweakDB::RTDB::IsFlatType(RED4ext::CName aTypeName)
     case EFlatType::CNameArray:
     case EFlatType::TweakDBIDArray:
     case EFlatType::LocKeyArray:
-    case EFlatType::CResourceArray:
+    case EFlatType::ResourceArray:
     case EFlatType::QuaternionArray:
     case EFlatType::EulerAnglesArray:
     case EFlatType::Vector3Array:
@@ -81,7 +83,7 @@ bool TweakDB::RTDB::IsArrayType(RED4ext::CName aTypeName)
     case EFlatType::CNameArray:
     case EFlatType::TweakDBIDArray:
     case EFlatType::LocKeyArray:
-    case EFlatType::CResourceArray:
+    case EFlatType::ResourceArray:
     case EFlatType::QuaternionArray:
     case EFlatType::EulerAnglesArray:
     case EFlatType::Vector3Array:
@@ -118,6 +120,26 @@ bool TweakDB::RTDB::IsForeignKeyArray(const RED4ext::CBaseRTTIType* aType)
     return aType && IsForeignKeyArray(aType->GetName());
 }
 
+bool TweakDB::RTDB::IsResRefToken(RED4ext::CName aTypeName)
+{
+    return aTypeName == ResRefTokenTypeName;
+}
+
+bool TweakDB::RTDB::IsResRefToken(const RED4ext::CBaseRTTIType* aType)
+{
+    return aType && IsResRefToken(aType->GetName());
+}
+
+bool TweakDB::RTDB::IsResRefTokenArray(RED4ext::CName aTypeName)
+{
+    return aTypeName == ResRefTokenArrayTypeName;
+}
+
+bool TweakDB::RTDB::IsResRefTokenArray(const RED4ext::CBaseRTTIType* aType)
+{
+    return aType && IsResRefTokenArray(aType->GetName());
+}
+
 RED4ext::CName TweakDB::RTDB::GetArrayType(RED4ext::CName aTypeName)
 {
     switch (aTypeName)
@@ -129,7 +151,7 @@ RED4ext::CName TweakDB::RTDB::GetArrayType(RED4ext::CName aTypeName)
     case EFlatType::CName: return EFlatType::CNameArray;
     case EFlatType::TweakDBID: return EFlatType::TweakDBIDArray;
     case EFlatType::LocKey: return EFlatType::LocKeyArray;
-    case EFlatType::CResource: return EFlatType::CResourceArray;
+    case EFlatType::Resource: return EFlatType::ResourceArray;
     case EFlatType::Quaternion: return EFlatType::QuaternionArray;
     case EFlatType::EulerAngles: return EFlatType::EulerAnglesArray;
     case EFlatType::Vector3: return EFlatType::Vector3Array;
@@ -159,7 +181,7 @@ RED4ext::CName TweakDB::RTDB::GetElementType(RED4ext::CName aTypeName)
     case EFlatType::CNameArray: return EFlatType::CName;
     case EFlatType::TweakDBIDArray: return EFlatType::TweakDBID;
     case EFlatType::LocKeyArray: return EFlatType::LocKey;
-    case EFlatType::CResourceArray: return EFlatType::CResource;
+    case EFlatType::ResourceArray: return EFlatType::Resource;
     case EFlatType::QuaternionArray: return EFlatType::Quaternion;
     case EFlatType::EulerAnglesArray: return EFlatType::EulerAngles;
     case EFlatType::Vector3Array: return EFlatType::Vector3;
@@ -225,7 +247,7 @@ Core::SharedPtr<void> TweakDB::RTDB::MakeDefaultValue(RED4ext::CName aTypeName)
     case EFlatType::CName: return MakeDefaultValue<RED4ext::CName>();
     case EFlatType::TweakDBID: return MakeDefaultValue<RED4ext::TweakDBID>();
     case EFlatType::LocKey: return MakeDefaultValue<Engine::LocKeyWrapper>();
-    case EFlatType::CResource: return MakeDefaultValue<Engine::ResourceAsyncReference>();
+    case EFlatType::Resource: return MakeDefaultValue<Engine::ResourceAsyncReference>();
     case EFlatType::Quaternion: return MakeDefaultValue<RED4ext::Quaternion>();
     case EFlatType::EulerAngles: return MakeDefaultValue<RED4ext::EulerAngles>();
     case EFlatType::Vector3: return MakeDefaultValue<RED4ext::Vector3>();
@@ -238,7 +260,7 @@ Core::SharedPtr<void> TweakDB::RTDB::MakeDefaultValue(RED4ext::CName aTypeName)
     case EFlatType::CNameArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::CName>>();
     case EFlatType::TweakDBIDArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::TweakDBID>>();
     case EFlatType::LocKeyArray: return MakeDefaultValue<RED4ext::DynArray<Engine::LocKeyWrapper>>();
-    case EFlatType::CResourceArray: return MakeDefaultValue<RED4ext::DynArray<Engine::ResourceAsyncReference>>();
+    case EFlatType::ResourceArray: return MakeDefaultValue<RED4ext::DynArray<Engine::ResourceAsyncReference>>();
     case EFlatType::QuaternionArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::Quaternion>>();
     case EFlatType::EulerAnglesArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::EulerAngles>>();
     case EFlatType::Vector3Array: return MakeDefaultValue<RED4ext::DynArray<RED4ext::Vector3>>();
