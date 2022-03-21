@@ -14,16 +14,19 @@ constexpr auto Version = []() {
     if (tag[0] == 'v')
     {
         const size_t appendix = tag.find('-');
-        if (appendix == std::string::npos)
+
+        // v1.2.3 => 1.2.3
+        // v1.2.3-type => 1.2.3-type
+        if (appendix == std::string::npos || tag[appendix + 1] > 'a')
         {
-            // v1.2.0 => 1.2.0
             version.from_string(tag.substr(1));
         }
+
+        // v1.2.3-8-gc1234ba => 1.2.4-alpha
         else
         {
-            // v1.2.0-3-gc1234ba => 1.2.1-beta
             version.from_string(tag.substr(1, appendix - 1));
-            version.prerelease_type = semver::prerelease::beta;
+            version.prerelease_type = semver::prerelease::alpha;
             version.patch++;
         }
     }
