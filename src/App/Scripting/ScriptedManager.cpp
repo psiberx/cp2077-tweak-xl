@@ -27,6 +27,19 @@ void App::ScriptedManager::SetFlat(RED4ext::IScriptable*, RED4ext::CStackFrame* 
     if (!s_manager)
         return;
 
+    if (TweakDB::RTDB::IsResRefToken(variant.GetType()))
+    {
+        const auto rtti = RED4ext::CRTTISystem::Get();
+        const auto type = rtti->GetType(TweakDB::RTDB::EFlatType::Resource);
+        variant = RED4ext::Variant(type, variant.GetDataPtr());
+    }
+    else if (TweakDB::RTDB::IsResRefTokenArray(variant.GetType()))
+    {
+        const auto rtti = RED4ext::CRTTISystem::Get();
+        const auto type = rtti->GetType(TweakDB::RTDB::EFlatType::ResourceArray);
+        variant = RED4ext::Variant(type, variant.GetDataPtr());
+    }
+
     // TODO: Convert LocKey
 
     auto success = s_manager->SetFlat(flatID, variant.GetType(), variant.GetDataPtr());
