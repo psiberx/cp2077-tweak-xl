@@ -120,7 +120,7 @@ private:
 
         auto* desc = reinterpret_cast<FinalDescriptor*>(s_class);
 
-        T::OnBuild(desc, rtti);
+        T::OnDescribe(desc, rtti);
 
         // Force native flag
         s_class->flags.isNative = true;
@@ -202,6 +202,6 @@ private:
     friend Descriptor;
 
     static void OnRegister(Descriptor* aType) {}
-    static void OnBuild(Descriptor* aType, RED4ext::CRTTISystem* aRtti) {}
+    static void OnDescribe(Descriptor* aType, RED4ext::CRTTISystem* aRtti) {}
 };
 }

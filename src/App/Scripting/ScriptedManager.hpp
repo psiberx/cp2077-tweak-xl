@@ -21,6 +21,6 @@ private:
 
     friend Descriptor;
     static void OnRegister(Descriptor* aType);
-    static void OnBuild(Descriptor* aType, RED4ext::CRTTISystem* aRtti);
+    static void OnDescribe(Descriptor* aType, RED4ext::CRTTISystem* aRtti);
 };
 }

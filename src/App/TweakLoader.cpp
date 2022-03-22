@@ -25,7 +25,7 @@ void App::TweakLoader::OnRegister(Descriptor* aType)
     aType->SetFlags({ .isAbstract = true });
 }
 
-void App::TweakLoader::OnBuild(Descriptor* aType, RED4ext::CRTTISystem* aRtti)
+void App::TweakLoader::OnDescribe(Descriptor* aType, RED4ext::CRTTISystem* aRtti)
 {
     aType->AddFunction<&Reload>("Reload", { .isFinal = true });
     aType->AddFunction<&ImportAll>("ImportAll", { .isFinal = true });
