@@ -120,6 +120,12 @@ void TweakDB::FlatPool::Initialize()
         auto offset = RED4ext::AlignUp(static_cast<uint32_t>(m_offsetEnd), FlatAlignment);
         while (offset < offsetEnd)
         {
+            // The current offset should always point to the VFT of the next flat.
+            // If there's zero instead, that means the next value is 16-byte aligned,
+            // and we need to skip the 8-byte padding to get to the flat.
+            if (*reinterpret_cast<uint64_t*>(m_tweakDb->flatDataBuffer + offset) == 0ull)
+                 offset += 8u;
+
             const auto data = GetFlatData(static_cast<int32_t>(offset));
             const auto poolKey = data.type->GetName();
 
