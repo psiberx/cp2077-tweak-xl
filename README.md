@@ -15,8 +15,8 @@ TweakXL is a modding tool that allows you to modify TweakDB.
 
 ## Documentation
 
-- [About TweakDB](/psiberx/cp2077-tweak-xl/wiki/About-TweakDB)
-- [YAML Tweaks](/psiberx/cp2077-tweak-xl/wiki/YAML-Tweaks)
-- [Script Extensions](/psiberx/cp2077-tweak-xl/wiki/Script-Extensions)
-- [Modder Tools](/psiberx/cp2077-tweak-xl/wiki/Modder-Tools)
-- [Examples](/psiberx/cp2077-tweak-xl/wiki/Examples)
+- [About TweakDB](https://github.com/psiberx/cp2077-tweak-xl/wiki/About-TweakDB)
+- [YAML Tweaks](https://github.com/psiberx/cp2077-tweak-xl/wiki/YAML-Tweaks)
+- [Script Extensions](https://github.com/psiberx/cp2077-tweak-xl/wiki/Script-Extensions)
+- [Modder Tools](https://github.com/psiberx/cp2077-tweak-xl/wiki/Modder-Tools)
+- [Examples](https://github.com/psiberx/cp2077-tweak-xl/wiki/Examples)
