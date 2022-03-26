@@ -538,7 +538,7 @@ const RED4ext::CBaseRTTIType* App::YamlReader::ResolveFlatType(App::TweakBatch& 
 
 const RED4ext::CClass* App::YamlReader::ResolveRecordType(const YAML::Node& aNode)
 {
-    return m_reflection.GetRecordType(aNode.Scalar().c_str());
+    return m_reflection.GetRecordType(aNode.Scalar());
 }
 
 const RED4ext::CClass* App::YamlReader::ResolveRecordType(App::TweakBatch& aBatch, RED4ext::TweakDBID aRecordId)

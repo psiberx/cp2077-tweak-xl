@@ -45,6 +45,7 @@ public:
 
     const RED4ext::CBaseRTTIType* GetFlatType(RED4ext::CName aTypeName);
     const RED4ext::CClass* GetRecordType(RED4ext::CName aTypeName);
+    const RED4ext::CClass* GetRecordType(const std::string& aTypeName);
 
     const RecordInfo* GetRecordInfo(RED4ext::CName aTypeName);
     const RecordInfo* GetRecordInfo(const RED4ext::CClass* aType);

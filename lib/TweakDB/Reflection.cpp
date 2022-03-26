@@ -32,9 +32,14 @@ const RED4ext::CBaseRTTIType* TweakDB::Reflection::GetFlatType(RED4ext::CName aT
 
 const RED4ext::CClass* TweakDB::Reflection::GetRecordType(RED4ext::CName aTypeName)
 {
-    aTypeName = RTDB::GetRecordFullName(aTypeName);
+    return GetRecordType(std::string(aTypeName.ToString()));
+}
 
-    RED4ext::CClass* type = m_rtti->GetClass(aTypeName);
+const RED4ext::CClass* TweakDB::Reflection::GetRecordType(const std::string& aTypeName)
+{
+    auto aFullName = RTDB::GetRecordFullName(aTypeName);
+
+    RED4ext::CClass* type = m_rtti->GetClass(aFullName);
 
     if (!RTDB::IsRecordType(type))
         return nullptr;
