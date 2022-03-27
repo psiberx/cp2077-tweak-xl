@@ -145,23 +145,30 @@ void App::TweakBatch::Dispatch()
                 continue;
             }
         }
-        else if (recordEntry.sourceId.IsValid())
-        {
-            const auto success = m_manager.CloneRecord(recordId, recordEntry.sourceId);
-
-            if (!success)
-            {
-                LogError("Cannot clone record [{}] from [{}].", AsString(recordId), AsString(recordEntry.sourceId));
-                continue;
-            }
-        }
-        else
+        else if (!recordEntry.sourceId.IsValid())
         {
             const auto success = m_manager.CreateRecord(recordId, recordEntry.type);
 
             if (!success)
             {
                 LogError("Cannot create record [{}] of type [{}].", AsString(recordId), AsString(recordEntry.type));
+                continue;
+            }
+        }
+    }
+
+    for (const auto& item : m_pendingRecords)
+    {
+        const auto& recordId = item.first;
+        const auto& recordEntry = item.second;
+
+        if (recordEntry.sourceId.IsValid())
+        {
+            const auto success = m_manager.CloneRecord(recordId, recordEntry.sourceId);
+
+            if (!success)
+            {
+                LogError("Cannot clone record [{}] from [{}].", AsString(recordId), AsString(recordEntry.sourceId));
                 continue;
             }
         }
