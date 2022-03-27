@@ -76,14 +76,19 @@ Core::SharedPtr<TweakDB::Reflection::RecordInfo> TweakDB::Reflection::CollectRec
     if (!RTDB::IsRecordType(aType))
         return nullptr;
 
+    auto sampleId = aSampleId;
+    if (!sampleId.IsValid())
+    {
+        sampleId = GetRecordSampleId(aType);
+
+        if (!sampleId.IsValid())
+            return nullptr;
+    }
+
     auto recordInfo = Core::MakeShared<RecordInfo>();
     recordInfo->name = aType->name;
     recordInfo->type = aType;
     recordInfo->shortName = RTDB::GetRecordShortName(aType->name);
-
-    const auto sampleId = aSampleId.IsValid() ? aSampleId : GetRecordSampleId(aType);
-
-    assert(sampleId.IsValid());
 
     const auto parentInfo = CollectRecordInfo(aType->parent, sampleId);
     if (parentInfo)
@@ -221,9 +226,12 @@ Core::SharedPtr<TweakDB::Reflection::RecordInfo> TweakDB::Reflection::CollectRec
 RED4ext::TweakDBID TweakDB::Reflection::GetRecordSampleId(const RED4ext::CClass* aType)
 {
     std::shared_lock<RED4ext::SharedMutex> recordLockR(m_tweakDb->mutex01);
-    auto* first = m_tweakDb->recordsByType.Get(const_cast<RED4ext::CClass*>(aType))->Begin();
+    auto* records = m_tweakDb->recordsByType.Get(const_cast<RED4ext::CClass*>(aType));
 
-    return reinterpret_cast<RED4ext::Handle<RED4ext::gamedataTweakDBRecord>*>(first)->GetPtr()->recordID;
+    if (records == nullptr)
+        return {};
+
+    return reinterpret_cast<RED4ext::Handle<RED4ext::gamedataTweakDBRecord>*>(records->Begin())->GetPtr()->recordID;
 }
 
 std::string TweakDB::Reflection::ResolvePropertyName(RED4ext::TweakDBID aSampleId, RED4ext::CName aGetterName)

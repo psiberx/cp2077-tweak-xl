@@ -245,6 +245,15 @@ void App::YamlReader::HandleRecordNode(App::TweakBatch& aBatch, const std::strin
     const auto recordId = RED4ext::TweakDBID(aName);
     const auto recordInfo = m_reflection.GetRecordInfo(aType);
 
+    if (!recordInfo)
+    {
+        if (TweakDB::RTDB::IsRecordType(aType))
+            LogError("{}: Cannot create record, the record type [{}] is abstract.", aPath, aType->name.ToString());
+        else
+            LogError("{}: Cannot create record, the record type [{}] is unknown.", aPath, aType->name.ToString());
+        return;
+    }
+
     // TODO: Notify about overwrites?
     // if (aBatch.HasRecord(recordId)) ...
 
@@ -427,7 +436,7 @@ void App::YamlReader::HandleInlineNode(App::TweakBatch& aBatch, const std::strin
             }
             else
             {
-                LogError("{}: Cannot be inlined, provided type [{}] is not a known record type.",
+                LogError("{}: Cannot be inlined, provided type [{}] is not a known record type or abstract.",
                          aPath, typeAttr.Scalar());
             }
         }
