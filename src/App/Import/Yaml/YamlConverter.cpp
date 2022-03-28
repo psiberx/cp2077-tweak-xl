@@ -2,6 +2,8 @@
 #include "TweakDB/Types.hpp"
 #include "Util/Str.hpp"
 
+#include <RED4ext/CNamePool.hpp>
+
 template<typename T>
 Core::SharedPtr<T> App::YamlConverter::Convert(const YAML::Node& aNode, bool)
 {
@@ -51,18 +53,18 @@ Core::SharedPtr<RED4ext::CName> App::YamlConverter::Convert(const YAML::Node& aN
         if (str.starts_with(QuotedPrefix) && str.ends_with(QuotedSuffix))
         {
             return Core::MakeShared<RED4ext::CName>(
-                str.substr(QuotedSkip, str.length() - QuotedDiff).c_str());
+                RED4ext::CNamePool::Add(str.substr(QuotedSkip, str.length() - QuotedDiff).c_str()));
         }
 
         if (str.starts_with(WrappedPrefix) && str.ends_with(WrappedSuffix))
         {
             return Core::MakeShared<RED4ext::CName>(
-                str.substr(WrappedSkip, str.length() - WrappedDiff).c_str());
+                RED4ext::CNamePool::Add(str.substr(WrappedSkip, str.length() - WrappedDiff).c_str()));
         }
 
         if (!aStrict)
         {
-            return Core::MakeShared<RED4ext::CName>(str.c_str());
+            return Core::MakeShared<RED4ext::CName>(RED4ext::CNamePool::Add(str.c_str()));
         }
     }
 
