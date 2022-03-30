@@ -664,7 +664,11 @@ void App::YamlReader::ConvertLegacyNodes()
             if (!flatTypeNode.IsDefined() || !flatValueNode.IsDefined())
                 continue;
 
-            m_yaml[flatKey] = flatValueNode;
+            auto convertedNode = YAML::Node();
+            convertedNode[TypeAttrKey] = flatTypeNode;
+            convertedNode[ValueAttrKey] = flatValueNode;
+
+            m_yaml[flatKey] = convertedNode;
         }
 
         m_yaml.remove(LegacyFlatsNodeKey);
