@@ -26,6 +26,8 @@ constexpr auto LegacyMembersNodeKey = "members";
 constexpr auto LegacyFlatsNodeKey = "flats";
 constexpr auto LegacyTypeNodeKey = "type";
 constexpr auto LegacyValueNodeKey = "value";
+
+size_t s_globalInlineIndex = 100000;
 }
 
 App::YamlReader::YamlReader(TweakDB::Manager& aManager, TweakDB::Reflection& aReflection)
@@ -292,16 +294,19 @@ void App::YamlReader::HandleRecordNode(App::TweakBatch& aBatch, const std::strin
 
                     if (itemData.IsMap())
                     {
+                        auto isRelative = IsRelativeChange(itemData);
+                        auto inlineIndex = isRelative ? ++s_globalInlineIndex : itemIndex;
+
                         auto inlinePath = aPath;
                         inlinePath.append(propInfo->appendix);
                         inlinePath.append(PropSeparator);
-                        inlinePath.append(std::to_string(itemIndex));
+                        inlinePath.append(std::to_string(inlineIndex));
 
                         auto inlineName = aName;
                         inlineName.append(InlineSeparator);
                         inlineName.append(nodeKey);
                         inlineName.append(IndexSeparator);
-                        inlineName.append(std::to_string(itemIndex));
+                        inlineName.append(std::to_string(inlineIndex));
 
                         HandleInlineNode(aBatch, inlinePath, inlineName, itemData, propInfo->foreignType);
 
@@ -516,6 +521,24 @@ bool App::YamlReader::HandleRelativeChanges(TweakBatch& aBatch, const std::strin
     }
 
     return isRelative;
+}
+
+bool App::YamlReader::IsRelativeChange(const YAML::Node& aNode)
+{
+    if (aNode.Tag().length() <= 1)
+        return false;
+
+    const auto tag = RED4ext::FNV1a64(aNode.Tag().c_str());
+
+    switch (tag)
+    {
+    case ArrayAppendOp:
+    case ArrayAppendOnceOp:
+    case ArrayAppendFromOp:
+        return true;
+    default:
+        return false;
+    }
 }
 
 const RED4ext::CBaseRTTIType* App::YamlReader::ResolveFlatType(const YAML::Node& aNode)

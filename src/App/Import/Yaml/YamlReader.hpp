@@ -29,6 +29,7 @@ private:
                           const YAML::Node& aNode, const RED4ext::CClass* aType);
     bool HandleRelativeChanges(TweakBatch& aBatch, const std::string& aPath, const std::string& aName,
                                const YAML::Node& aNode, const RED4ext::CBaseRTTIType* aElementType);
+    bool IsRelativeChange(const YAML::Node& aNode);
 
     const RED4ext::CBaseRTTIType* ResolveFlatType(const YAML::Node& aNode);
     const RED4ext::CBaseRTTIType* ResolveFlatType(RED4ext::CName aName);
