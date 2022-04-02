@@ -25,6 +25,10 @@ bool App::TweakBatch::MakeRecord(RED4ext::TweakDBID aRecordId, const RED4ext::CC
         return false;
 
     auto& entry = m_pendingRecords[aRecordId];
+
+    if (!entry.type)
+        m_orderedRecords.push_back(aRecordId);
+
     entry.type = aType;
     entry.sourceId = aSourceId;
 
@@ -130,10 +134,9 @@ void App::TweakBatch::Dispatch()
         }
     }
 
-    for (const auto& item : m_pendingRecords)
+    for (const auto& recordId : m_orderedRecords)
     {
-        const auto& recordId = item.first;
-        const auto& recordEntry = item.second;
+        const auto& recordEntry = m_pendingRecords[recordId];
 
         if (m_manager.IsRecordExists(recordId))
         {
@@ -145,30 +148,23 @@ void App::TweakBatch::Dispatch()
                 continue;
             }
         }
-        else if (!recordEntry.sourceId.IsValid())
-        {
-            const auto success = m_manager.CreateRecord(recordId, recordEntry.type);
-
-            if (!success)
-            {
-                LogError("Cannot create record [{}] of type [{}].", AsString(recordId), AsString(recordEntry.type));
-                continue;
-            }
-        }
-    }
-
-    for (const auto& item : m_pendingRecords)
-    {
-        const auto& recordId = item.first;
-        const auto& recordEntry = item.second;
-
-        if (recordEntry.sourceId.IsValid())
+        else if (recordEntry.sourceId.IsValid())
         {
             const auto success = m_manager.CloneRecord(recordId, recordEntry.sourceId);
 
             if (!success)
             {
                 LogError("Cannot clone record [{}] from [{}].", AsString(recordId), AsString(recordEntry.sourceId));
+                continue;
+            }
+        }
+        else
+        {
+            const auto success = m_manager.CreateRecord(recordId, recordEntry.type);
+
+            if (!success)
+            {
+                LogError("Cannot create record [{}] of type [{}].", AsString(recordId), AsString(recordEntry.type));
                 continue;
             }
         }
@@ -271,6 +267,7 @@ void App::TweakBatch::Dispatch()
 
     m_pendingFlats.clear();
     m_pendingRecords.clear();
+    m_orderedRecords.clear();
     m_pendingNames.clear();
     m_pendingAlterings.clear();
 }

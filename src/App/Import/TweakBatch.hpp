@@ -82,6 +82,7 @@ private:
     TweakDB::Manager& m_manager;
     Core::Map<RED4ext::TweakDBID, FlatEntry> m_pendingFlats;
     Core::Map<RED4ext::TweakDBID, RecordEntry> m_pendingRecords;
+    Core::Vector<RED4ext::TweakDBID> m_orderedRecords;
     Core::Map<RED4ext::TweakDBID, AlteringEntry> m_pendingAlterings;
     Core::Map<RED4ext::TweakDBID, std::string> m_pendingNames;
     Core::Map<RED4ext::TweakDBID, RED4ext::TweakDBID> m_associationMap;
