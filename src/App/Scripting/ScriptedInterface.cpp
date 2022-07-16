@@ -21,9 +21,11 @@ void App::ScriptedInterface::GetFlat(RED4ext::IScriptable*, RED4ext::CStackFrame
         return;
 
     auto data = flat->GetValue();
-    auto variant = RED4ext::Variant(data.type, data.value);
 
-    aRetType->Assign(aRet, &variant);
+     if (!data.value)
+        return;
+
+    aRet->Fill(data.type, data.value);
 }
 
 void App::ScriptedInterface::GetRecord(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame,
