@@ -48,7 +48,7 @@ struct WrappedCapture : BaseCapture<F>
 
     static R Handle(Args... aArgs)
     {
-        return callback(aArgs..., original);
+        return callback(original, aArgs...);
     }
 };
 
