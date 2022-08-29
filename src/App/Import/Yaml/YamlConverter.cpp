@@ -132,7 +132,7 @@ Core::SharedPtr<RED4ext::TweakDBID> App::YamlConverter::Convert(const YAML::Node
 }
 
 template<>
-Core::SharedPtr<Engine::LocKeyWrapper> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<RED4ext::gamedataLocKeyWrapper> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     // Quoted format: l"Secondary-Loc-Key"
     constexpr const char* QuotedPrefix = "l\"";
@@ -155,7 +155,7 @@ Core::SharedPtr<Engine::LocKeyWrapper> App::YamlConverter::Convert(const YAML::N
 
         if (str.starts_with(QuotedPrefix) && str.ends_with(QuotedSuffix))
         {
-            return Core::MakeShared<Engine::LocKeyWrapper>(
+            return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(
                 str.substr(QuotedSkip, str.length() - QuotedDiff).c_str());
         }
 
@@ -165,11 +165,11 @@ Core::SharedPtr<Engine::LocKeyWrapper> App::YamlConverter::Convert(const YAML::N
             auto value = str.substr(WrappedSkip + quoted, str.length() - WrappedDiff - (quoted << 1));
 
             if (quoted)
-                return Core::MakeShared<Engine::LocKeyWrapper>(value.c_str());
+                return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(value.c_str());
 
             uint64_t key;
             if (Util::Str::ParseInt(value, key))
-                return Core::MakeShared<Engine::LocKeyWrapper>(key);
+                return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(key);
 
             return nullptr;
         }
@@ -178,9 +178,9 @@ Core::SharedPtr<Engine::LocKeyWrapper> App::YamlConverter::Convert(const YAML::N
         {
             uint64_t key;
             if (Util::Str::ParseInt(str, key))
-                return Core::MakeShared<Engine::LocKeyWrapper>(key);
+                return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(key);
 
-            return Core::MakeShared<Engine::LocKeyWrapper>(str.c_str());
+            return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(str.c_str());
         }
     }
 
@@ -188,7 +188,7 @@ Core::SharedPtr<Engine::LocKeyWrapper> App::YamlConverter::Convert(const YAML::N
 }
 
 template<>
-Core::SharedPtr<Engine::ResourceAsyncReference> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<RED4ext::ResourceAsyncReference<>> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     // Quoted format: r"base\gameplay\resource.ext"
     constexpr const char* QuotedPrefix = "r\"";
@@ -213,7 +213,7 @@ Core::SharedPtr<Engine::ResourceAsyncReference> App::YamlConverter::Convert(cons
         {
             auto value = str.substr(QuotedSkip, str.length() - QuotedDiff);
 
-            return Core::MakeShared<Engine::ResourceAsyncReference>(value.c_str());
+            return Core::MakeShared<RED4ext::ResourceAsyncReference<>>(value.c_str());
         }
 
         if (str.starts_with(WrappedPrefix) && str.ends_with(WrappedSuffix))
@@ -222,11 +222,11 @@ Core::SharedPtr<Engine::ResourceAsyncReference> App::YamlConverter::Convert(cons
             auto value = str.substr(WrappedSkip + quoted, str.length() - WrappedDiff - (quoted << 1));
 
             if (quoted)
-                return Core::MakeShared<Engine::ResourceAsyncReference>(value.c_str());
+                return Core::MakeShared<RED4ext::ResourceAsyncReference<>>(value.c_str());
 
             uint64_t hash;
             if (Util::Str::ParseInt(value, hash))
-                return Core::MakeShared<Engine::ResourceAsyncReference>(hash);
+                return Core::MakeShared<RED4ext::ResourceAsyncReference<>>(hash);
 
             return nullptr;
         }
@@ -235,9 +235,9 @@ Core::SharedPtr<Engine::ResourceAsyncReference> App::YamlConverter::Convert(cons
         {
             uint64_t hash;
             if (Util::Str::ParseInt(str, hash))
-                return Core::MakeShared<Engine::ResourceAsyncReference>(hash);
+                return Core::MakeShared<RED4ext::ResourceAsyncReference<>>(hash);
 
-            return Core::MakeShared<Engine::ResourceAsyncReference>(str.c_str());
+            return Core::MakeShared<RED4ext::ResourceAsyncReference<>>(str.c_str());
         }
     }
 
@@ -423,14 +423,14 @@ Core::SharedPtr<void> App::YamlConverter::Convert(RED4ext::CName aTypeName, cons
         return ConvertArray<RED4ext::TweakDBID>(aNode);
 
     case TweakDB::RTDB::EFlatType::LocKey:
-        return Convert<Engine::LocKeyWrapper>(aNode);
+        return Convert<RED4ext::gamedataLocKeyWrapper>(aNode);
     case TweakDB::RTDB::EFlatType::LocKeyArray:
-        return ConvertArray<Engine::LocKeyWrapper>(aNode);
+        return ConvertArray<RED4ext::gamedataLocKeyWrapper>(aNode);
 
     case TweakDB::RTDB::EFlatType::Resource:
-        return Convert<Engine::ResourceAsyncReference>(aNode);
+        return Convert<RED4ext::ResourceAsyncReference<>>(aNode);
     case TweakDB::RTDB::EFlatType::ResourceArray:
-        return ConvertArray<Engine::ResourceAsyncReference>(aNode);
+        return ConvertArray<RED4ext::ResourceAsyncReference<>>(aNode);
 
     case TweakDB::RTDB::EFlatType::Quaternion:
         return Convert<RED4ext::Quaternion>(aNode);
@@ -487,10 +487,10 @@ std::pair<RED4ext::CName, Core::SharedPtr<void>> App::YamlConverter::Convert(con
         if (Convert<RED4ext::TweakDBID>(aNode, value, true))
             return { TweakDB::RTDB::EFlatType::TweakDBID, value };
 
-        if (Convert<Engine::LocKeyWrapper>(aNode, value, true))
+        if (Convert<RED4ext::gamedataLocKeyWrapper>(aNode, value, true))
             return { TweakDB::RTDB::EFlatType::LocKey, value };
 
-        if (Convert<Engine::ResourceAsyncReference>(aNode, value, true))
+        if (Convert<RED4ext::ResourceAsyncReference<>>(aNode, value, true))
             return { TweakDB::RTDB::EFlatType::Resource, value };
 
         break;

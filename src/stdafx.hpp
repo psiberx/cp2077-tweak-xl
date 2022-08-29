@@ -10,6 +10,8 @@
 #include <yaml-cpp/yaml.h>
 
 #include <RED4ext/TweakDB.hpp>
+#include <RED4ext/NativeTypes.hpp>
+#include <RED4ext/ResourceReference.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Color.hpp>
 #include <RED4ext/Scripting/Natives/Generated/EulerAngles.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Vector2.hpp>

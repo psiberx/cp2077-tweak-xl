@@ -282,15 +282,17 @@ void App::YamlReader::HandleRecordNode(App::TweakBatch& aBatch, const std::strin
 
         aBatch.AssociateRecord(recordId, propKey, propId);
 
-        auto nodeData = nodeIt.second;
+        const auto originalData = nodeIt.second;
+        YAML::Node overrideData;
 
+        // Inline records
         if (propInfo->isForeignKey)
         {
-            if (propInfo->isArray && nodeData.IsSequence())
+            if (propInfo->isArray && originalData.IsSequence())
             {
-                for (std::size_t itemIndex = 0; itemIndex < nodeData.size(); ++itemIndex)
+                for (std::size_t itemIndex = 0; itemIndex < originalData.size(); ++itemIndex)
                 {
-                    auto itemData = nodeData[itemIndex];
+                    auto itemData = originalData[itemIndex];
 
                     if (itemData.IsMap())
                     {
@@ -310,12 +312,17 @@ void App::YamlReader::HandleRecordNode(App::TweakBatch& aBatch, const std::strin
 
                         HandleInlineNode(aBatch, inlinePath, inlineName, itemData, propInfo->foreignType);
 
+                        if (overrideData.IsNull())
+                        {
+                            overrideData = YAML::Clone(originalData);
+                        }
+
                         // Overwrite inline item with foreign key
-                        nodeData[itemIndex] = inlineName;
+                        overrideData[itemIndex] = inlineName;
                     }
                 }
             }
-            else if (nodeData.IsMap())
+            else if (originalData.IsMap())
             {
                 auto inlinePath = aPath;
                 inlinePath.append(propInfo->appendix);
@@ -330,20 +337,38 @@ void App::YamlReader::HandleRecordNode(App::TweakBatch& aBatch, const std::strin
                     // Item records have both .iconPath and .icon properties, but last one is never used.
                     // So if parent record has .iconPath property then auto fill it with our inline icon name.
                     if (recordInfo->props.contains("iconPath") && !aNode["iconPath"])
+                    {
                         aBatch.SetFlat(RED4ext::TweakDBID(recordId, ".iconPath"), ResolveFlatType("String"),
                                        Core::MakeShared<RED4ext::CString>(inlineName.c_str()));
+                    }
 
                     // Then force type prefix to make it accessible by short name that we just set in .iconPath.
                     inlineName.insert(0, "UIIcon.");
                 }
 
-                HandleInlineNode(aBatch, inlinePath, inlineName, nodeData, propInfo->foreignType);
+                HandleInlineNode(aBatch, inlinePath, inlineName, originalData, propInfo->foreignType);
 
                 // Overwrite inline data with foreign key
-                nodeData = inlineName;
+                overrideData = inlineName;
             }
         }
 
+        // Special handling for LocKey# strings
+        else if (propInfo->type->GetName() == StringType && originalData.IsScalar())
+        {
+            auto& nodeValue = originalData.Scalar();
+
+            if (nodeValue.starts_with(LocKeyPrefix) &&
+                nodeValue.find_first_not_of("0123456789", LocKeyPrefixLength) != std::string::npos)
+            {
+                const auto wrapper = RED4ext::gamedataLocKeyWrapper(nodeValue.substr(LocKeyPrefixLength).c_str());
+                overrideData = std::string(LocKeyPrefix).append(std::to_string(wrapper.primaryKey));
+            }
+        }
+
+        const auto& nodeData = !overrideData.IsNull() ? overrideData : originalData;
+
+        // Relative operations
         if (propInfo->isArray)
         {
             auto propName = aName;
@@ -356,19 +381,6 @@ void App::YamlReader::HandleRecordNode(App::TweakBatch& aBatch, const std::strin
 
             if (HandleRelativeChanges(aBatch, propPath, propName, nodeData, propInfo->elementType))
                 continue;
-        }
-
-        // Special handling for LocKey# strings
-        else if (propInfo->type->GetName() == StringType && nodeData.IsScalar())
-        {
-            auto& nodeValue = nodeData.Scalar();
-
-            if (nodeValue.starts_with(LocKeyPrefix) &&
-                nodeValue.find_first_not_of("0123456789", LocKeyPrefixLength) != std::string::npos)
-            {
-                const auto wrapper = Engine::LocKeyWrapper(nodeValue.substr(LocKeyPrefixLength).c_str());
-                nodeData = std::string(LocKeyPrefix).append(std::to_string(wrapper.primaryKey));
-            }
         }
 
         const auto propValue = m_converter.Convert(propInfo->type, nodeData);

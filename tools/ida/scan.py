@@ -9,6 +9,8 @@ def patterns():
             Group(name="Engine", functions=[
                 Item(name="Main",
                      pattern="40 53 48 81 EC ? ? ? ? FF 15 ? ? ? ? E8 ? ? ? ? E8 ? ? ? ?"),
+                Item(name="Init",
+                     pattern="48 89 5C 24 10 55 56 41 56 48 8D 6C 24 B9 48 81 EC F0 00 00 00 4C 8B F2 48 8B F1 E8"),
             ]),
             Group(name="ResourceReference", functions=[
                 Item(name="Load",

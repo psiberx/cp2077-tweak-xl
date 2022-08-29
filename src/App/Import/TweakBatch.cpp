@@ -298,5 +298,5 @@ std::string App::TweakBatch::AsString(RED4ext::TweakDBID aId)
     if (nameIt != m_pendingNames.end())
         return nameIt->second;
 
-    return fmt::format("<TDBID:{:08X}:{:02X}>", aId.nameHash, aId.nameLength);
+    return fmt::format("<TDBID:{:08X}:{:02X}>", aId.name.hash, aId.name.length);
 }
