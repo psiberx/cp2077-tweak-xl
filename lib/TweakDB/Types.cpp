@@ -1,6 +1,7 @@
 #include "Types.hpp"
 
 #include <RED4ext/NativeTypes.hpp>
+#include <RED4ext/ResourceReference.hpp>
 #include <RED4ext/RTTISystem.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Color.hpp>
 #include <RED4ext/Scripting/Natives/Generated/EulerAngles.hpp>
@@ -246,8 +247,8 @@ Core::SharedPtr<void> TweakDB::RTDB::MakeDefaultValue(RED4ext::CName aTypeName)
     case EFlatType::String: return MakeDefaultValue<RED4ext::CString>();
     case EFlatType::CName: return MakeDefaultValue<RED4ext::CName>();
     case EFlatType::TweakDBID: return MakeDefaultValue<RED4ext::TweakDBID>();
-    case EFlatType::LocKey: return MakeDefaultValue<Engine::LocKeyWrapper>();
-    case EFlatType::Resource: return MakeDefaultValue<Engine::ResourceAsyncReference>();
+    case EFlatType::LocKey: return MakeDefaultValue<RED4ext::gamedataLocKeyWrapper>();
+    case EFlatType::Resource: return MakeDefaultValue<RED4ext::ResourceAsyncReference<>>();
     case EFlatType::Quaternion: return MakeDefaultValue<RED4ext::Quaternion>();
     case EFlatType::EulerAngles: return MakeDefaultValue<RED4ext::EulerAngles>();
     case EFlatType::Vector3: return MakeDefaultValue<RED4ext::Vector3>();
@@ -259,8 +260,8 @@ Core::SharedPtr<void> TweakDB::RTDB::MakeDefaultValue(RED4ext::CName aTypeName)
     case EFlatType::StringArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::CString>>();
     case EFlatType::CNameArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::CName>>();
     case EFlatType::TweakDBIDArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::TweakDBID>>();
-    case EFlatType::LocKeyArray: return MakeDefaultValue<RED4ext::DynArray<Engine::LocKeyWrapper>>();
-    case EFlatType::ResourceArray: return MakeDefaultValue<RED4ext::DynArray<Engine::ResourceAsyncReference>>();
+    case EFlatType::LocKeyArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::gamedataLocKeyWrapper>>();
+    case EFlatType::ResourceArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::ResourceAsyncReference<>>>();
     case EFlatType::QuaternionArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::Quaternion>>();
     case EFlatType::EulerAnglesArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::EulerAngles>>();
     case EFlatType::Vector3Array: return MakeDefaultValue<RED4ext::DynArray<RED4ext::Vector3>>();
@@ -279,8 +280,3 @@ Core::SharedPtr<void> TweakDB::RTDB::MakeDefaultValue(const RED4ext::CBaseRTTITy
     return MakeDefaultValue(aType->GetName());
 }
 
-template<typename T>
-Core::SharedPtr<T> TweakDB::RTDB::MakeDefaultValue()
-{
-    return Core::MakeShared<T>();
-}

@@ -1,8 +1,6 @@
 #pragma once
 
 #include "Core/Stl.hpp"
-#include "Engine/Localization/LocKeyWrapper.hpp"
-#include "Engine/Resources/ResourceAsyncReference.hpp"
 
 #include <RED4ext/CName.hpp>
 #include <RED4ext/RTTITypes.hpp>
@@ -77,6 +75,10 @@ std::string GetRecordShortName(const std::string& aName);
 
 Core::SharedPtr<void> MakeDefaultValue(RED4ext::CName aTypeName);
 Core::SharedPtr<void> MakeDefaultValue(const RED4ext::CBaseRTTIType* aType);
+
 template<typename T>
-Core::SharedPtr<T> MakeDefaultValue();
+Core::SharedPtr<T> MakeDefaultValue()
+{
+    return Core::MakeShared<T>();
+}
 }
