@@ -2,7 +2,7 @@
 #include "TweakDB/Types.hpp"
 
 void App::ScriptedInterface::GetFlat(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame,
-                                    RED4ext::Variant* aRet, RED4ext::CBaseRTTIType* aRetType)
+                                     RED4ext::Variant* aRet, RED4ext::CBaseRTTIType*)
 {
     RED4ext::TweakDBID flatID;
 
@@ -65,10 +65,10 @@ void App::ScriptedInterface::GetRecords(RED4ext::IScriptable*, RED4ext::CStackFr
 
     auto records = FetchRecords(TweakDB::RTDB::GetRecordFullName(recordTypeName));
 
-    if (records.size <= 0)
+    if (records->size <= 0)
         return;
 
-    aRetType->Assign(aRet, &records);
+    aRetType->Assign(aRet, records);
 }
 
 void App::ScriptedInterface::GetRecordCount(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, uint32_t* aRet, void*)
@@ -83,7 +83,7 @@ void App::ScriptedInterface::GetRecordCount(RED4ext::IScriptable*, RED4ext::CSta
 
     auto records = FetchRecords(recordTypeName);
 
-    *aRet = records.size;
+    *aRet = records->size;
 }
 
 void App::ScriptedInterface::GetRecordByIndex(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame,
@@ -104,34 +104,32 @@ void App::ScriptedInterface::GetRecordByIndex(RED4ext::IScriptable*, RED4ext::CS
 
     auto records = FetchRecords(recordTypeName);
 
-    if (records.size <= 0 || recordIndex >= records.size)
+    if (records->size <= 0 || recordIndex >= records->size)
         return;
 
-    aRetType->Assign(aRet, &records.entries[recordIndex]);
+    aRetType->Assign(aRet, &records->entries[recordIndex]);
 }
 
-App::ScriptedInterface::ScriptableArray App::ScriptedInterface::FetchRecords(RED4ext::CName aTypeName)
+App::ScriptedInterface::ScriptableArray* App::ScriptedInterface::FetchRecords(RED4ext::CName aTypeName)
 {
-    ScriptableArray records;
-
     auto* rtti = RED4ext::CRTTISystem::Get();
     if (!rtti)
-        return records;
+        return nullptr;
 
     auto* recordType = rtti->GetType(aTypeName);
     if (!recordType)
-        return records;
+        return nullptr;
 
     auto* tdb = RED4ext::TweakDB::Get();
     if (!tdb)
-        return records;
+        return nullptr;
 
-    tdb->TryGetRecordsByType(recordType, records);
+    std::shared_lock<RED4ext::SharedMutex> _(tdb->mutex01);
 
-    return records;
+    return tdb->recordsByType.Get(recordType);
 }
 
-void App::ScriptedInterface::OnExpand(Descriptor* aType, RED4ext::CRTTISystem* aRtti)
+void App::ScriptedInterface::OnExpand(Descriptor* aType, RED4ext::CRTTISystem*)
 {
     {
         auto func = aType->AddFunction(&GetRecords, "GetRecords", { .isFinal = true });

@@ -24,7 +24,7 @@ private:
     static void GetRecordByIndex(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, RecordHandle* aRet,
                                  RED4ext::CRTTIHandleType* aRetType);
 
-    static ScriptableArray FetchRecords(RED4ext::CName aTypeName);
+    static ScriptableArray* FetchRecords(RED4ext::CName aTypeName);
 
     friend Descriptor;
     static void OnExpand(Descriptor* aType, RED4ext::CRTTISystem* aRtti);

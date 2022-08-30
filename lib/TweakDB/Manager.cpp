@@ -1,5 +1,10 @@
 #include "Manager.hpp"
 
+namespace
+{
+constexpr bool OptimizeBatchFlatInsertions = true;
+}
+
 TweakDB::Manager::Manager()
     : Manager(RED4ext::TweakDB::Get())
 {
@@ -150,15 +155,35 @@ bool TweakDB::Manager::CreateRecord(RED4ext::TweakDBID aRecordId, const RED4ext:
 
     std::unique_lock<RED4ext::SharedMutex> flatLockRW(m_tweakDb->mutex00);
 
-    for (const auto& propIt : recordInfo->props)
+    if constexpr (OptimizeBatchFlatInsertions)
     {
-        const auto& propInfo = propIt.second;
-        auto propId = RED4ext::TweakDBID(aRecordId, propInfo->appendix);
+        decltype(m_tweakDb->flats) propFlats;
+        propFlats.Reserve(recordInfo->props.size());
 
-        if (m_tweakDb->flats.Find(propId) == m_tweakDb->flats.End())
+        for (const auto& propIt : recordInfo->props)
         {
-            propId.SetTDBOffset(m_flatPool.AllocateDefault(propInfo->type));
-            m_tweakDb->flats.Insert(propId);
+            const auto& propInfo = propIt.second;
+
+            auto propFlat = RED4ext::TweakDBID(aRecordId, propInfo->appendix);
+            propFlat.SetTDBOffset(m_flatPool.AllocateDefault(propInfo->type));
+
+            propFlats.Emplace(propFlat);
+        }
+
+        m_tweakDb->flats.Insert(propFlats);
+    }
+    else
+    {
+        for (const auto& propIt : recordInfo->props)
+        {
+            const auto& propInfo = propIt.second;
+            auto propId = RED4ext::TweakDBID(aRecordId, propInfo->appendix);
+
+            if (m_tweakDb->flats.Find(propId) == m_tweakDb->flats.End())
+            {
+                propId.SetTDBOffset(m_flatPool.AllocateDefault(propInfo->type));
+                m_tweakDb->flats.Insert(propId);
+            }
         }
     }
 
@@ -194,20 +219,45 @@ bool TweakDB::Manager::CloneRecord(RED4ext::TweakDBID aRecordId, RED4ext::TweakD
 
     std::unique_lock<RED4ext::SharedMutex> flatLockRW(m_tweakDb->mutex00);
 
-    for (const auto& propIt : recordInfo->props)
+    if constexpr (OptimizeBatchFlatInsertions)
     {
-        const auto& propInfo = propIt.second;
-        auto propId = RED4ext::TweakDBID(aRecordId, propInfo->appendix);
+        decltype(m_tweakDb->flats) propFlats;
+        propFlats.Reserve(recordInfo->props.size());
 
-        if (m_tweakDb->flats.Find(propId) == m_tweakDb->flats.End())
+        for (const auto& propIt : recordInfo->props)
         {
+            const auto& propInfo = propIt.second;
+
             const auto sourcePropId = RED4ext::TweakDBID(aSourceId, propInfo->appendix);
             const auto* sourceFlat = m_tweakDb->flats.Find(sourcePropId);
 
             assert(sourceFlat->IsValid());
 
-            propId.SetTDBOffset(sourceFlat->ToTDBOffset());
-            m_tweakDb->flats.Insert(propId);
+            auto propFlat = RED4ext::TweakDBID(aRecordId, propInfo->appendix);
+            propFlat.SetTDBOffset(sourceFlat->ToTDBOffset());
+
+            propFlats.Emplace(propFlat);
+        }
+
+        m_tweakDb->flats.Insert(propFlats);
+    }
+    else
+    {
+        for (const auto& propIt : recordInfo->props)
+        {
+            const auto& propInfo = propIt.second;
+            auto propId = RED4ext::TweakDBID(aRecordId, propInfo->appendix);
+
+            if (m_tweakDb->flats.Find(propId) == m_tweakDb->flats.End())
+            {
+                const auto sourcePropId = RED4ext::TweakDBID(aSourceId, propInfo->appendix);
+                const auto* sourceFlat = m_tweakDb->flats.Find(sourcePropId);
+
+                assert(sourceFlat->IsValid());
+
+                propId.SetTDBOffset(sourceFlat->ToTDBOffset());
+                m_tweakDb->flats.Insert(propId);
+            }
         }
     }
 

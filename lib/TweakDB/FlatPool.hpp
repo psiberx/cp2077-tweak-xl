@@ -17,6 +17,7 @@ public:
         size_t poolSize = 0; // bytes
         size_t poolValues = 0;
         size_t knownTypes = 0;
+        size_t flatEntries = 0;
     };
 
     FlatPool();

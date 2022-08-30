@@ -255,13 +255,14 @@ void TweakDB::FlatPool::UpdateStats(float updateTime)
     m_stats.poolSize = m_offsetEnd;
     m_stats.poolValues = totalValues;
     m_stats.knownTypes = m_vfts.size();
+    m_stats.flatEntries = m_tweakDb->flats.size;
 
 #ifdef VERBOSE
     Engine::Log::Debug(
-        "[TweakDB::FlatPool] init {:.3f}s | update {:.6f}s | {} KiB | {} entries | {} types",
+        "[TweakDB::FlatPool] init {:.3f}s | update {:.6f}s | {} KiB | {} values | {} flats | {} types",
         m_stats.initTime, m_stats.updateTime,
         m_stats.poolSize / 1024, m_stats.poolValues,
-        m_stats.knownTypes);
+        m_stats.flatEntries, m_stats.knownTypes);
 #endif
 }
 
