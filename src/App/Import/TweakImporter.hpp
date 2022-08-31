@@ -1,6 +1,5 @@
 #pragma once
 
-#include "stdafx.hpp"
 #include "TweakBatch.hpp"
 #include "Core/Logging/LoggingAgent.hpp"
 #include "TweakDB/Manager.hpp"

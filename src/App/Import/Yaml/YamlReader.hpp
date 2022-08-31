@@ -1,6 +1,5 @@
 #pragma once
 
-#include "stdafx.hpp"
 #include "App/Import/TweakBatch.hpp"
 #include "App/Import/Yaml/YamlConverter.hpp"
 #include "Core/Logging/LoggingAgent.hpp"
