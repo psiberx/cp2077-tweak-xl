@@ -5,7 +5,7 @@ from pathlib import Path
 # Defines patterns and output files
 def patterns():
     return [
-        Output(filename="lib/TweakDB/Addresses.hpp", namespace="TweakDB::Addresses", groups=[
+        Output(filename="lib/Engine/TweakDB/Addresses.hpp", namespace="TweakDB::Addresses", groups=[
             Group(functions=[
                 Item(name="TweakDB_Load",
                      pattern="48 89 5C 24 18 55 57 41 56 48 8B EC 48 83 EC 70 48 8B D9 45 33 F6 48 8D"),
