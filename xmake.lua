@@ -1,12 +1,10 @@
 set_xmakever("2.5.9")
 
 set_project("TweakXL")
+set_version("1.0.6")
 
 set_arch("x64")
 set_languages("cxx20", "cxx2a")
-
-add_requires("fmt", "hopscotch-map", "minhook", "spdlog", "tiltedcore", "yaml-cpp")
-
 set_optimize("none")
 add_cxxflags("/MP /GR- /EHsc")
 
@@ -29,6 +27,8 @@ else
     set_runtimes("MD")
 end
 
+add_requires("fmt", "hopscotch-map", "minhook", "spdlog", "tiltedcore", "yaml-cpp")
+
 add_defines("RED4EXT_STATIC_LIB", "YAML_CPP_STATIC_DEFINE")
 
 target("TweakXL")
@@ -37,14 +37,16 @@ target("TweakXL")
     set_filename("TweakXL.dll")
     set_pcxxheader("src/stdafx.hpp")
     add_files("src/**.cpp", "lib/**.cpp")
-    add_headerfiles("src/**.hpp", "lib/**.hpp", "build/Project.hpp")
-    add_includedirs("src/", "lib/", "build/")
+    add_headerfiles("src/**.hpp", "lib/**.hpp")
+    add_includedirs("src/", "lib/")
     add_deps("RED4ext.SDK", "semver", "wil")
     add_packages("fmt", "hopscotch-map", "minhook", "spdlog", "tiltedcore", "yaml-cpp")
     add_syslinks("Version")
     add_defines("WINVER=0x0601", "WIN32_LEAN_AND_MEAN", "NOMINMAX")
-    set_configdir("build")
-    add_configfiles("src/Project.hpp.in")
+    set_configdir("src")
+    add_configfiles("config/Project.hpp.in", {prefixdir = "App"})
+    set_configvar("AUTHOR", "psiberx")
+    set_configvar("NAME", "TweakXL")
 
 target("RED4ext.SDK")
     set_default(false)
