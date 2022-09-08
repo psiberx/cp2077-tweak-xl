@@ -37,8 +37,6 @@ public:
     Reflection& GetReflection();
 
 private:
-    static uint32_t GetRecordTypeHash(RED4ext::Handle<RED4ext::IScriptable>* aRecord);
-
     inline static Raw::CreateRecord CreateRecordInternal;
     inline static Raw::CreateTweakDBID CreateTweakDBID;
 
@@ -47,6 +45,6 @@ private:
     Reflection m_reflection;
     bool m_batchMode;
     RED4ext::SortedUniqueArray<RED4ext::TweakDBID> m_batchFlats;
-    Core::Map<RED4ext::TweakDBID, uint32_t> m_batchRecords;
+    Core::Map<RED4ext::TweakDBID, const Reflection::RecordInfo*> m_batchRecords;
 };
 }

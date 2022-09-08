@@ -32,6 +32,7 @@ public:
         const RED4ext::CClass* parent;
         Core::SortedMap<RED4ext::CName, Core::SharedPtr<PropertyInfo>> props;
         std::string shortName;
+        uint32_t typeHash;
 
         [[nodiscard]] const PropertyInfo* GetPropInfo(RED4ext::CName aPropName) const
         {
@@ -54,6 +55,7 @@ private:
     Core::SharedPtr<TweakDB::Reflection::RecordInfo> CollectRecordInfo(const RED4ext::CClass* aType, RED4ext::TweakDBID aSampleId = 0);
 
     RED4ext::TweakDBID GetRecordSampleId(const RED4ext::CClass* aType);
+    uint32_t GetRecordTypeHash(const RED4ext::CClass* aType);
     std::string ResolvePropertyName(RED4ext::TweakDBID aSampleId, RED4ext::CName aGetterName);
 
     RED4ext::TweakDB* m_tweakDb;

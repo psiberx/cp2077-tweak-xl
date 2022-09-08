@@ -1,7 +1,7 @@
 set_xmakever("2.5.9")
 
 set_project("TweakXL")
-set_version("1.0.6")
+set_version("1.0.7")
 
 set_arch("x64")
 set_languages("cxx20", "cxx2a")

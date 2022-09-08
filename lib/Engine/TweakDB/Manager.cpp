@@ -147,6 +147,9 @@ bool TweakDB::Manager::CreateRecord(RED4ext::TweakDBID aRecordId, const RED4ext:
     if (!RTDB::IsRecordType(aType))
         return false;
 
+    if (m_batchMode && m_batchRecords.contains(aRecordId))
+        return false;
+
     RED4ext::Handle<RED4ext::IScriptable>* record;
 
     {
@@ -193,11 +196,11 @@ bool TweakDB::Manager::CreateRecord(RED4ext::TweakDBID aRecordId, const RED4ext:
 
     if (m_batchMode)
     {
-        m_batchRecords.emplace(aRecordId, GetRecordTypeHash(record));
+        m_batchRecords.emplace(aRecordId, recordInfo);
     }
     else
     {
-        CreateRecordInternal(m_tweakDb, GetRecordTypeHash(record), aRecordId);
+        CreateRecordInternal(m_tweakDb, recordInfo->typeHash, aRecordId);
     }
 
     return true;
@@ -206,6 +209,9 @@ bool TweakDB::Manager::CreateRecord(RED4ext::TweakDBID aRecordId, const RED4ext:
 bool TweakDB::Manager::CloneRecord(RED4ext::TweakDBID aRecordId, RED4ext::TweakDBID aSourceId)
 {
     if (!aRecordId.IsValid())
+        return false;
+
+    if (m_batchMode && m_batchRecords.contains(aRecordId))
         return false;
 
     RED4ext::Handle<RED4ext::IScriptable>* record;
@@ -218,10 +224,24 @@ bool TweakDB::Manager::CloneRecord(RED4ext::TweakDBID aRecordId, RED4ext::TweakD
     }
 
     // Abort if record already exists or source doesn't exist
-    if (record || !source)
+    if (record)
         return false;
 
-    const auto recordInfo = m_reflection.GetRecordInfo(source->GetPtr()->GetType());
+    bool batch = false;
+    const Reflection::RecordInfo* recordInfo;
+
+    if (source)
+    {
+        recordInfo = m_reflection.GetRecordInfo(source->GetPtr()->GetType());
+    }
+    else
+    {
+        if (!m_batchMode || !m_batchRecords.contains(aSourceId))
+            return false;
+
+        recordInfo = m_batchRecords.at(aSourceId);
+        batch = true;
+    }
 
     decltype(m_tweakDb->flats) propFlats;
     propFlats.Reserve(recordInfo->props.size());
@@ -233,7 +253,7 @@ bool TweakDB::Manager::CloneRecord(RED4ext::TweakDBID aRecordId, RED4ext::TweakD
             const auto& propInfo = propIt.second;
 
             const auto sourcePropId = RED4ext::TweakDBID(aSourceId, propInfo->appendix);
-            const auto* sourceFlat = m_tweakDb->flats.Find(sourcePropId);
+            const auto* sourceFlat = batch ? m_batchFlats.Find(sourcePropId) : m_tweakDb->flats.Find(sourcePropId);
 
             assert(sourceFlat->IsValid());
 
@@ -256,11 +276,11 @@ bool TweakDB::Manager::CloneRecord(RED4ext::TweakDBID aRecordId, RED4ext::TweakD
 
     if (m_batchMode)
     {
-        m_batchRecords.emplace(aRecordId, GetRecordTypeHash(source));
+        m_batchRecords.emplace(aRecordId, recordInfo);
     }
     else
     {
-        CreateRecordInternal(m_tweakDb, GetRecordTypeHash(source), aRecordId);
+        CreateRecordInternal(m_tweakDb, recordInfo->typeHash, aRecordId);
     }
 
     return true;
@@ -270,6 +290,9 @@ bool TweakDB::Manager::UpdateRecord(RED4ext::TweakDBID aRecordId)
 {
     if (!aRecordId.IsValid())
         return false;
+
+    if (m_batchMode && m_batchRecords.contains(aRecordId))
+        return true;
 
     RED4ext::Handle<RED4ext::IScriptable>* record;
 
@@ -284,7 +307,7 @@ bool TweakDB::Manager::UpdateRecord(RED4ext::TweakDBID aRecordId)
 
     if (m_batchMode)
     {
-        m_batchRecords.emplace(aRecordId, 0);
+        m_batchRecords.emplace(aRecordId, nullptr);
     }
     else
     {
@@ -311,25 +334,28 @@ void TweakDB::Manager::CommitBatch()
     if (!m_batchMode)
         return;
 
-    // auto a = m_batchFlats.Find(RED4ext::TweakDBID("Items.zwei_fvbootpants.entityName"));
-    // auto b = m_batchFlats.Find(RED4ext::TweakDBID("Items.zwei_fvbootpants.appearanceName"));
-
     {
         std::unique_lock flatLockRW(m_tweakDb->mutex00);
         m_tweakDb->flats.InsertOrAssign(m_batchFlats);
     }
 
-    for (const auto& [recordId, recordType] : m_batchRecords)
+    for (const auto& [recordId, recordInfo] : m_batchRecords)
     {
-        if (recordType)
+        if (recordInfo)
         {
-            CreateRecordInternal(m_tweakDb, recordType, recordId);
+            CreateRecordInternal(m_tweakDb, recordInfo->typeHash, recordId);
         }
-        else
+    }
+
+    {
+        std::unique_lock recordLockRW(m_tweakDb->mutex01);
+        for (const auto& [recordId, recordInfo] : m_batchRecords)
         {
-            std::unique_lock recordLockRW(m_tweakDb->mutex01);
-            auto* record = m_tweakDb->recordsByID.Get(recordId);
-            m_tweakDb->UpdateRecord(record->GetPtr<RED4ext::gamedataTweakDBRecord>());
+            if (!recordInfo)
+            {
+                auto* record = m_tweakDb->recordsByID.Get(recordId);
+                m_tweakDb->UpdateRecord(record->GetPtr<RED4ext::gamedataTweakDBRecord>());
+            }
         }
     }
 
@@ -341,9 +367,4 @@ void TweakDB::Manager::CommitBatch()
 TweakDB::Reflection& TweakDB::Manager::GetReflection()
 {
     return m_reflection;
-}
-
-uint32_t TweakDB::Manager::GetRecordTypeHash(RED4ext::Handle<RED4ext::IScriptable>* aRecord)
-{
-    return reinterpret_cast<RED4ext::Handle<RED4ext::gamedataTweakDBRecord>*>(aRecord)->GetPtr()->GetTweakBaseHash();
 }
