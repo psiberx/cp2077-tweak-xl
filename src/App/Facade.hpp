@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Engine/Scripting/RTTIClass.hpp"
+#include "Red/Rtti/Class.hpp"
 
 namespace App
 {
-class Facade : public Engine::RTTIClass<Facade>
+class Facade : public Red::Rtti::Class<Facade>
 {
 public:
     static void Reload();

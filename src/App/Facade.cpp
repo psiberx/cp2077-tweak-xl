@@ -1,45 +1,37 @@
 #include "Facade.hpp"
-#include "App/Config.hpp"
+#include "App/Environment.hpp"
 #include "App/Project.hpp"
-#include "App/Tweaks/TweakExecutor.hpp"
-#include "App/Tweaks/TweakImporter.hpp"
-#include "Engine/TweakDB/Manager.hpp"
+#include "App/Tweaks/TweakService.hpp"
+#include "Core/Facades/Container.hpp"
 
 void App::Facade::Reload()
 {
-    TweakDB::Manager manager;
-    TweakImporter(manager, Config::GetTweaksDir()).ImportAll();
-    TweakExecutor(manager).ExecuteAll();
+    Core::Resolve<TweakService>()->LoadAll();
 }
 
 void App::Facade::ImportAll()
 {
-    TweakDB::Manager manager;
-    TweakImporter(manager, Config::GetTweaksDir()).ImportAll();
+    Core::Resolve<TweakService>()->ImportAll();
 }
 
 void App::Facade::ImportDir(RED4ext::CString& aPath)
 {
-    TweakDB::Manager manager;
-    TweakImporter(manager, Config::GetTweaksDir()).ImportDir(aPath.c_str());
+    Core::Resolve<TweakService>()->ImportDir(aPath.c_str());
 }
 
 void App::Facade::ImportTweak(RED4ext::CString& aPath)
 {
-    TweakDB::Manager manager;
-    TweakImporter(manager, Config::GetTweaksDir()).Import(aPath.c_str());
+    Core::Resolve<TweakService>()->ImportTweak(aPath.c_str());
 }
 
 void App::Facade::ExecuteAll()
 {
-    TweakDB::Manager manager;
-    TweakExecutor(manager).ExecuteAll();
+    Core::Resolve<TweakService>()->ExecuteAll();
 }
 
 void App::Facade::ExecuteTweak(RED4ext::CName aName)
 {
-    TweakDB::Manager manager;
-    TweakExecutor(manager).Execute(aName);
+    Core::Resolve<TweakService>()->ExecuteTweak(aName);
 }
 
 RED4ext::CString App::Facade::GetVersion()
