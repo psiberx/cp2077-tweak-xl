@@ -5,19 +5,53 @@
 
 namespace Red::Rtti
 {
-class Locator
+template<RED4ext::CName ATypeName>
+class TypeLocator
 {
 public:
-    Locator(RED4ext::CName aName) noexcept;
+    operator const RED4ext::CBaseRTTIType*()
+    {
+        if (!s_resolved)
+        {
+            Resolve();
+        }
 
-    operator const RED4ext::CBaseRTTIType*();
-    operator const RED4ext::CClass*();
-    operator bool();
+        return s_type;
+    }
+
+    operator const RED4ext::CClass*()
+    {
+        if (!s_resolved)
+        {
+            Resolve();
+        }
+
+        if (!s_type || s_type->GetType() != RED4ext::ERTTIType::Class)
+        {
+            return nullptr;
+        }
+
+        return reinterpret_cast<RED4ext::CClass*>(s_type);
+    }
+
+    operator bool()
+    {
+        return s_type;
+    }
 
 private:
-    void Resolve();
+    void Resolve()
+    {
+        s_type = RED4ext::CRTTISystem::Get()->GetType(ATypeName);
+        s_resolved = true;
+    }
 
-    RED4ext::CName m_name;
-    RED4ext::CBaseRTTIType* m_type;
+    static inline RED4ext::CBaseRTTIType* s_type;
+    static inline bool s_resolved;
+};
+
+template<class TClass>
+class ClassLocator : public TypeLocator<TClass::NAME>
+{
 };
 }

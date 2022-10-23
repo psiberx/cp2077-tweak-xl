@@ -129,7 +129,7 @@ App::ScriptedInterface::ScriptableArray* App::ScriptedInterface::FetchRecords(RE
     return tdb->recordsByType.Get(recordType);
 }
 
-void App::ScriptedInterface::OnExpand(Descriptor* aType, RED4ext::CRTTISystem*)
+void App::ScriptedInterface::OnExpand(Descriptor* aType)
 {
     {
         auto func = aType->AddFunction(&GetRecords, "GetRecords", { .isFinal = true });

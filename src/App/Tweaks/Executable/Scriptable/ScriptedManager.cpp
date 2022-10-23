@@ -130,7 +130,7 @@ void App::ScriptedManager::OnRegister(Descriptor* aType)
     aType->SetFlags({ .isAbstract = true });
 }
 
-void App::ScriptedManager::OnDescribe(Descriptor* aType, RED4ext::CRTTISystem* aRtti)
+void App::ScriptedManager::OnDescribe(Descriptor* aType)
 {
     {
         auto func = aType->AddFunction(&SetFlat, "SetFlat", { .isFinal = true });

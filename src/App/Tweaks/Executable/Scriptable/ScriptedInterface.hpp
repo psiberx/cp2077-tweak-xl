@@ -25,6 +25,6 @@ private:
     static ScriptableArray* FetchRecords(RED4ext::CName aTypeName);
 
     friend Descriptor;
-    static void OnExpand(Descriptor* aType, RED4ext::CRTTISystem* aRtti);
+    static void OnExpand(Descriptor* aType);
 };
 }

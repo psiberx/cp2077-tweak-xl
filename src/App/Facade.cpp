@@ -45,7 +45,7 @@ void App::Facade::OnRegister(Descriptor* aType)
     aType->SetFlags({ .isAbstract = true });
 }
 
-void App::Facade::OnDescribe(Descriptor* aType, RED4ext::CRTTISystem*)
+void App::Facade::OnDescribe(Descriptor* aType)
 {
     aType->AddFunction<&Reload>("Reload", { .isFinal = true });
     aType->AddFunction<&ImportAll>("ImportAll", { .isFinal = true });
