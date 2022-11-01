@@ -449,12 +449,44 @@ void App::YamlReader::HandleInlineNode(App::TweakChangeset& aChangeset, const st
                 {
                     LogError("{}: Cannot be inlined, provided type [{}] is incompatible with property type.",
                              aPath, typeAttr.Scalar());
+                    return;
                 }
             }
             else
             {
                 LogError("{}: Cannot be inlined, provided type [{}] is not a known record type or abstract.",
                          aPath, typeAttr.Scalar());
+                return;
+            }
+        }
+    }
+
+    {
+        const auto cloneAttr = aNode[BaseAttrKey];
+
+        if (cloneAttr.IsDefined())
+        {
+            sourceId = ResolveTweakDBID(cloneAttr);
+            const auto sourceType = ResolveRecordType(aChangeset, sourceId);
+
+            if (sourceType)
+            {
+                if (sourceType->IsA(foreignType))
+                {
+                    foreignType = sourceType;
+                }
+                else
+                {
+                    LogError("{}: Cannot inline from [{}], record has incompatible type.",
+                             aPath, cloneAttr.Scalar());
+                    return;
+                }
+            }
+            else
+            {
+                LogWarning("{}: Cannot clone from [{}], record doesn't exists.",
+                           aPath, cloneAttr.Scalar());
+                return;
             }
         }
     }
