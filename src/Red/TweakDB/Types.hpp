@@ -1,82 +1,78 @@
 #pragma once
 
+#include "Alias.hpp"
+
 #include <RED4ext/CName.hpp>
 #include <RED4ext/RTTITypes.hpp>
 
-namespace Red::TweakDB::RTDB
+namespace Red::TweakDB
 {
 namespace EFlatType
 {
-enum Name: uint64_t
+enum : uint64_t
 {
-    Int32 = (uint64_t) RED4ext::CName("Int32"),
-    Float = (uint64_t) RED4ext::CName("Float"),
-    Bool = (uint64_t) RED4ext::CName("Bool"),
-    String = (uint64_t) RED4ext::CName("String"),
-    CName = (uint64_t) RED4ext::CName("CName"),
-    TweakDBID = (uint64_t) RED4ext::CName("TweakDBID"),
-    LocKey = (uint64_t) RED4ext::CName("gamedataLocKeyWrapper"),
-    Resource = (uint64_t) RED4ext::CName("raRef:CResource"),
-    Quaternion = (uint64_t) RED4ext::CName("Quaternion"),
-    EulerAngles = (uint64_t) RED4ext::CName("EulerAngles"),
-    Vector3 = (uint64_t) RED4ext::CName("Vector3"),
-    Vector2 = (uint64_t) RED4ext::CName("Vector2"),
-    Color = (uint64_t) RED4ext::CName("Color"),
-    Int32Array = (uint64_t) RED4ext::CName("array:Int32"),
-    FloatArray = (uint64_t) RED4ext::CName("array:Float"),
-    BoolArray = (uint64_t) RED4ext::CName("array:Bool"),
-    StringArray = (uint64_t) RED4ext::CName("array:String"),
-    CNameArray = (uint64_t) RED4ext::CName("array:CName"),
-    TweakDBIDArray = (uint64_t) RED4ext::CName("array:TweakDBID"),
-    LocKeyArray = (uint64_t) RED4ext::CName("array:gamedataLocKeyWrapper"),
-    ResourceArray = (uint64_t) RED4ext::CName("array:raRef:CResource"),
-    QuaternionArray = (uint64_t) RED4ext::CName("array:Quaternion"),
-    EulerAnglesArray = (uint64_t) RED4ext::CName("array:EulerAngles"),
-    Vector3Array = (uint64_t) RED4ext::CName("array:Vector3"),
-    Vector2Array = (uint64_t) RED4ext::CName("array:Vector2"),
-    ColorArray = (uint64_t) RED4ext::CName("array:Color"),
+    Int32 = Red::FNV1a64("Int32"),
+    Float = Red::FNV1a64("Float"),
+    Bool = Red::FNV1a64("Bool"),
+    String = Red::FNV1a64("String"),
+    CName = Red::FNV1a64("CName"),
+    TweakDBID = Red::FNV1a64("TweakDBID"),
+    LocKey = Red::FNV1a64("gamedataLocKeyWrapper"),
+    Resource = Red::FNV1a64("raRef:CResource"),
+    Quaternion = Red::FNV1a64("Quaternion"),
+    EulerAngles = Red::FNV1a64("EulerAngles"),
+    Vector3 = Red::FNV1a64("Vector3"),
+    Vector2 = Red::FNV1a64("Vector2"),
+    Color = Red::FNV1a64("Color"),
+    Int32Array = Red::FNV1a64("array:Int32"),
+    FloatArray = Red::FNV1a64("array:Float"),
+    BoolArray = Red::FNV1a64("array:Bool"),
+    StringArray = Red::FNV1a64("array:String"),
+    CNameArray = Red::FNV1a64("array:CName"),
+    TweakDBIDArray = Red::FNV1a64("array:TweakDBID"),
+    LocKeyArray = Red::FNV1a64("array:gamedataLocKeyWrapper"),
+    ResourceArray = Red::FNV1a64("array:raRef:CResource"),
+    QuaternionArray = Red::FNV1a64("array:Quaternion"),
+    EulerAnglesArray = Red::FNV1a64("array:EulerAngles"),
+    Vector3Array = Red::FNV1a64("array:Vector3"),
+    Vector2Array = Red::FNV1a64("array:Vector2"),
+    ColorArray = Red::FNV1a64("array:Color"),
 };
 }
 
-bool IsFlatType(RED4ext::CName aTypeName);
-bool IsFlatType(const RED4ext::CBaseRTTIType* aType);
+bool IsFlatType(Red::CName aTypeName);
+bool IsFlatType(const Red::CBaseRTTIType* aType);
 
-bool IsRecordType(RED4ext::CName aTypeName);
-bool IsRecordType(const RED4ext::CClass* aType);
+bool IsRecordType(Red::CName aTypeName);
+bool IsRecordType(const Red::CClass* aType);
 
-bool IsArrayType(RED4ext::CName aTypeName);
-bool IsArrayType(const RED4ext::CBaseRTTIType* aType);
+bool IsArrayType(Red::CName aTypeName);
+bool IsArrayType(const Red::CBaseRTTIType* aType);
 
-bool IsForeignKey(RED4ext::CName aTypeName);
-bool IsForeignKey(const RED4ext::CBaseRTTIType* aType);
+bool IsForeignKey(Red::CName aTypeName);
+bool IsForeignKey(const Red::CBaseRTTIType* aType);
 
-bool IsForeignKeyArray(RED4ext::CName aTypeName);
-bool IsForeignKeyArray(const RED4ext::CBaseRTTIType* aType);
+bool IsForeignKeyArray(Red::CName aTypeName);
+bool IsForeignKeyArray(const Red::CBaseRTTIType* aType);
 
-bool IsResRefToken(RED4ext::CName aTypeName);
-bool IsResRefToken(const RED4ext::CBaseRTTIType* aType);
+bool IsResRefToken(Red::CName aTypeName);
+bool IsResRefToken(const Red::CBaseRTTIType* aType);
 
-bool IsResRefTokenArray(RED4ext::CName aTypeName);
-bool IsResRefTokenArray(const RED4ext::CBaseRTTIType* aType);
+bool IsResRefTokenArray(Red::CName aTypeName);
+bool IsResRefTokenArray(const Red::CBaseRTTIType* aType);
 
-RED4ext::CName GetArrayType(RED4ext::CName aTypeName);
-RED4ext::CName GetArrayType(const RED4ext::CBaseRTTIType* aType);
+Red::CName GetArrayType(Red::CName aTypeName);
+Red::CName GetArrayType(const Red::CBaseRTTIType* aType);
 
-RED4ext::CName GetElementType(RED4ext::CName aTypeName);
-RED4ext::CName GetElementType(const RED4ext::CBaseRTTIType* aType);
+Red::CName GetElementType(Red::CName aTypeName);
+Red::CName GetElementType(const Red::CBaseRTTIType* aType);
 
-RED4ext::CName GetRecordFullName(RED4ext::CName aName);
-RED4ext::CName GetRecordFullName(const std::string& aName);
+Red::CName GetRecordFullName(Red::CName aName);
+Red::CName GetRecordFullName(const char* aName);
 
-std::string GetRecordShortName(RED4ext::CName aName);
-std::string GetRecordShortName(const std::string& aName);
+std::string GetRecordShortName(Red::CName aName);
+std::string GetRecordShortName(const char* aName);
 
-Core::SharedPtr<void> MakeDefaultValue(RED4ext::CName aTypeName);
-Core::SharedPtr<void> MakeDefaultValue(const RED4ext::CBaseRTTIType* aType);
-
-template<typename T>
-Core::SharedPtr<T> MakeDefaultValue()
-{
-    return Core::MakeShared<T>();
-}
+Core::SharedPtr<void> MakeDefaultValue(Red::CName aTypeName);
+Core::SharedPtr<void> MakeDefaultValue(const Red::CBaseRTTIType* aType);
 }

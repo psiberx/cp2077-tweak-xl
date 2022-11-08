@@ -1,6 +1,7 @@
 #pragma once
 
 #include "App/Tweaks/Declarative/TweakChangeset.hpp"
+#include "App/Tweaks/Declarative/TweakReader.hpp"
 #include "App/Tweaks/Declarative/Yaml/YamlConverter.hpp"
 #include "Core/Logging/LoggingAgent.hpp"
 #include "Red/TweakDB/Manager.hpp"
@@ -8,15 +9,18 @@
 
 namespace App
 {
-class YamlReader : public Core::LoggingAgent
+class YamlReader
+    : public ITweakReader
+    , public Core::LoggingAgent
 {
 public:
     YamlReader(Red::TweakDB::Manager& aManager, Red::TweakDB::Reflection& aReflection);
+    ~YamlReader() override = default;
 
-    bool Load(const std::filesystem::path& aPath);
-    bool IsLoaded() const;
-    void Unload();
-    void Read(TweakChangeset& aChangeset);
+    bool Load(const std::filesystem::path& aPath) override;
+    bool IsLoaded() const override;
+    void Unload() override;
+    void Read(TweakChangeset& aChangeset) override;
 
 private:
     void HandleTopNode(TweakChangeset& aChangeset, const std::string& aName, const YAML::Node& aNode);

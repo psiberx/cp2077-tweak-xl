@@ -2,11 +2,11 @@
 #include "Raws.hpp"
 
 Red::TweakDB::Manager::Manager()
-    : Manager(RED4ext::TweakDB::Get())
+    : Manager(Instance::Get())
 {
 }
 
-Red::TweakDB::Manager::Manager(RED4ext::TweakDB* aTweakDb)
+Red::TweakDB::Manager::Manager(Instance* aTweakDb)
     : m_tweakDb(aTweakDb)
     , m_flatPool(aTweakDb)
     , m_reflection(aTweakDb)
@@ -14,7 +14,7 @@ Red::TweakDB::Manager::Manager(RED4ext::TweakDB* aTweakDb)
 {
 }
 
-RED4ext::CStackType Red::TweakDB::Manager::GetFlat(RED4ext::TweakDBID aFlatId)
+Red::CStackType Red::TweakDB::Manager::GetFlat(Red::TweakDBID aFlatId)
 {
     if (!aFlatId.IsValid())
         return {};
@@ -28,12 +28,12 @@ RED4ext::CStackType Red::TweakDB::Manager::GetFlat(RED4ext::TweakDBID aFlatId)
     return m_flatPool.GetData(flat->ToTDBOffset());
 }
 
-RED4ext::Handle<RED4ext::gamedataTweakDBRecord> Red::TweakDB::Manager::GetRecord(RED4ext::TweakDBID aRecordId)
+Red::Handle<Red::gamedataTweakDBRecord> Red::TweakDB::Manager::GetRecord(Red::TweakDBID aRecordId)
 {
     if (!aRecordId.IsValid())
         return {};
 
-    RED4ext::Handle<RED4ext::IScriptable>* record;
+    Red::Handle<Red::IScriptable>* record;
 
     {
         std::shared_lock recordLockR(m_tweakDb->mutex01);
@@ -43,10 +43,10 @@ RED4ext::Handle<RED4ext::gamedataTweakDBRecord> Red::TweakDB::Manager::GetRecord
     if (!record)
         return {};
 
-    return *reinterpret_cast<RED4ext::Handle<RED4ext::gamedataTweakDBRecord>*>(record);
+    return *reinterpret_cast<Red::Handle<Red::gamedataTweakDBRecord>*>(record);
 }
 
-bool Red::TweakDB::Manager::IsFlatExists(RED4ext::TweakDBID aFlatId)
+bool Red::TweakDB::Manager::IsFlatExists(Red::TweakDBID aFlatId)
 {
     if (!aFlatId.IsValid())
         return false;
@@ -56,7 +56,7 @@ bool Red::TweakDB::Manager::IsFlatExists(RED4ext::TweakDBID aFlatId)
     return m_tweakDb->flats.Find(aFlatId) != m_tweakDb->flats.End();
 }
 
-bool Red::TweakDB::Manager::IsRecordExists(RED4ext::TweakDBID aRecordId)
+bool Red::TweakDB::Manager::IsRecordExists(Red::TweakDBID aRecordId)
 {
     if (!aRecordId.IsValid())
         return false;
@@ -66,8 +66,8 @@ bool Red::TweakDB::Manager::IsRecordExists(RED4ext::TweakDBID aRecordId)
     return m_tweakDb->recordsByID.Get(aRecordId) != nullptr;
 }
 
-bool Red::TweakDB::Manager::SetFlat(RED4ext::TweakDBID aFlatId, const RED4ext::CBaseRTTIType* aType,
-                               RED4ext::ScriptInstance aValue)
+bool Red::TweakDB::Manager::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
+                               Red::ScriptInstance aValue)
 {
     if (!aValue)
         return false;
@@ -75,7 +75,7 @@ bool Red::TweakDB::Manager::SetFlat(RED4ext::TweakDBID aFlatId, const RED4ext::C
     if (!aFlatId.IsValid())
         return false;
 
-    if (!RTDB::IsFlatType(aType))
+    if (!IsFlatType(aType))
         return false;
 
     std::shared_lock flatLockR(m_tweakDb->mutex00);
@@ -138,20 +138,20 @@ bool Red::TweakDB::Manager::SetFlat(RED4ext::TweakDBID aFlatId, const RED4ext::C
     return true;
 }
 
-bool Red::TweakDB::Manager::SetFlat(RED4ext::TweakDBID aFlatId, RED4ext::CStackType aData)
+bool Red::TweakDB::Manager::SetFlat(Red::TweakDBID aFlatId, Red::CStackType aData)
 {
     return SetFlat(aFlatId, aData.type, aData.value);
 }
 
-bool Red::TweakDB::Manager::CreateRecord(RED4ext::TweakDBID aRecordId, const RED4ext::CClass* aType)
+bool Red::TweakDB::Manager::CreateRecord(Red::TweakDBID aRecordId, const Red::CClass* aType)
 {
-    if (!RTDB::IsRecordType(aType))
+    if (!IsRecordType(aType))
         return false;
 
     if (m_batchMode && m_batchRecords.contains(aRecordId))
         return false;
 
-    RED4ext::Handle<RED4ext::IScriptable>* record;
+    Red::Handle<Red::IScriptable>* record;
 
     {
         std::shared_lock recordLockR(m_tweakDb->mutex01);
@@ -173,7 +173,7 @@ bool Red::TweakDB::Manager::CreateRecord(RED4ext::TweakDBID aRecordId, const RED
         {
             const auto& propInfo = propIt.second;
 
-            auto propFlat = RED4ext::TweakDBID(aRecordId, propInfo->appendix);
+            auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);
             propFlat.SetTDBOffset(m_flatPool.AllocateDefault(propInfo->type));
 
             propFlats.Emplace(propFlat);
@@ -192,7 +192,7 @@ bool Red::TweakDB::Manager::CreateRecord(RED4ext::TweakDBID aRecordId, const RED
 
     // {
     //     std::shared_lock recordLockR(m_tweakDb->mutex01);
-    //     record = m_tweakDb->recordsByType.Get(const_cast<RED4ext::CClass*>(aType))->Begin();
+    //     record = m_tweakDb->recordsByType.Get(const_cast<Red::CClass*>(aType))->Begin();
     // }
 
     if (m_batchMode)
@@ -207,7 +207,7 @@ bool Red::TweakDB::Manager::CreateRecord(RED4ext::TweakDBID aRecordId, const RED
     return true;
 }
 
-bool Red::TweakDB::Manager::CloneRecord(RED4ext::TweakDBID aRecordId, RED4ext::TweakDBID aSourceId)
+bool Red::TweakDB::Manager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId)
 {
     if (!aRecordId.IsValid())
         return false;
@@ -215,8 +215,8 @@ bool Red::TweakDB::Manager::CloneRecord(RED4ext::TweakDBID aRecordId, RED4ext::T
     if (m_batchMode && m_batchRecords.contains(aRecordId))
         return false;
 
-    RED4ext::Handle<RED4ext::IScriptable>* record;
-    RED4ext::Handle<RED4ext::IScriptable>* source;
+    Red::Handle<Red::IScriptable>* record;
+    Red::Handle<Red::IScriptable>* source;
 
     {
         std::shared_lock recordLockR(m_tweakDb->mutex01);
@@ -229,7 +229,7 @@ bool Red::TweakDB::Manager::CloneRecord(RED4ext::TweakDBID aRecordId, RED4ext::T
         return false;
 
     bool batch = false;
-    const Reflection::RecordInfo* recordInfo;
+    const RecordTypeInfo* recordInfo;
 
     if (source)
     {
@@ -253,12 +253,12 @@ bool Red::TweakDB::Manager::CloneRecord(RED4ext::TweakDBID aRecordId, RED4ext::T
         {
             const auto& propInfo = propIt.second;
 
-            const auto sourcePropId = RED4ext::TweakDBID(aSourceId, propInfo->appendix);
+            const auto sourcePropId = Red::TweakDBID(aSourceId, propInfo->appendix);
             const auto* sourceFlat = batch ? m_batchFlats.Find(sourcePropId) : m_tweakDb->flats.Find(sourcePropId);
 
             assert(sourceFlat->IsValid());
 
-            auto propFlat = RED4ext::TweakDBID(aRecordId, propInfo->appendix);
+            auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);
             propFlat.SetTDBOffset(sourceFlat->ToTDBOffset());
 
             propFlats.Emplace(propFlat);
@@ -287,7 +287,7 @@ bool Red::TweakDB::Manager::CloneRecord(RED4ext::TweakDBID aRecordId, RED4ext::T
     return true;
 }
 
-bool Red::TweakDB::Manager::UpdateRecord(RED4ext::TweakDBID aRecordId)
+bool Red::TweakDB::Manager::UpdateRecord(Red::TweakDBID aRecordId)
 {
     if (!aRecordId.IsValid())
         return false;
@@ -295,7 +295,7 @@ bool Red::TweakDB::Manager::UpdateRecord(RED4ext::TweakDBID aRecordId)
     if (m_batchMode && m_batchRecords.contains(aRecordId))
         return true;
 
-    RED4ext::Handle<RED4ext::IScriptable>* record;
+    Red::Handle<Red::IScriptable>* record;
 
     {
         std::shared_lock recordLockR(m_tweakDb->mutex01);
@@ -312,16 +312,16 @@ bool Red::TweakDB::Manager::UpdateRecord(RED4ext::TweakDBID aRecordId)
     }
     else
     {
-        if (!m_tweakDb->UpdateRecord(record->GetPtr<RED4ext::gamedataTweakDBRecord>()))
+        if (!m_tweakDb->UpdateRecord(record->GetPtr<Red::gamedataTweakDBRecord>()))
             return false;
     }
 
     return true;
 }
 
-void Red::TweakDB::Manager::RegisterName(RED4ext::TweakDBID aId, const std::string& aName)
+void Red::TweakDB::Manager::RegisterName(Red::TweakDBID aId, const std::string& aName)
 {
-    RED4ext::TweakDBID base;
+    Red::TweakDBID base;
     Raw::CreateTweakDBID(&base, &aId, aName.c_str());
 }
 
@@ -355,7 +355,7 @@ void Red::TweakDB::Manager::CommitBatch()
             if (!recordInfo)
             {
                 auto* record = m_tweakDb->recordsByID.Get(recordId);
-                m_tweakDb->UpdateRecord(record->GetPtr<RED4ext::gamedataTweakDBRecord>());
+                m_tweakDb->UpdateRecord(record->GetPtr<Red::gamedataTweakDBRecord>());
             }
         }
     }

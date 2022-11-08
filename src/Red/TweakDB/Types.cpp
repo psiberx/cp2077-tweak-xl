@@ -11,16 +11,16 @@
 
 namespace
 {
-constexpr RED4ext::CName BaseRecordTypeName = "gamedataTweakDBRecord";
-constexpr RED4ext::CName ResRefTokenTypeName = "redResourceReferenceScriptToken";
-constexpr RED4ext::CName ResRefTokenArrayTypeName = "array:redResourceReferenceScriptToken";
+constexpr Red::CName BaseRecordTypeName = "gamedataTweakDBRecord";
+constexpr Red::CName ResRefTokenTypeName = "redResourceReferenceScriptToken";
+constexpr Red::CName ResRefTokenArrayTypeName = "array:redResourceReferenceScriptToken";
 constexpr const char* RecordTypePrefix = "gamedata";
 constexpr const char* RecordTypeSuffix = "_Record";
 constexpr size_t RecordTypePrefixLength = std::char_traits<char>::length(RecordTypePrefix);
 constexpr size_t RecordTypeSuffixLength = std::char_traits<char>::length(RecordTypeSuffix);
 }
 
-bool Red::TweakDB::RTDB::IsFlatType(RED4ext::CName aTypeName)
+bool Red::TweakDB::IsFlatType(Red::CName aTypeName)
 {
     switch (aTypeName)
     {
@@ -56,24 +56,24 @@ bool Red::TweakDB::RTDB::IsFlatType(RED4ext::CName aTypeName)
     }
 }
 
-bool Red::TweakDB::RTDB::IsFlatType(const RED4ext::CBaseRTTIType* aType)
+bool Red::TweakDB::IsFlatType(const Red::CBaseRTTIType* aType)
 {
     return aType && IsFlatType(aType->GetName());
 }
 
-bool Red::TweakDB::RTDB::IsRecordType(RED4ext::CName aTypeName)
+bool Red::TweakDB::IsRecordType(Red::CName aTypeName)
 {
-    return IsRecordType(RED4ext::CRTTISystem::Get()->GetClass(aTypeName));
+    return IsRecordType(Red::CRTTISystem::Get()->GetClass(aTypeName));
 }
 
-bool Red::TweakDB::RTDB::IsRecordType(const RED4ext::CClass* aType)
+bool Red::TweakDB::IsRecordType(const Red::CClass* aType)
 {
-    static RED4ext::CBaseRTTIType* s_baseRecordType = RED4ext::CRTTISystem::Get()->GetClass(BaseRecordTypeName);
+    static Red::CBaseRTTIType* s_baseRecordType = Red::CRTTISystem::Get()->GetClass(BaseRecordTypeName);
 
     return aType && aType != s_baseRecordType && aType->IsA(s_baseRecordType);
 }
 
-bool Red::TweakDB::RTDB::IsArrayType(RED4ext::CName aTypeName)
+bool Red::TweakDB::IsArrayType(Red::CName aTypeName)
 {
     switch (aTypeName)
     {
@@ -96,52 +96,52 @@ bool Red::TweakDB::RTDB::IsArrayType(RED4ext::CName aTypeName)
     }
 }
 
-bool Red::TweakDB::RTDB::IsArrayType(const RED4ext::CBaseRTTIType* aType)
+bool Red::TweakDB::IsArrayType(const Red::CBaseRTTIType* aType)
 {
     return aType && IsArrayType(aType->GetName());
 }
 
-bool Red::TweakDB::RTDB::IsForeignKey(RED4ext::CName aTypeName)
+bool Red::TweakDB::IsForeignKey(Red::CName aTypeName)
 {
     return aTypeName == EFlatType::TweakDBID;
 }
 
-bool Red::TweakDB::RTDB::IsForeignKey(const RED4ext::CBaseRTTIType* aType)
+bool Red::TweakDB::IsForeignKey(const Red::CBaseRTTIType* aType)
 {
     return aType && IsForeignKey(aType->GetName());
 }
 
-bool Red::TweakDB::RTDB::IsForeignKeyArray(RED4ext::CName aTypeName)
+bool Red::TweakDB::IsForeignKeyArray(Red::CName aTypeName)
 {
     return aTypeName == EFlatType::TweakDBIDArray;
 }
 
-bool Red::TweakDB::RTDB::IsForeignKeyArray(const RED4ext::CBaseRTTIType* aType)
+bool Red::TweakDB::IsForeignKeyArray(const Red::CBaseRTTIType* aType)
 {
     return aType && IsForeignKeyArray(aType->GetName());
 }
 
-bool Red::TweakDB::RTDB::IsResRefToken(RED4ext::CName aTypeName)
+bool Red::TweakDB::IsResRefToken(Red::CName aTypeName)
 {
     return aTypeName == ResRefTokenTypeName;
 }
 
-bool Red::TweakDB::RTDB::IsResRefToken(const RED4ext::CBaseRTTIType* aType)
+bool Red::TweakDB::IsResRefToken(const Red::CBaseRTTIType* aType)
 {
     return aType && IsResRefToken(aType->GetName());
 }
 
-bool Red::TweakDB::RTDB::IsResRefTokenArray(RED4ext::CName aTypeName)
+bool Red::TweakDB::IsResRefTokenArray(Red::CName aTypeName)
 {
     return aTypeName == ResRefTokenArrayTypeName;
 }
 
-bool Red::TweakDB::RTDB::IsResRefTokenArray(const RED4ext::CBaseRTTIType* aType)
+bool Red::TweakDB::IsResRefTokenArray(const Red::CBaseRTTIType* aType)
 {
     return aType && IsResRefTokenArray(aType->GetName());
 }
 
-RED4ext::CName Red::TweakDB::RTDB::GetArrayType(RED4ext::CName aTypeName)
+Red::CName Red::TweakDB::GetArrayType(Red::CName aTypeName)
 {
     switch (aTypeName)
     {
@@ -163,7 +163,7 @@ RED4ext::CName Red::TweakDB::RTDB::GetArrayType(RED4ext::CName aTypeName)
     return {};
 }
 
-RED4ext::CName Red::TweakDB::RTDB::GetArrayType(const RED4ext::CBaseRTTIType* aType)
+Red::CName Red::TweakDB::GetArrayType(const Red::CBaseRTTIType* aType)
 {
     if (!aType)
         return {};
@@ -171,7 +171,7 @@ RED4ext::CName Red::TweakDB::RTDB::GetArrayType(const RED4ext::CBaseRTTIType* aT
     return GetArrayType(aType->GetName());
 }
 
-RED4ext::CName Red::TweakDB::RTDB::GetElementType(RED4ext::CName aTypeName)
+Red::CName Red::TweakDB::GetElementType(Red::CName aTypeName)
 {
     switch (aTypeName)
     {
@@ -193,7 +193,7 @@ RED4ext::CName Red::TweakDB::RTDB::GetElementType(RED4ext::CName aTypeName)
     return {};
 }
 
-RED4ext::CName Red::TweakDB::RTDB::GetElementType(const RED4ext::CBaseRTTIType* aType)
+Red::CName Red::TweakDB::GetElementType(const Red::CBaseRTTIType* aType)
 {
     if (!aType)
         return {};
@@ -201,12 +201,12 @@ RED4ext::CName Red::TweakDB::RTDB::GetElementType(const RED4ext::CBaseRTTIType* 
     return GetElementType(aType->GetName());
 }
 
-RED4ext::CName Red::TweakDB::RTDB::GetRecordFullName(RED4ext::CName aName)
+Red::CName Red::TweakDB::GetRecordFullName(Red::CName aName)
 {
-    return GetRecordFullName(std::string(aName.ToString()));
+    return GetRecordFullName(aName.ToString());
 }
 
-RED4ext::CName Red::TweakDB::RTDB::GetRecordFullName(const std::string& aName)
+Red::CName Red::TweakDB::GetRecordFullName(const char* aName)
 {
     std::string finalName = aName;
 
@@ -219,12 +219,12 @@ RED4ext::CName Red::TweakDB::RTDB::GetRecordFullName(const std::string& aName)
     return finalName.c_str();
 }
 
-std::string Red::TweakDB::RTDB::GetRecordShortName(RED4ext::CName aName)
+std::string Red::TweakDB::GetRecordShortName(Red::CName aName)
 {
-    return GetRecordShortName(std::string(aName.ToString()));
+    return GetRecordShortName(aName.ToString());
 }
 
-std::string Red::TweakDB::RTDB::GetRecordShortName(const std::string& aName)
+std::string Red::TweakDB::GetRecordShortName(const char* aName)
 {
     std::string finalName = aName;
 
@@ -237,42 +237,42 @@ std::string Red::TweakDB::RTDB::GetRecordShortName(const std::string& aName)
     return finalName;
 }
 
-Core::SharedPtr<void> Red::TweakDB::RTDB::MakeDefaultValue(RED4ext::CName aTypeName)
+Core::SharedPtr<void> Red::TweakDB::MakeDefaultValue(Red::CName aTypeName)
 {
     switch (aTypeName)
     {
-    case EFlatType::Int32: return MakeDefaultValue<int>();
-    case EFlatType::Float: return MakeDefaultValue<float>();
-    case EFlatType::Bool: return MakeDefaultValue<bool>();
-    case EFlatType::String: return MakeDefaultValue<RED4ext::CString>();
-    case EFlatType::CName: return MakeDefaultValue<RED4ext::CName>();
-    case EFlatType::TweakDBID: return MakeDefaultValue<RED4ext::TweakDBID>();
-    case EFlatType::LocKey: return MakeDefaultValue<RED4ext::gamedataLocKeyWrapper>();
-    case EFlatType::Resource: return MakeDefaultValue<RED4ext::ResourceAsyncReference<>>();
-    case EFlatType::Quaternion: return MakeDefaultValue<RED4ext::Quaternion>();
-    case EFlatType::EulerAngles: return MakeDefaultValue<RED4ext::EulerAngles>();
-    case EFlatType::Vector3: return MakeDefaultValue<RED4ext::Vector3>();
-    case EFlatType::Vector2: return MakeDefaultValue<RED4ext::Vector2>();
-    case EFlatType::Color: return MakeDefaultValue<RED4ext::Color>();
-    case EFlatType::Int32Array: return MakeDefaultValue<RED4ext::DynArray<int>>();
-    case EFlatType::FloatArray: return MakeDefaultValue<RED4ext::DynArray<float>>();
-    case EFlatType::BoolArray: return MakeDefaultValue<RED4ext::DynArray<bool>>();
-    case EFlatType::StringArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::CString>>();
-    case EFlatType::CNameArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::CName>>();
-    case EFlatType::TweakDBIDArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::TweakDBID>>();
-    case EFlatType::LocKeyArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::gamedataLocKeyWrapper>>();
-    case EFlatType::ResourceArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::ResourceAsyncReference<>>>();
-    case EFlatType::QuaternionArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::Quaternion>>();
-    case EFlatType::EulerAnglesArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::EulerAngles>>();
-    case EFlatType::Vector3Array: return MakeDefaultValue<RED4ext::DynArray<RED4ext::Vector3>>();
-    case EFlatType::Vector2Array: return MakeDefaultValue<RED4ext::DynArray<RED4ext::Vector2>>();
-    case EFlatType::ColorArray: return MakeDefaultValue<RED4ext::DynArray<RED4ext::Color>>();
+    case EFlatType::Int32: return Core::MakeShared<int>();
+    case EFlatType::Float: return Core::MakeShared<float>();
+    case EFlatType::Bool: return Core::MakeShared<bool>();
+    case EFlatType::String: return Core::MakeShared<Red::CString>();
+    case EFlatType::CName: return Core::MakeShared<Red::CName>();
+    case EFlatType::TweakDBID: return Core::MakeShared<Red::TweakDBID>();
+    case EFlatType::LocKey: return Core::MakeShared<Red::gamedataLocKeyWrapper>();
+    case EFlatType::Resource: return Core::MakeShared<Red::ResourceAsyncReference<>>();
+    case EFlatType::Quaternion: return Core::MakeShared<Red::Quaternion>();
+    case EFlatType::EulerAngles: return Core::MakeShared<Red::EulerAngles>();
+    case EFlatType::Vector3: return Core::MakeShared<Red::Vector3>();
+    case EFlatType::Vector2: return Core::MakeShared<Red::Vector2>();
+    case EFlatType::Color: return Core::MakeShared<Red::Color>();
+    case EFlatType::Int32Array: return Core::MakeShared<Red::DynArray<int>>();
+    case EFlatType::FloatArray: return Core::MakeShared<Red::DynArray<float>>();
+    case EFlatType::BoolArray: return Core::MakeShared<Red::DynArray<bool>>();
+    case EFlatType::StringArray: return Core::MakeShared<Red::DynArray<Red::CString>>();
+    case EFlatType::CNameArray: return Core::MakeShared<Red::DynArray<Red::CName>>();
+    case EFlatType::TweakDBIDArray: return Core::MakeShared<Red::DynArray<Red::TweakDBID>>();
+    case EFlatType::LocKeyArray: return Core::MakeShared<Red::DynArray<Red::gamedataLocKeyWrapper>>();
+    case EFlatType::ResourceArray: return Core::MakeShared<Red::DynArray<Red::ResourceAsyncReference<>>>();
+    case EFlatType::QuaternionArray: return Core::MakeShared<Red::DynArray<Red::Quaternion>>();
+    case EFlatType::EulerAnglesArray: return Core::MakeShared<Red::DynArray<Red::EulerAngles>>();
+    case EFlatType::Vector3Array: return Core::MakeShared<Red::DynArray<Red::Vector3>>();
+    case EFlatType::Vector2Array: return Core::MakeShared<Red::DynArray<Red::Vector2>>();
+    case EFlatType::ColorArray: return Core::MakeShared<Red::DynArray<Red::Color>>();
     }
 
     return nullptr;
 }
 
-Core::SharedPtr<void> Red::TweakDB::RTDB::MakeDefaultValue(const RED4ext::CBaseRTTIType* aType)
+Core::SharedPtr<void> Red::TweakDB::MakeDefaultValue(const Red::CBaseRTTIType* aType)
 {
     if (!aType)
         return {};

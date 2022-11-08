@@ -390,69 +390,69 @@ Core::SharedPtr<void> App::YamlConverter::Convert(RED4ext::CName aTypeName, cons
 {
     switch (aTypeName)
     {
-    case Red::TweakDB::RTDB::EFlatType::Int32:
+    case Red::TweakDB::EFlatType::Int32:
         return Convert<int>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::Int32Array:
+    case Red::TweakDB::EFlatType::Int32Array:
         return ConvertArray<int>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::Float:
+    case Red::TweakDB::EFlatType::Float:
         return Convert<float>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::FloatArray:
+    case Red::TweakDB::EFlatType::FloatArray:
         return ConvertArray<float>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::Bool:
+    case Red::TweakDB::EFlatType::Bool:
         return Convert<bool>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::BoolArray:
+    case Red::TweakDB::EFlatType::BoolArray:
         return ConvertArray<bool>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::String:
+    case Red::TweakDB::EFlatType::String:
         return Convert<RED4ext::CString>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::StringArray:
+    case Red::TweakDB::EFlatType::StringArray:
         return ConvertArray<RED4ext::CString>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::CName:
+    case Red::TweakDB::EFlatType::CName:
         return Convert<RED4ext::CName>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::CNameArray:
+    case Red::TweakDB::EFlatType::CNameArray:
         return ConvertArray<RED4ext::CName>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::TweakDBID:
+    case Red::TweakDB::EFlatType::TweakDBID:
         return Convert<RED4ext::TweakDBID>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::TweakDBIDArray:
+    case Red::TweakDB::EFlatType::TweakDBIDArray:
         return ConvertArray<RED4ext::TweakDBID>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::LocKey:
+    case Red::TweakDB::EFlatType::LocKey:
         return Convert<RED4ext::gamedataLocKeyWrapper>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::LocKeyArray:
+    case Red::TweakDB::EFlatType::LocKeyArray:
         return ConvertArray<RED4ext::gamedataLocKeyWrapper>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::Resource:
+    case Red::TweakDB::EFlatType::Resource:
         return Convert<RED4ext::ResourceAsyncReference<>>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::ResourceArray:
+    case Red::TweakDB::EFlatType::ResourceArray:
         return ConvertArray<RED4ext::ResourceAsyncReference<>>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::Quaternion:
+    case Red::TweakDB::EFlatType::Quaternion:
         return Convert<RED4ext::Quaternion>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::QuaternionArray:
+    case Red::TweakDB::EFlatType::QuaternionArray:
         return ConvertArray<RED4ext::Quaternion>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::EulerAngles:
+    case Red::TweakDB::EFlatType::EulerAngles:
         return Convert<RED4ext::EulerAngles>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::EulerAnglesArray:
+    case Red::TweakDB::EFlatType::EulerAnglesArray:
         return ConvertArray<RED4ext::EulerAngles>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::Vector3:
+    case Red::TweakDB::EFlatType::Vector3:
         return Convert<RED4ext::Vector3>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::Vector3Array:
+    case Red::TweakDB::EFlatType::Vector3Array:
         return ConvertArray<RED4ext::Vector3>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::Vector2:
+    case Red::TweakDB::EFlatType::Vector2:
         return Convert<RED4ext::Vector2>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::Vector2Array:
+    case Red::TweakDB::EFlatType::Vector2Array:
         return ConvertArray<RED4ext::Vector2>(aNode);
 
-    case Red::TweakDB::RTDB::EFlatType::Color:
+    case Red::TweakDB::EFlatType::Color:
         return Convert<RED4ext::Color>(aNode);
-    case Red::TweakDB::RTDB::EFlatType::ColorArray:
+    case Red::TweakDB::EFlatType::ColorArray:
         return ConvertArray<RED4ext::Color>(aNode);
     }
 
@@ -468,47 +468,47 @@ std::pair<RED4ext::CName, Core::SharedPtr<void>> App::YamlConverter::Convert(con
     case YAML::NodeType::Scalar:
     {
         if (Convert<RED4ext::CString>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::String, value };
+            return { Red::TweakDB::EFlatType::String, value };
 
         if (Convert<int>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::Int32, value };
+            return { Red::TweakDB::EFlatType::Int32, value };
 
         if (Convert<float>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::Float, value };
+            return { Red::TweakDB::EFlatType::Float, value };
 
         if (Convert<bool>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::Bool, value };
+            return { Red::TweakDB::EFlatType::Bool, value };
 
         if (Convert<RED4ext::CName>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::CName, value };
+            return { Red::TweakDB::EFlatType::CName, value };
 
         if (Convert<RED4ext::TweakDBID>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::TweakDBID, value };
+            return { Red::TweakDB::EFlatType::TweakDBID, value };
 
         if (Convert<RED4ext::gamedataLocKeyWrapper>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::LocKey, value };
+            return { Red::TweakDB::EFlatType::LocKey, value };
 
         if (Convert<RED4ext::ResourceAsyncReference<>>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::Resource, value };
+            return { Red::TweakDB::EFlatType::Resource, value };
 
         break;
     }
     case YAML::NodeType::Map:
     {
         if (Convert<RED4ext::Quaternion>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::Quaternion, value };
+            return { Red::TweakDB::EFlatType::Quaternion, value };
 
         if (Convert<RED4ext::EulerAngles>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::EulerAngles, value };
+            return { Red::TweakDB::EFlatType::EulerAngles, value };
 
         if (Convert<RED4ext::Vector3>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::Vector3, value };
+            return { Red::TweakDB::EFlatType::Vector3, value };
 
         if (Convert<RED4ext::Vector2>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::Vector2, value };
+            return { Red::TweakDB::EFlatType::Vector2, value };
 
         if (Convert<RED4ext::Color>(aNode, value, true))
-            return { Red::TweakDB::RTDB::EFlatType::Color, value };
+            return { Red::TweakDB::EFlatType::Color, value };
 
         break;
     }
@@ -521,7 +521,7 @@ std::pair<RED4ext::CName, Core::SharedPtr<void>> App::YamlConverter::Convert(con
 
             if (item.second)
             {
-                const auto arrayTypeName = Red::TweakDB::RTDB::GetArrayType(item.first);
+                const auto arrayTypeName = Red::TweakDB::GetArrayType(item.first);
                 return { arrayTypeName, Convert(arrayTypeName, aNode) };
             }
         }

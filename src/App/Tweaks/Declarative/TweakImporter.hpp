@@ -1,6 +1,7 @@
 #pragma once
 
 #include "App/Tweaks/Declarative/TweakChangeset.hpp"
+#include "App/Tweaks/Declarative/TweakReader.hpp"
 #include "Core/Logging/LoggingAgent.hpp"
 #include "Red/TweakDB/Manager.hpp"
 #include "Red/TweakDB/Reflection.hpp"
@@ -18,7 +19,7 @@ public:
 
 private:
     bool EnsureDirExists();
-    bool ReadTweakFile(TweakChangeset& aChangeset, const std::filesystem::path& aFullPath);
+    bool ReadFile(TweakChangeset& aChangeset, const std::filesystem::path& aFullPath);
     bool ApplyChangeset(TweakChangeset& aChangeset);
 
     Red::TweakDB::Manager& m_manager;

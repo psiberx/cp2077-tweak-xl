@@ -63,7 +63,7 @@ void App::ScriptedInterface::GetRecords(RED4ext::IScriptable*, RED4ext::CStackFr
     if (!aRet)
         return;
 
-    auto records = FetchRecords(Red::TweakDB::RTDB::GetRecordFullName(recordTypeName));
+    auto records = FetchRecords(Red::TweakDB::GetRecordFullName(recordTypeName));
 
     if (records->size <= 0)
         return;

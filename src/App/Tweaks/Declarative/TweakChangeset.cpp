@@ -123,12 +123,12 @@ void App::TweakChangeset::Commit()
             continue;
         }
 
-        if (Red::TweakDB::RTDB::IsForeignKey(flatType))
+        if (Red::TweakDB::IsForeignKey(flatType))
         {
             const auto foreignKey = reinterpret_cast<RED4ext::TweakDBID*>(flatValue);
             foreignKeys.insert(*foreignKey);
         }
-        else if (Red::TweakDB::RTDB::IsForeignKeyArray(flatType))
+        else if (Red::TweakDB::IsForeignKeyArray(flatType))
         {
             const auto foreignKeyList = reinterpret_cast<RED4ext::DynArray<RED4ext::TweakDBID>*>(flatValue);
             for (const auto& foreignKey : *foreignKeyList)
@@ -191,13 +191,13 @@ void App::TweakChangeset::Commit()
             continue;
         }
 
-        const auto isForeignKey = Red::TweakDB::RTDB::IsForeignKeyArray(flatData.type);
+        const auto isForeignKey = Red::TweakDB::IsForeignKeyArray(flatData.type);
 
         auto* targetType = reinterpret_cast<RED4ext::CRTTIArrayType*>(flatData.type);
 
         // Flat data returned by manager is a direct pointer to the TweakDB data buffer,
         // so we have to make a copy of that array for all modifications.
-        auto targetArray = Red::TweakDB::RTDB::MakeDefaultValue(targetType);
+        auto targetArray = Red::TweakDB::MakeDefaultValue(targetType);
         targetType->Assign(targetArray.get(), flatData.value);
 
         auto newIndex = targetType->GetLength(targetArray.get());
@@ -209,7 +209,7 @@ void App::TweakChangeset::Commit()
             if (item.unique && InArray(targetType, targetArray.get(), newItem))
                 continue;
 
-            targetType->InsertAt(targetArray.get(), newIndex);
+            targetType->InsertAt(targetArray.get(), static_cast<int32_t>(newIndex));
             targetType->innerType->Assign(targetType->GetElement(targetArray.get(), newIndex), newItem);
 
             ++newIndex;
@@ -242,7 +242,7 @@ void App::TweakChangeset::Commit()
                 if (InArray(targetType, targetArray.get(), sourceItem))
                     continue;
 
-                targetType->InsertAt(targetArray.get(), newIndex);
+                targetType->InsertAt(targetArray.get(), static_cast<int32_t>(newIndex));
                 targetType->innerType->Assign(targetType->GetElement(targetArray.get(), newIndex), sourceItem);
 
                 ++newIndex;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Alias.hpp"
+
 #include <RED4ext/TweakDB.hpp>
 
 namespace Red::TweakDB
@@ -20,37 +22,37 @@ public:
     };
 
     FlatPool();
-    explicit FlatPool(RED4ext::TweakDB* aTweakDb);
+    explicit FlatPool(Instance* aTweakDb);
 
-    int32_t AllocateData(const RED4ext::CStackType& aData);
-    int32_t AllocateValue(const RED4ext::CBaseRTTIType* aType, RED4ext::ScriptInstance aValue);
-    int32_t AllocateDefault(const RED4ext::CBaseRTTIType* aType);
+    int32_t AllocateData(const Red::CStackType& aData);
+    int32_t AllocateValue(const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue);
+    int32_t AllocateDefault(const Red::CBaseRTTIType* aType);
 
-    RED4ext::CStackType GetData(int32_t aOffset);
-    RED4ext::ScriptInstance GetValuePtr(int32_t aOffset);
+    Red::CStackType GetData(int32_t aOffset);
+    Red::ScriptInstance GetValuePtr(int32_t aOffset);
 
     [[nodiscard]] Stats GetStats() const;
 
 private:
     struct FlatTypeInfo
     {
-        RED4ext::CBaseRTTIType* type;
+        Red::CBaseRTTIType* type;
         uintptr_t offset;
     };
 
     using FlatValueMap = Core::Map<uint64_t, int32_t>; // Hash -> Offset
-    using FlatPoolMap = Core::Map<RED4ext::CName, FlatValueMap>; // TypeName -> Pool
-    using FlatDefaultMap = Core::Map<RED4ext::CName, int32_t>; // TypeName -> Offset
+    using FlatPoolMap = Core::Map<Red::CName, FlatValueMap>; // TypeName -> Pool
+    using FlatDefaultMap = Core::Map<Red::CName, int32_t>; // TypeName -> Offset
     using FlatTypeMap = Core::Map<uintptr_t, FlatTypeInfo>; // VFT -> TypeInfo
 
     void Initialize();
     void UpdateStats(float updateTime = 0);
     void SyncBuffer();
 
-    inline RED4ext::CStackType GetFlatData(int32_t aOffset);
-    inline static uint64_t Hash(const RED4ext::CBaseRTTIType* aType, RED4ext::ScriptInstance aValue);
+    inline Red::CStackType GetFlatData(int32_t aOffset);
+    inline static uint64_t Hash(const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue);
 
-    RED4ext::TweakDB* m_tweakDb;
+    Instance* m_tweakDb;
     uintptr_t m_bufferEnd;
     uintptr_t m_offsetEnd;
     FlatPoolMap m_pools;

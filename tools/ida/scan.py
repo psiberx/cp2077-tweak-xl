@@ -13,6 +13,8 @@ def patterns():
             Group(name="TweakDB", functions=[
                 Item(name="Load",
                      pattern="48 89 5C 24 18 55 57 41 56 48 8B EC 48 83 EC 70 48 8B D9 45 33 F6 48 8D"),
+                Item(name="CreateRecord",
+                     pattern="48 89 5C 24 08 ? 89 ? 24 18 57 48 83 EC 30 8B C2"),
             ]),
             Group(name="TweakDBID", functions=[
                 Item(name="Derive",

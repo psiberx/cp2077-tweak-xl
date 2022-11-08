@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Alias.hpp"
+
 #include <RED4ext/CName.hpp>
 #include <RED4ext/RTTISystem.hpp>
 #include <RED4ext/RTTITypes.hpp>
@@ -7,56 +9,56 @@
 
 namespace Red::TweakDB
 {
+struct PropertyInfo
+{
+    Red::CName name;
+    const Red::CBaseRTTIType* type;
+    bool isArray;
+    const Red::CBaseRTTIType* elementType;
+    bool isForeignKey;
+    const Red::CClass* foreignType;
+    std::string appendix; // The name used to build TweakDBID of the property
+    uintptr_t offset;
+};
+
+struct RecordTypeInfo
+{
+    Red::CName name;
+    const Red::CClass* type;
+    const Red::CClass* parent;
+    Core::SortedMap<Red::CName, Core::SharedPtr<PropertyInfo>> props;
+    std::string shortName;
+    uint32_t typeHash;
+
+    [[nodiscard]] const PropertyInfo* GetPropInfo(Red::CName aPropName) const
+    {
+        const auto& propIt = props.find(aPropName);
+        return propIt != props.end() ? propIt->second.get() : nullptr;
+    }
+};
+
 class Reflection
 {
 public:
-    struct PropertyInfo
-    {
-        RED4ext::CName name;
-        const RED4ext::CBaseRTTIType* type;
-        bool isArray;
-        const RED4ext::CBaseRTTIType* elementType;
-        bool isForeignKey;
-        const RED4ext::CClass* foreignType;
-        std::string appendix; // The name used to build TweakDBID of the property
-        uintptr_t offset;
-    };
-
-    struct RecordInfo
-    {
-        RED4ext::CName name;
-        const RED4ext::CClass* type;
-        const RED4ext::CClass* parent;
-        Core::SortedMap<RED4ext::CName, Core::SharedPtr<PropertyInfo>> props;
-        std::string shortName;
-        uint32_t typeHash;
-
-        [[nodiscard]] const PropertyInfo* GetPropInfo(RED4ext::CName aPropName) const
-        {
-            const auto& propIt = props.find(aPropName);
-            return propIt != props.end() ? propIt->second.get() : nullptr;
-        }
-    };
-
     Reflection();
-    explicit Reflection(RED4ext::TweakDB* aTweakDb);
+    explicit Reflection(Instance* aTweakDb);
 
-    const RED4ext::CBaseRTTIType* GetFlatType(RED4ext::CName aTypeName);
-    const RED4ext::CClass* GetRecordType(RED4ext::CName aTypeName);
-    const RED4ext::CClass* GetRecordType(const std::string& aTypeName);
+    const Red::CBaseRTTIType* GetFlatType(Red::CName aTypeName);
+    const Red::CClass* GetRecordType(Red::CName aTypeName);
+    const Red::CClass* GetRecordType(const char* aTypeName);
 
-    const RecordInfo* GetRecordInfo(RED4ext::CName aTypeName);
-    const RecordInfo* GetRecordInfo(const RED4ext::CClass* aType);
+    const RecordTypeInfo* GetRecordInfo(Red::CName aTypeName);
+    const RecordTypeInfo* GetRecordInfo(const Red::CClass* aType);
 
 private:
-    Core::SharedPtr<RecordInfo> CollectRecordInfo(const RED4ext::CClass* aType, RED4ext::TweakDBID aSampleId = 0);
+    Core::SharedPtr<RecordTypeInfo> CollectRecordInfo(const Red::CClass* aType, Red::TweakDBID aSampleId = 0);
 
-    RED4ext::TweakDBID GetRecordSampleId(const RED4ext::CClass* aType);
-    uint32_t GetRecordTypeHash(const RED4ext::CClass* aType);
-    std::string ResolvePropertyName(RED4ext::TweakDBID aSampleId, RED4ext::CName aGetterName);
+    Red::TweakDBID GetRecordSampleId(const Red::CClass* aType);
+    uint32_t GetRecordTypeHash(const Red::CClass* aType);
+    std::string ResolvePropertyName(Red::TweakDBID aSampleId, Red::CName aGetterName);
 
-    RED4ext::TweakDB* m_tweakDb;
-    RED4ext::CRTTISystem* m_rtti;
-    Core::Map<RED4ext::CName, Core::SharedPtr<RecordInfo>> m_records;
+    Instance* m_tweakDb;
+    Red::CRTTISystem* m_rtti;
+    Core::Map<Red::CName, Core::SharedPtr<RecordTypeInfo>> m_data;
 };
 }

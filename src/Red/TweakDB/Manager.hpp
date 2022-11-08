@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Alias.hpp"
 #include "FlatPool.hpp"
 #include "Reflection.hpp"
 #include "Types.hpp"
@@ -10,25 +11,25 @@ class Manager
 {
 public:
     Manager();
-    explicit Manager(RED4ext::TweakDB* aTweakDb);
+    explicit Manager(Instance* aTweakDb);
 
     Manager(const Manager&) = delete;
     Manager& operator=(const Manager&) = delete;
 
-    RED4ext::CStackType GetFlat(RED4ext::TweakDBID aFlatId);
-    RED4ext::Handle<RED4ext::gamedataTweakDBRecord> GetRecord(RED4ext::TweakDBID aRecordId);
+    Red::CStackType GetFlat(Red::TweakDBID aFlatId);
+    Red::Handle<Red::gamedataTweakDBRecord> GetRecord(Red::TweakDBID aRecordId);
 
-    bool IsFlatExists(RED4ext::TweakDBID aFlatId);
-    bool IsRecordExists(RED4ext::TweakDBID aRecordId);
+    bool IsFlatExists(Red::TweakDBID aFlatId);
+    bool IsRecordExists(Red::TweakDBID aRecordId);
 
-    bool SetFlat(RED4ext::TweakDBID aFlatId, const RED4ext::CBaseRTTIType* aType, RED4ext::ScriptInstance aValue);
-    bool SetFlat(RED4ext::TweakDBID aFlatId, RED4ext::CStackType aData);
+    bool SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue);
+    bool SetFlat(Red::TweakDBID aFlatId, Red::CStackType aData);
 
-    bool CreateRecord(RED4ext::TweakDBID aRecordId, const RED4ext::CClass* aType);
-    bool CloneRecord(RED4ext::TweakDBID aRecordId, RED4ext::TweakDBID aSourceId);
-    bool UpdateRecord(RED4ext::TweakDBID aRecordId);
+    bool CreateRecord(Red::TweakDBID aRecordId, const Red::CClass* aType);
+    bool CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
+    bool UpdateRecord(Red::TweakDBID aRecordId);
 
-    void RegisterName(RED4ext::TweakDBID aId, const std::string& aName);
+    void RegisterName(Red::TweakDBID aId, const std::string& aName);
 
     void StartBatch();
     void CommitBatch();
@@ -36,11 +37,11 @@ public:
     Reflection& GetReflection();
 
 private:
-    RED4ext::TweakDB* m_tweakDb;
+    Instance* m_tweakDb;
     FlatPool m_flatPool;
     Reflection m_reflection;
     bool m_batchMode;
-    RED4ext::SortedUniqueArray<RED4ext::TweakDBID> m_batchFlats;
-    Core::Map<RED4ext::TweakDBID, const Reflection::RecordInfo*> m_batchRecords;
+    Red::SortedUniqueArray<Red::TweakDBID> m_batchFlats;
+    Core::Map<Red::TweakDBID, const RecordTypeInfo*> m_batchRecords;
 };
 }

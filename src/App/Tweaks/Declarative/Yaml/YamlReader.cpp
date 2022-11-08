@@ -54,6 +54,7 @@ bool App::YamlReader::IsLoaded() const
 
 void App::YamlReader::Unload()
 {
+    m_path = "";
     m_yaml = YAML::Node();
 }
 
@@ -201,11 +202,11 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
     {
         // TODO: Inlined records with suggested type?
 
-        if (Red::TweakDB::RTDB::IsArrayType(aType))
+        if (Red::TweakDB::IsArrayType(aType))
         {
             // TODO: Extra check that flat exists?
 
-            const auto elementType = ResolveFlatType(Red::TweakDB::RTDB::GetElementType(aType));
+            const auto elementType = ResolveFlatType(Red::TweakDB::GetElementType(aType));
 
             if (HandleRelativeChanges(aChangeset, aName, aName, aNode, elementType))
                 return;
@@ -249,7 +250,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
 
     if (!recordInfo)
     {
-        if (Red::TweakDB::RTDB::IsRecordType(aType))
+        if (Red::TweakDB::IsRecordType(aType))
             LogError("{}: Cannot create record, the record type [{}] is abstract.", aPath, aType->name.ToString());
         else
             LogError("{}: Cannot create record, the record type [{}] is unknown.", aPath, aType->name.ToString());
@@ -402,34 +403,6 @@ void App::YamlReader::HandleInlineNode(App::TweakChangeset& aChangeset, const st
 {
     auto foreignType = aType;
     auto sourceId = RED4ext::TweakDBID();
-
-    {
-        const auto cloneAttr = aNode[BaseAttrKey];
-
-        if (cloneAttr.IsDefined())
-        {
-            sourceId = ResolveTweakDBID(cloneAttr);
-            const auto sourceType = ResolveRecordType(aChangeset, sourceId);
-
-            if (sourceType)
-            {
-                if (sourceType->IsA(foreignType))
-                {
-                    foreignType = sourceType;
-                }
-                else
-                {
-                    LogError("{}: Cannot clone inline [{}], record has incompatible type.",
-                             aPath, cloneAttr.Scalar());
-                }
-            }
-            else
-            {
-                LogWarning("{}: Cannot clone [{}], record doesn't exists.",
-                           aPath, cloneAttr.Scalar());
-            }
-        }
-    }
 
     // User can suggest inline type using attribute
     {
@@ -614,7 +587,7 @@ const RED4ext::CBaseRTTIType* App::YamlReader::ResolveFlatType(App::TweakChanges
 
 const RED4ext::CClass* App::YamlReader::ResolveRecordType(const YAML::Node& aNode)
 {
-    return m_reflection.GetRecordType(aNode.Scalar());
+    return m_reflection.GetRecordType(aNode.Scalar().c_str());
 }
 
 const RED4ext::CClass* App::YamlReader::ResolveRecordType(App::TweakChangeset& aChangeset, RED4ext::TweakDBID aRecordId)

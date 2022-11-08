@@ -6,7 +6,7 @@ TweakXL is a modding tool that allows you to modify TweakDB.
 
 ### Prerequisites
 
-- [RED4ext](https://docs.red4ext.com/getting-started/installing-red4ext) 1.4.0+
+- [RED4ext](https://docs.red4ext.com/getting-started/installing-red4ext) 1.9.0+
 
 ### Installation
 

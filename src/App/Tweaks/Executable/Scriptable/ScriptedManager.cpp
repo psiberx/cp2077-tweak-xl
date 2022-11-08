@@ -27,16 +27,16 @@ void App::ScriptedManager::SetFlat(RED4ext::IScriptable*, RED4ext::CStackFrame* 
     if (!s_manager)
         return;
 
-    if (Red::TweakDB::RTDB::IsResRefToken(variant.GetType()))
+    if (Red::TweakDB::IsResRefToken(variant.GetType()))
     {
         const auto rtti = RED4ext::CRTTISystem::Get();
-        const auto type = rtti->GetType(Red::TweakDB::RTDB::EFlatType::Resource);
+        const auto type = rtti->GetType(Red::TweakDB::EFlatType::Resource);
         variant = RED4ext::Variant(type, variant.GetDataPtr());
     }
-    else if (Red::TweakDB::RTDB::IsResRefTokenArray(variant.GetType()))
+    else if (Red::TweakDB::IsResRefTokenArray(variant.GetType()))
     {
         const auto rtti = RED4ext::CRTTISystem::Get();
-        const auto type = rtti->GetType(Red::TweakDB::RTDB::EFlatType::ResourceArray);
+        const auto type = rtti->GetType(Red::TweakDB::EFlatType::ResourceArray);
         variant = RED4ext::Variant(type, variant.GetDataPtr());
     }
 

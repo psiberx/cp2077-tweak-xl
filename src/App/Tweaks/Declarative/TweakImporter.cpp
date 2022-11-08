@@ -1,5 +1,5 @@
 #include "TweakImporter.hpp"
-#include "Yaml/YamlReader.hpp"
+#include "App/Tweaks/Declarative/Yaml/YamlReader.hpp"
 
 App::TweakImporter::TweakImporter(Red::TweakDB::Manager& aManager, std::filesystem::path aTweaksDir)
     : m_manager(aManager)
@@ -24,16 +24,15 @@ void App::TweakImporter::ImportDir(const std::filesystem::path& aDir)
 
         TweakChangeset changeset(m_manager);
 
-        auto tweakDirIt = std::filesystem::recursive_directory_iterator(
-            m_tweaksDir / aDir, std::filesystem::directory_options::follow_directory_symlink);
+        const auto tweakDir = m_tweaksDir / aDir;
+        const auto tweakDirIt = std::filesystem::recursive_directory_iterator(
+            tweakDir, std::filesystem::directory_options::follow_directory_symlink);
 
         for (const auto& entry : tweakDirIt)
         {
-            const auto ext = entry.path().extension();
-
-            if (entry.is_regular_file() && (ext == L".yml" || ext == L".yaml"))
+            if (entry.is_regular_file())
             {
-                ReadTweakFile(changeset, entry.path());
+                ReadFile(changeset, entry.path());
             }
         }
 
@@ -62,7 +61,7 @@ void App::TweakImporter::Import(const std::filesystem::path& aPath)
 
     TweakChangeset changeset(m_manager);
 
-    if (ReadTweakFile(changeset, m_tweaksDir / aPath))
+    if (ReadFile(changeset, m_tweaksDir / aPath))
         ApplyChangeset(changeset);
 }
 
@@ -84,16 +83,32 @@ bool App::TweakImporter::EnsureDirExists()
     return true;
 }
 
-bool App::TweakImporter::ReadTweakFile(App::TweakChangeset& aChangeset, const std::filesystem::path& aFullPath)
+bool App::TweakImporter::ReadFile(App::TweakChangeset& aChangeset, const std::filesystem::path& aPath)
 {
+    Core::SharedPtr<ITweakReader> reader;
+
+    {
+        const auto ext = aPath.extension();
+
+        if (ext == L".yaml" || ext == L".yml")
+        {
+            reader = Core::MakeShared<YamlReader>(m_manager, m_reflection);
+        }
+    }
+
+    if (!reader)
+    {
+        return false;
+    }
+
     try
     {
-        LogInfo("Reading \"{}\"...", std::filesystem::relative(aFullPath, m_tweaksDir).string());
+        LogInfo("Reading \"{}\"...", std::filesystem::relative(aPath, m_tweaksDir).string());
 
-        YamlReader reader(m_manager, m_reflection);
-
-        if (reader.Load(aFullPath))
-            reader.Read(aChangeset);
+        if (reader->Load(aPath))
+        {
+            reader->Read(aChangeset);
+        }
     }
     catch (const std::exception& ex)
     {

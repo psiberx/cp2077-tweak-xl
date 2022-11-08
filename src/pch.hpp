@@ -29,6 +29,7 @@
 #include <RED4ext/NativeTypes.hpp>
 #include <RED4ext/ResourcePath.hpp>
 #include <RED4ext/ResourceReference.hpp>
+#include <RED4ext/RTTISystem.hpp>
 #include <RED4ext/SortedArray.hpp>
 #include <RED4ext/TweakDB.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Color.hpp>

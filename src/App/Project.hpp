@@ -12,5 +12,5 @@ constexpr auto Author = "psiberx";
 constexpr auto NameW = L"TweakXL";
 constexpr auto AuthorW = L"psiberx";
 
-constexpr auto Version = semver::from_string_noexcept("1.1.0").value();
+constexpr auto Version = semver::from_string_noexcept("1.0.8").value();
 }

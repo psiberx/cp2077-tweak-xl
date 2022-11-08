@@ -2,18 +2,18 @@
 #include "Types.hpp"
 
 Red::TweakDB::FlatPool::FlatPool()
-    : FlatPool(RED4ext::TweakDB::Get())
+    : FlatPool(Instance::Get())
 {
 }
 
-Red::TweakDB::FlatPool::FlatPool(RED4ext::TweakDB* aTweakDb)
+Red::TweakDB::FlatPool::FlatPool(Instance* aTweakDb)
     : m_tweakDb(aTweakDb)
     , m_bufferEnd(0)
     , m_offsetEnd(0)
 {
 }
 
-int32_t Red::TweakDB::FlatPool::AllocateValue(const RED4ext::CBaseRTTIType* aType, RED4ext::ScriptInstance aValue)
+int32_t Red::TweakDB::FlatPool::AllocateValue(const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue)
 {
     if (m_bufferEnd != m_tweakDb->flatDataBufferEnd)
         Initialize();
@@ -35,7 +35,7 @@ int32_t Red::TweakDB::FlatPool::AllocateValue(const RED4ext::CBaseRTTIType* aTyp
 
     if (offsetIt == pool.end())
     {
-        offset = m_tweakDb->CreateFlatValue({ const_cast<RED4ext::CBaseRTTIType*>(aType), aValue });
+        offset = m_tweakDb->CreateFlatValue({ const_cast<Red::CBaseRTTIType*>(aType), aValue });
 
         if (offset != InvalidOffset)
             pool.emplace(hash, offset);
@@ -50,12 +50,12 @@ int32_t Red::TweakDB::FlatPool::AllocateValue(const RED4ext::CBaseRTTIType* aTyp
     return offset;
 }
 
-int32_t Red::TweakDB::FlatPool::AllocateData(const RED4ext::CStackType& aData)
+int32_t Red::TweakDB::FlatPool::AllocateData(const Red::CStackType& aData)
 {
     return AllocateValue(aData.type, aData.value);
 }
 
-int32_t Red::TweakDB::FlatPool::AllocateDefault(const RED4ext::CBaseRTTIType* aType)
+int32_t Red::TweakDB::FlatPool::AllocateDefault(const Red::CBaseRTTIType* aType)
 {
     if (m_bufferEnd != m_tweakDb->flatDataBufferEnd)
         Initialize();
@@ -67,7 +67,7 @@ int32_t Red::TweakDB::FlatPool::AllocateDefault(const RED4ext::CBaseRTTIType* aT
 
     if (offsetIt == m_defaults.end())
     {
-        offset = AllocateValue(aType, RTDB::MakeDefaultValue(aType).get());
+        offset = AllocateValue(aType, MakeDefaultValue(aType).get());
 
         if (offset != InvalidOffset)
         {
@@ -86,7 +86,7 @@ int32_t Red::TweakDB::FlatPool::AllocateDefault(const RED4ext::CBaseRTTIType* aT
     return offset;
 }
 
-RED4ext::CStackType Red::TweakDB::FlatPool::GetData(int32_t aOffset)
+Red::CStackType Red::TweakDB::FlatPool::GetData(int32_t aOffset)
 {
     if (m_bufferEnd != m_tweakDb->flatDataBufferEnd)
         Initialize();
@@ -94,7 +94,7 @@ RED4ext::CStackType Red::TweakDB::FlatPool::GetData(int32_t aOffset)
     return GetFlatData(aOffset);
 }
 
-RED4ext::ScriptInstance Red::TweakDB::FlatPool::GetValuePtr(int32_t aOffset)
+Red::ScriptInstance Red::TweakDB::FlatPool::GetValuePtr(int32_t aOffset)
 {
     if (m_bufferEnd != m_tweakDb->flatDataBufferEnd)
         Initialize();
@@ -115,12 +115,12 @@ void Red::TweakDB::FlatPool::Initialize()
     const auto startTimePoint = std::chrono::steady_clock::now();
 
     {
-        std::shared_lock<RED4ext::SharedMutex> flatLockR(m_tweakDb->mutex00);
+        std::shared_lock<Red::SharedMutex> flatLockR(m_tweakDb->mutex00);
 
         constexpr auto FlatVFTSize = 8u;
         constexpr auto FlatAlignment = 8u;
 
-        auto offset = RED4ext::AlignUp(static_cast<uint32_t>(m_offsetEnd), FlatAlignment);
+        auto offset = Red::AlignUp(static_cast<uint32_t>(m_offsetEnd), FlatAlignment);
         while (offset < offsetEnd)
         {
             // The current offset should always point to the VFT of the next flat.
@@ -147,7 +147,7 @@ void Red::TweakDB::FlatPool::Initialize()
                 pool.emplace(hash, offset);
 
             // Step {vft + data_size} aligned by {max(data_align, 8)}
-            offset += RED4ext::AlignUp(FlatVFTSize + data.type->GetSize(),
+            offset += Red::AlignUp(FlatVFTSize + data.type->GetSize(),
                                        std::max(FlatAlignment, data.type->GetAlignment()));
         }
 
@@ -160,7 +160,7 @@ void Red::TweakDB::FlatPool::Initialize()
     UpdateStats(updateTime);
 }
 
-RED4ext::CStackType Red::TweakDB::FlatPool::GetFlatData(int32_t aOffset)
+Red::CStackType Red::TweakDB::FlatPool::GetFlatData(int32_t aOffset)
 {
     // This method uses VFTs to determine the flat type.
     // It's 11% to 33% faster than calling GetValue() every time.
@@ -174,7 +174,7 @@ RED4ext::CStackType Red::TweakDB::FlatPool::GetFlatData(int32_t aOffset)
         return { it->second.type, reinterpret_cast<void*>(addr + it->second.offset) };
 
     // For an unknown VFT, we call the virtual GetValue() once to get the type.
-    const auto data = reinterpret_cast<RED4ext::TweakDB::FlatValue*>(addr)->GetValue();
+    const auto data = reinterpret_cast<FlatValue*>(addr)->GetValue();
 
     // Add type info to the map.
     // In addition to the RTTI type, we also store the data offset considering alignment.
@@ -185,7 +185,7 @@ RED4ext::CStackType Red::TweakDB::FlatPool::GetFlatData(int32_t aOffset)
     return data;
 }
 
-uint64_t Red::TweakDB::FlatPool::Hash(const RED4ext::CBaseRTTIType* aType, RED4ext::ScriptInstance aValue)
+uint64_t Red::TweakDB::FlatPool::Hash(const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue)
 {
     // Case 1: Everything is processed as a sequence of bytes and passed to the hash function,
     //         except for an array of strings.
@@ -197,39 +197,39 @@ uint64_t Red::TweakDB::FlatPool::Hash(const RED4ext::CBaseRTTIType* aType, RED4e
 
     uint64_t hash;
 
-    if (aType->GetType() == RED4ext::ERTTIType::Array)
+    if (aType->GetType() == Red::ERTTIType::Array)
     {
-        auto* arrayType = reinterpret_cast<const RED4ext::CRTTIArrayType*>(aType);
+        auto* arrayType = reinterpret_cast<const Red::CRTTIArrayType*>(aType);
         auto* innerType = arrayType->GetInnerType();
 
-        if (innerType->GetName() == RTDB::EFlatType::String)
+        if (innerType->GetName() == EFlatType::String)
         {
-            const auto* array = reinterpret_cast<RED4ext::DynArray<RED4ext::CString>*>(aValue);
-            hash = RED4ext::FNV1a64(reinterpret_cast<uint8_t*>(0), 0); // Initial seed
+            const auto* array = reinterpret_cast<Red::DynArray<Red::CString>*>(aValue);
+            hash = Red::FNV1a64(reinterpret_cast<uint8_t*>(0), 0); // Initial seed
             for (uint32_t i = 0; i != array->size; ++i)
             {
                 const auto* str = array->entries + i;
                 const auto length = str->Length();
-                hash = RED4ext::FNV1a64(reinterpret_cast<const uint8_t*>(&length), sizeof(length), hash);
-                hash = RED4ext::FNV1a64(reinterpret_cast<const uint8_t*>(str->c_str()), length, hash);
+                hash = Red::FNV1a64(reinterpret_cast<const uint8_t*>(&length), sizeof(length), hash);
+                hash = Red::FNV1a64(reinterpret_cast<const uint8_t*>(str->c_str()), length, hash);
             }
         }
         else
         {
-            const auto* array = reinterpret_cast<RED4ext::DynArray<uint8_t>*>(aValue);
-            hash = RED4ext::FNV1a64(array->entries, array->size * innerType->GetSize());
+            const auto* array = reinterpret_cast<Red::DynArray<uint8_t>*>(aValue);
+            hash = Red::FNV1a64(array->entries, array->size * innerType->GetSize());
         }
     }
-    else if (aType->GetName() == RTDB::EFlatType::String)
+    else if (aType->GetName() == EFlatType::String)
     {
-        const auto* str = reinterpret_cast<RED4ext::CString*>(aValue);
+        const auto* str = reinterpret_cast<Red::CString*>(aValue);
         const auto* data = reinterpret_cast<const uint8_t*>(str->c_str());
-        hash = RED4ext::FNV1a64(data, str->Length());
+        hash = Red::FNV1a64(data, str->Length());
     }
     else
     {
         const auto* data = reinterpret_cast<const uint8_t*>(aValue);
-        hash = RED4ext::FNV1a64(data, aType->GetSize());
+        hash = Red::FNV1a64(data, aType->GetSize());
     }
 
     return hash;

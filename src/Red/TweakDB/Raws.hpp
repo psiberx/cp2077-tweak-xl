@@ -1,21 +1,21 @@
 #pragma once
 
+#include "Alias.hpp"
 #include "Core/Raw.hpp"
 #include "Red/Addresses.hpp"
-
-#include <RED4ext/Addresses.hpp>
 
 namespace Raw
 {
 constexpr auto LoadTweakDB = Core::RawFunc<
     /* addr = */ Red::Addresses::TweakDB_Load,
-    /* type = */ void (*)(RED4ext::TweakDB*, RED4ext::CString&)>();
+    /* type = */ void (*)(Red::TweakDBInstance*, Red::CString&)>();
+
+constexpr auto CreateRecord = Core::RawFunc<
+    /* addr = */ Red::Addresses::TweakDB_CreateRecord,
+    /* type = */ void (*)(Red::TweakDBInstance*, uint32_t, Red::TweakDBID)>();
 
 constexpr auto CreateTweakDBID = Core::RawFunc<
     /* addr = */ Red::Addresses::TweakDBID_Derive,
-    /* type = */ void (*)(RED4ext::TweakDBID*, const RED4ext::TweakDBID*, const char*)>();
+    /* type = */ void (*)(Red::TweakDBID*, const Red::TweakDBID*, const char*)>();
 
-constexpr auto CreateRecord = Core::RawFunc<
-    /* addr = */ RED4ext::Addresses::TweakDB_CreateRecord,
-    /* type = */ void (*)(RED4ext::TweakDB*, uint32_t, RED4ext::TweakDBID)>();
 }
