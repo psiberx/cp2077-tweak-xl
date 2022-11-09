@@ -239,6 +239,21 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
 
     aChangeset.SetFlat(flatId, flatType, flatValue);
     aChangeset.RegisterName(flatId, aName);
+
+    {
+        const auto separatorPos = aName.find_last_of(PropSeparator);
+
+        if (separatorPos != std::string::npos)
+        {
+            const auto recordName = aName.substr(0, separatorPos);
+            const auto recordId = Red::TweakDBID(recordName);
+
+            if (m_manager.IsRecordExists(recordId))
+            {
+                aChangeset.UpdateRecord(recordId);
+            }
+        }
+    }
 }
 
 void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,

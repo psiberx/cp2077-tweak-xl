@@ -54,6 +54,8 @@ public:
     bool MakeRecord(RED4ext::TweakDBID aRecordId, const RED4ext::CClass* aType,
                     RED4ext::TweakDBID aSourceId = 0);
 
+    bool UpdateRecord(RED4ext::TweakDBID aRecordId);
+
     bool AssociateRecord(RED4ext::TweakDBID aRecordId, RED4ext::CName aPropName,
                          RED4ext::TweakDBID aFlatId);
 

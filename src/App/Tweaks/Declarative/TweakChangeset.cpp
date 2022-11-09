@@ -35,6 +35,20 @@ bool App::TweakChangeset::MakeRecord(RED4ext::TweakDBID aRecordId, const RED4ext
     return true;
 }
 
+bool App::TweakChangeset::UpdateRecord(RED4ext::TweakDBID aRecordId)
+{
+    if (!aRecordId.IsValid())
+        return false;
+
+    if (!m_pendingRecords.contains(aRecordId))
+    {
+        m_pendingRecords.insert({aRecordId, {}});
+        m_orderedRecords.push_back(aRecordId);
+    }
+
+    return true;
+}
+
 bool App::TweakChangeset::AssociateRecord(RED4ext::TweakDBID aRecordId, RED4ext::CName aPropName,
                                           RED4ext::TweakDBID aFlatId)
 {
