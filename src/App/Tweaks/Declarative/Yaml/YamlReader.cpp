@@ -18,9 +18,6 @@ constexpr auto ArrayAppendFromOp = RED4ext::FNV1a64("!append-from");
 constexpr auto UIIconType = RED4ext::CName("gamedataUIIcon_Record");
 constexpr auto StringType = RED4ext::CName("String");
 
-constexpr auto LocKeyPrefix = "LocKey#";
-constexpr auto LocKeyPrefixLength = std::char_traits<char>::length(LocKeyPrefix);
-
 constexpr auto LegacyGroupsNodeKey = "groups";
 constexpr auto LegacyMembersNodeKey = "members";
 constexpr auto LegacyFlatsNodeKey = "flats";
@@ -366,19 +363,6 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
 
                 // Overwrite inline data with foreign key
                 overrideData = inlineName;
-            }
-        }
-
-        // Special handling for LocKey# strings
-        else if (propInfo->type->GetName() == StringType && originalData.IsScalar())
-        {
-            auto& nodeValue = originalData.Scalar();
-
-            if (nodeValue.starts_with(LocKeyPrefix) &&
-                nodeValue.find_first_not_of("0123456789", LocKeyPrefixLength) != std::string::npos)
-            {
-                const auto wrapper = RED4ext::gamedataLocKeyWrapper(nodeValue.substr(LocKeyPrefixLength).c_str());
-                overrideData = std::string(LocKeyPrefix).append(std::to_string(wrapper.primaryKey));
             }
         }
 

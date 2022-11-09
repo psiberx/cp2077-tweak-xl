@@ -13,20 +13,6 @@ Core::SharedPtr<T> App::YamlConverter::Convert(const YAML::Node& aNode, bool)
 }
 
 template<>
-Core::SharedPtr<RED4ext::CString> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
-{
-    if (!aNode.IsScalar())
-        return nullptr;
-
-    // In strict mode accept only quoted strings.
-    // According to the spec the parser must set the tag to "!" for quoted strings.
-    if (aStrict && aNode.Tag() != "!")
-        return nullptr;
-
-    return Core::MakeShared<RED4ext::CString>(aNode.Scalar().c_str());
-}
-
-template<>
 Core::SharedPtr<RED4ext::CName> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     // Quoted format: n"Name"
@@ -144,6 +130,11 @@ Core::SharedPtr<RED4ext::gamedataLocKeyWrapper> App::YamlConverter::Convert(cons
     constexpr size_t WrappedSkip = std::char_traits<char>::length(WrappedPrefix);
     constexpr size_t WrappedDiff = WrappedSkip + sizeof(WrappedSuffix);
 
+    // String format: LocKey#Secondary-Loc-Key | LocKey#12345
+    constexpr const char* StringPrefix = "LocKey#";
+    constexpr size_t StringSkip = std::char_traits<char>::length(StringPrefix);
+    constexpr size_t StringDiff = StringSkip;
+
     if (aNode.IsScalar())
     {
         if (aStrict && aNode.Tag() == "!")
@@ -170,6 +161,17 @@ Core::SharedPtr<RED4ext::gamedataLocKeyWrapper> App::YamlConverter::Convert(cons
                 return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(key);
 
             return nullptr;
+        }
+
+        if (str.starts_with(StringPrefix))
+        {
+            auto value = str.substr(StringSkip, str.length() - StringDiff);
+
+            uint64_t key;
+            if (ParseInt(value, key))
+                return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(key);
+
+            return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(value.c_str());
         }
 
         if (!aStrict)
@@ -240,6 +242,33 @@ Core::SharedPtr<RED4ext::ResourceAsyncReference<>> App::YamlConverter::Convert(c
     }
 
     return nullptr;
+}
+
+template<>
+Core::SharedPtr<RED4ext::CString> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+{
+    if (!aNode.IsScalar())
+        return nullptr;
+
+    if (aStrict)
+    {
+        // In strict mode we accept only quoted strings.
+        // According to the spec the parser must set the tag to "!" for quoted strings.
+        if (aNode.Tag() != "!")
+            return nullptr;
+    }
+    else
+    {
+        const auto locKey = Convert<Red::LocKeyWrapper>(aNode, true);
+        if (locKey)
+        {
+            const auto locKeyStr = std::string("LocKey#").append(std::to_string(locKey->primaryKey));
+
+            return Core::MakeShared<RED4ext::CString>(locKeyStr.c_str());
+        }
+    }
+
+    return Core::MakeShared<RED4ext::CString>(aNode.Scalar().c_str());
 }
 
 template<>
