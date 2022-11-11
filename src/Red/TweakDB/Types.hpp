@@ -73,6 +73,8 @@ Red::CName GetRecordFullName(const char* aName);
 std::string GetRecordShortName(Red::CName aName);
 std::string GetRecordShortName(const char* aName);
 
+Red::TweakDBID GetDefaultValueID(Red::CName aTypeName, const std::string& aPropName);
+
 Core::SharedPtr<void> MakeDefaultValue(Red::CName aTypeName);
 Core::SharedPtr<void> MakeDefaultValue(const Red::CBaseRTTIType* aType);
 }

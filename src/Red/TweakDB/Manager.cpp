@@ -174,7 +174,11 @@ bool Red::TweakDB::Manager::CreateRecord(Red::TweakDBID aRecordId, const Red::CC
             const auto& propInfo = propIt.second;
 
             auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);
-            propFlat.SetTDBOffset(m_flatPool.AllocateDefault(propInfo->type));
+
+            if (propInfo->defaultValue > 0)
+                propFlat.SetTDBOffset(propInfo->defaultValue);
+            else
+                propFlat.SetTDBOffset(m_flatPool.AllocateDefault(propInfo->type));
 
             propFlats.Emplace(propFlat);
         }

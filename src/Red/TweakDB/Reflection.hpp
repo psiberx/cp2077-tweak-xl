@@ -19,6 +19,7 @@ struct PropertyInfo
     const Red::CClass* foreignType;
     std::string appendix; // The name used to build TweakDBID of the property
     uintptr_t offset;
+    int32_t defaultValue;
 };
 
 struct RecordTypeInfo
@@ -56,6 +57,7 @@ private:
     Red::TweakDBID GetRecordSampleId(const Red::CClass* aType);
     uint32_t GetRecordTypeHash(const Red::CClass* aType);
     std::string ResolvePropertyName(Red::TweakDBID aSampleId, Red::CName aGetterName);
+    int32_t ResolveDefaultValue(const Red::CClass* aType, const std::string& aPropAppx);
 
     Instance* m_tweakDb;
     Red::CRTTISystem* m_rtti;

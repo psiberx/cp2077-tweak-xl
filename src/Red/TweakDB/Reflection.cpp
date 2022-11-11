@@ -70,8 +70,8 @@ const Red::TweakDB::RecordTypeInfo* Red::TweakDB::Reflection::GetRecordInfo(Red:
     return CollectRecordInfo(m_rtti->GetClass(aTypeName)).get();
 }
 
-Core::SharedPtr<Red::TweakDB::RecordTypeInfo> Red::TweakDB::Reflection::CollectRecordInfo(const Red::CClass* aType,
-                                                                                        Red::TweakDBID aSampleId)
+Core::SharedPtr<Red::TweakDB::RecordTypeInfo> Red::TweakDB::Reflection::CollectRecordInfo(
+    const Red::CClass* aType, Red::TweakDBID aSampleId)
 {
     if (!IsRecordType(aType))
         return nullptr;
@@ -219,6 +219,11 @@ Core::SharedPtr<Red::TweakDB::RecordTypeInfo> Red::TweakDB::Reflection::CollectR
         recordInfo->props.insert({ propInfo->name, propInfo });
     }
 
+    for (auto& [_, propInfo] : recordInfo->props)
+    {
+        propInfo->defaultValue = ResolveDefaultValue(aType, propInfo->appendix);
+    }
+
     m_data.insert({ recordInfo->name, recordInfo });
 
     return recordInfo;
@@ -232,7 +237,7 @@ Red::TweakDBID Red::TweakDB::Reflection::GetRecordSampleId(const Red::CClass* aT
     if (records == nullptr)
         return {};
 
-    return records->Begin()->GetPtr<Red::gamedataTweakDBRecord>()->recordID;
+    return records->Begin()->GetPtr<Red::TweakDBRecord>()->recordID;
 }
 
 uint32_t Red::TweakDB::Reflection::GetRecordTypeHash(const Red::CClass* aType)
@@ -243,12 +248,12 @@ uint32_t Red::TweakDB::Reflection::GetRecordTypeHash(const Red::CClass* aType)
     if (records == nullptr)
         return 0;
 
-    return records->Begin()->GetPtr<Red::gamedataTweakDBRecord>()->GetTweakBaseHash();
+    return records->Begin()->GetPtr<Red::TweakDBRecord>()->GetTweakBaseHash();
 }
 
 std::string Red::TweakDB::Reflection::ResolvePropertyName(Red::TweakDBID aSampleId, Red::CName aGetterName)
 {
-    static std::string dot = ".";
+    static const std::string dot = ".";
 
     std::string propName = aGetterName.ToString();
     propName[0] = static_cast<char>(std::tolower(propName[0]));
@@ -257,12 +262,23 @@ std::string Red::TweakDB::Reflection::ResolvePropertyName(Red::TweakDBID aSample
 
     std::shared_lock<Red::SharedMutex> flatLockR(m_tweakDb->mutex00);
 
-    auto flat = m_tweakDb->flats.Find(propId);
-
-    flatLockR.unlock();
-
-    if (flat == m_tweakDb->flats.End())
+    auto propFlat = m_tweakDb->flats.Find(propId);
+    if (propFlat == m_tweakDb->flats.End())
         propName[0] = static_cast<char>(std::toupper(propName[0]));
 
     return propName;
+}
+
+int32_t Red::TweakDB::Reflection::ResolveDefaultValue(const Red::CClass* aType, const std::string& aPropAppx)
+{
+    const auto defaultFlatId = GetDefaultValueID(aType->name, aPropAppx);
+
+    std::shared_lock<Red::SharedMutex> flatLockR(m_tweakDb->mutex00);
+
+    auto defaultFlat = m_tweakDb->flats.Find(defaultFlatId);
+
+    if (defaultFlat == m_tweakDb->flats.End())
+        return 0;
+
+    return defaultFlat->ToTDBOffset();
 }

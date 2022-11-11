@@ -18,6 +18,8 @@ constexpr const char* RecordTypePrefix = "gamedata";
 constexpr const char* RecordTypeSuffix = "_Record";
 constexpr size_t RecordTypePrefixLength = std::char_traits<char>::length(RecordTypePrefix);
 constexpr size_t RecordTypeSuffixLength = std::char_traits<char>::length(RecordTypeSuffix);
+constexpr const char* DefaultsGroup = "RTDB.";
+constexpr const char* PropSeparator = ".";
 }
 
 bool Red::TweakDB::IsFlatType(Red::CName aTypeName)
@@ -235,6 +237,22 @@ std::string Red::TweakDB::GetRecordShortName(const char* aName)
         finalName.erase(finalName.end() - RecordTypeSuffixLength, finalName.end());
 
     return finalName;
+}
+
+Red::TweakDBID Red::TweakDB::GetDefaultValueID(Red::CName aTypeName, const std::string& aPropName)
+{
+    std::string flatName = DefaultsGroup;
+
+    flatName.append(GetRecordShortName(aTypeName));
+
+    if (!aPropName.starts_with(PropSeparator))
+    {
+        flatName.append(PropSeparator);
+    }
+
+    flatName.append(aPropName);
+
+    return {flatName.c_str()};
 }
 
 Core::SharedPtr<void> Red::TweakDB::MakeDefaultValue(Red::CName aTypeName)
