@@ -23,11 +23,21 @@ public:
     void Read(TweakChangeset& aChangeset) override;
 
 private:
-    void HandleTopNode(TweakChangeset& aChangeset, const std::string& aName, const YAML::Node& aNode);
+    enum class PropertyMode
+    {
+        Strict,
+        Auto
+    };
+
+    static PropertyMode ResolvePropertyMode(const YAML::Node& aNode, PropertyMode aDefault = PropertyMode::Strict);
+
+    void HandleTopNode(TweakChangeset& aChangeset, PropertyMode aPropMode, const std::string& aName,
+                       const YAML::Node& aNode);
     void HandleFlatNode(TweakChangeset& aChangeset, const std::string& aName, const YAML::Node& aNode,
                         const RED4ext::CBaseRTTIType* aType = nullptr);
-    void HandleRecordNode(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
-                          const YAML::Node& aNode, const RED4ext::CClass* aType, RED4ext::TweakDBID aSourceId = 0);
+    void HandleRecordNode(TweakChangeset& aChangeset, PropertyMode aPropMode, const std::string& aPath,
+                          const std::string& aName, const YAML::Node& aNode, const RED4ext::CClass* aType,
+                          RED4ext::TweakDBID aSourceId = 0);
     bool ResolveInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath, const YAML::Node& aNode,
                            const RED4ext::CClass*& aForeignType, RED4ext::TweakDBID aSourceId);
     bool HandleRelativeChanges(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,

@@ -8,6 +8,9 @@ constexpr auto TypeAttrKey = "$type";
 constexpr auto ValueAttrKey = "$value";
 constexpr auto BaseAttrKey = "$base";
 
+constexpr auto PropModeKey = "$props";
+constexpr auto PropModeAuto = "Auto";
+
 constexpr auto InlineSeparator = "$";
 constexpr auto PropSeparator = ".";
 constexpr auto HashSeparator = "|";
@@ -72,13 +75,28 @@ void App::YamlReader::Read(App::TweakChangeset& aChangeset)
 
     ConvertLegacyNodes();
 
+    auto propMode = ResolvePropertyMode(m_yaml);
+
     for (const auto& it : m_yaml)
     {
-        HandleTopNode(aChangeset, it.first.Scalar(), it.second);
+        HandleTopNode(aChangeset, propMode, it.first.Scalar(), it.second);
     }
 }
 
-void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, const std::string& aName, const YAML::Node& aNode)
+App::YamlReader::PropertyMode App::YamlReader::ResolvePropertyMode(const YAML::Node& aNode, PropertyMode aDefault)
+{
+    const auto modeAttr = aNode[PropModeKey];
+
+    if (modeAttr.IsDefined() && modeAttr.Scalar() == PropModeAuto)
+    {
+        return PropertyMode::Auto;
+    }
+
+    return aDefault;
+}
+
+void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMode aPropMode,
+                                    const std::string& aName, const YAML::Node& aNode)
 {
     if (aName.empty())
     {
@@ -116,11 +134,11 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, const std::
                         break;
                     }
 
-                    HandleRecordNode(aChangeset, aName, aName, aNode, recordType, sourceId);
+                    HandleRecordNode(aChangeset, aPropMode, aName, aName, aNode, recordType, sourceId);
                 }
                 else
                 {
-                    HandleRecordNode(aChangeset, aName, aName, aNode, recordType);
+                    HandleRecordNode(aChangeset, aPropMode, aName, aName, aNode, recordType);
                 }
                 break;
             }
@@ -150,7 +168,7 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, const std::
                     break;
                 }
 
-                HandleRecordNode(aChangeset, aName, aName, aNode, sourceType, sourceId);
+                HandleRecordNode(aChangeset, aPropMode, aName, aName, aNode, sourceType, sourceId);
                 break;
             }
         }
@@ -185,7 +203,7 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, const std::
                         break;
                     }
 
-                    HandleRecordNode(aChangeset, aName, aName, aNode, recordType);
+                    HandleRecordNode(aChangeset, aPropMode, aName, aName, aNode, recordType);
                     break;
                 }
             }
@@ -279,7 +297,8 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
     }
 }
 
-void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
+void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, PropertyMode aPropMode,
+                                       const std::string& aPath, const std::string& aName,
                                        const YAML::Node& aNode, const RED4ext::CClass* aType,
                                        RED4ext::TweakDBID aSourceId)
 {
@@ -314,6 +333,8 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
         }
     }
 
+    const auto propMode = ResolvePropertyMode(aNode, aPropMode);
+
     for (const auto& nodeIt : aNode)
     {
         const auto nodeKey = nodeIt.first.Scalar();
@@ -327,7 +348,18 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
 
         if (!propInfo)
         {
-            LogError("{}: Unknown property [{}].[{}].", aPath, recordInfo->shortName, nodeKey);
+            if (propMode == PropertyMode::Auto)
+            {
+                auto propName = aName;
+                propName.append(PropSeparator);
+                propName.append(nodeKey);
+
+                HandleFlatNode(aChangeset, propName, nodeIt.second);
+            }
+            else
+            {
+                LogError("{}: Unknown property {}.{}.", aPath, recordInfo->shortName, nodeKey);
+            }
             continue;
         }
 
@@ -376,7 +408,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
                         inlineName.append(InlineSeparator);
                         inlineName.append(ToHex(Red::FNV1a32(inlineHash.c_str(), inlineHash.size())));
 
-                        HandleRecordNode(aChangeset, inlinePath, inlineName, itemData, foreignType, sourceId);
+                        HandleRecordNode(aChangeset, propMode, inlinePath, inlineName, itemData, foreignType, sourceId);
 
                         if (overrideData.IsNull())
                         {
@@ -418,7 +450,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
                     inlineName.insert(0, "UIIcon.");
                 }
 
-                HandleRecordNode(aChangeset, inlinePath, inlineName, originalData, foreignType, sourceId);
+                HandleRecordNode(aChangeset, propMode, inlinePath, inlineName, originalData, foreignType, sourceId);
 
                 // Overwrite inline data with foreign key
                 overrideData = inlineName;
@@ -674,7 +706,8 @@ const RED4ext::CBaseRTTIType* App::YamlReader::ResolveFlatType(RED4ext::CName aN
     return m_reflection.GetFlatType(aName);
 }
 
-const RED4ext::CBaseRTTIType* App::YamlReader::ResolveFlatType(App::TweakChangeset& aChangeset, RED4ext::TweakDBID aFlatId)
+const RED4ext::CBaseRTTIType* App::YamlReader::ResolveFlatType(App::TweakChangeset& aChangeset,
+                                                               RED4ext::TweakDBID aFlatId)
 {
     const auto existingFlat = m_manager.GetFlat(aFlatId);
     if (existingFlat.value)
