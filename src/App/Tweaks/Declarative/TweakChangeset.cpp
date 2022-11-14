@@ -1,10 +1,5 @@
 #include "TweakChangeset.hpp"
 
-App::TweakChangeset::TweakChangeset(Red::TweakDB::Manager& aManager)
-    : m_manager(aManager)
-{
-}
-
 bool App::TweakChangeset::SetFlat(RED4ext::TweakDBID aFlatId, const RED4ext::CBaseRTTIType* aType,
                                   const Core::SharedPtr<void>& aValue)
 {
@@ -14,6 +9,9 @@ bool App::TweakChangeset::SetFlat(RED4ext::TweakDBID aFlatId, const RED4ext::CBa
     auto& entry = m_pendingFlats[aFlatId];
     entry.type = aType;
     entry.value = aValue;
+
+    // Overwrite relative changes
+    m_pendingAlterings.erase(aFlatId);
 
     return true;
 }
@@ -49,10 +47,12 @@ bool App::TweakChangeset::UpdateRecord(RED4ext::TweakDBID aRecordId)
     return true;
 }
 
-bool App::TweakChangeset::AssociateRecord(RED4ext::TweakDBID aRecordId, RED4ext::CName aPropName,
-                                          RED4ext::TweakDBID aFlatId)
+bool App::TweakChangeset::AssociateRecord(RED4ext::TweakDBID aRecordId, RED4ext::TweakDBID aFlatId)
 {
-    m_associationMap[aFlatId] = aRecordId;
+    if (!aRecordId.IsValid() || !aFlatId.IsValid())
+        return false;
+
+    m_flatToRecordMap[aFlatId] = aRecordId;
 
     return true;
 }
@@ -64,7 +64,31 @@ bool App::TweakChangeset::AppendElement(RED4ext::TweakDBID aFlatId, const RED4ex
         return false;
 
     auto& entry = m_pendingAlterings[aFlatId];
-    entry.items.emplace_back(AlteringMethod::Append, aType, aValue, aUnique);
+    entry.appendings.emplace_back(aType, aValue, aUnique);
+
+    return true;
+}
+
+bool App::TweakChangeset::PrependElement(RED4ext::TweakDBID aFlatId, const RED4ext::CBaseRTTIType* aType,
+                                         const Core::SharedPtr<void>& aValue, bool aUnique)
+{
+    if (!aFlatId.IsValid() || !aType || !aValue)
+        return false;
+
+    auto& entry = m_pendingAlterings[aFlatId];
+    entry.prependings.emplace_back(aType, aValue, aUnique);
+
+    return true;
+}
+
+bool App::TweakChangeset::RemoveElement(RED4ext::TweakDBID aFlatId, const RED4ext::CBaseRTTIType* aType,
+                                        const Core::SharedPtr<void>& aValue)
+{
+    if (!aFlatId.IsValid() || !aType || !aValue)
+        return false;
+
+    auto& entry = m_pendingAlterings[aFlatId];
+    entry.deletions.emplace_back(aType, aValue);
 
     return true;
 }
@@ -75,9 +99,35 @@ bool App::TweakChangeset::AppendFrom(RED4ext::TweakDBID aFlatId, RED4ext::TweakD
         return false;
 
     auto& entry = m_pendingAlterings[aFlatId];
-    entry.merges.emplace_back(AlteringMethod::Append, aSourceId);
+    entry.appendingMerges.emplace_back(aSourceId);
 
     return true;
+}
+
+bool App::TweakChangeset::PrependFrom(RED4ext::TweakDBID aFlatId, RED4ext::TweakDBID aSourceId)
+{
+    if (!aFlatId.IsValid() || !aSourceId.IsValid())
+        return false;
+
+    auto& entry = m_pendingAlterings[aFlatId];
+    entry.prependingMerges.emplace_back(aSourceId);
+
+    return true;
+}
+
+bool App::TweakChangeset::InheritChanges(RED4ext::TweakDBID aFlatId, RED4ext::TweakDBID aBaseId)
+{
+    if (!aFlatId.IsValid() || !aBaseId.IsValid())
+        return false;
+
+    auto alteringIt = m_pendingAlterings.find(aBaseId);
+    if (alteringIt == m_pendingAlterings.end())
+        return false;
+
+    auto& entry = alteringIt.value();
+    m_pendingAlterings[aFlatId] = entry;
+
+    return false;
 }
 
 bool App::TweakChangeset::RegisterName(RED4ext::TweakDBID aId, const std::string& aName)
@@ -85,11 +135,6 @@ bool App::TweakChangeset::RegisterName(RED4ext::TweakDBID aId, const std::string
     m_pendingNames[aId] = aName;
 
     return true;
-}
-
-bool App::TweakChangeset::IsEmpty()
-{
-    return m_pendingFlats.empty() && m_pendingRecords.empty() && m_pendingAlterings.empty() && m_pendingNames.empty();
 }
 
 const App::TweakChangeset::FlatEntry* App::TweakChangeset::GetFlat(RED4ext::TweakDBID aFlatId)
@@ -112,16 +157,36 @@ const App::TweakChangeset::RecordEntry* App::TweakChangeset::GetRecord(RED4ext::
     return &it->second;
 }
 
-void App::TweakChangeset::Commit()
+bool App::TweakChangeset::HasRecord(RED4ext::TweakDBID aRecordId)
 {
-    for (const auto& item : m_pendingNames)
+    return m_pendingRecords.find(aRecordId) != m_pendingRecords.end();
+}
+
+bool App::TweakChangeset::IsEmpty()
+{
+    return m_pendingFlats.empty() && m_pendingRecords.empty() && m_pendingAlterings.empty() && m_pendingNames.empty();
+}
+
+void App::TweakChangeset::Commit(Core::SharedPtr<Red::TweakDB::Manager>& aManager,
+                                 Core::SharedPtr<App::TweakChangelog>& aChangelog)
+{
+    if (!aManager)
     {
-        m_manager.RegisterName(item.first, item.second);
+        return;
     }
 
-    m_manager.StartBatch();
+    if (aChangelog)
+    {
+        aChangelog->RevertChanges(aManager);
+        aChangelog->ForgetForeignKeys();
+    }
 
-    Core::Set<RED4ext::TweakDBID> foreignKeys;
+    aManager->StartBatch();
+
+    for (const auto& item : m_pendingNames)
+    {
+        aManager->RegisterName(item.first, item.second);
+    }
 
     for (const auto& item : m_pendingFlats)
     {
@@ -129,24 +194,29 @@ void App::TweakChangeset::Commit()
         const auto& flatType = item.second.type;
         const auto& flatValue = item.second.value.get();
 
-        const auto success = m_manager.SetFlat(flatId, flatType, flatValue);
+        const auto success = aManager->SetFlat(flatId, flatType, flatValue);
 
         if (!success)
         {
-            LogError("Cannot set flat [{}].", AsString(flatId));
+            LogError("Can't set flat [{}].", AsString(flatId));
             continue;
         }
 
-        if (Red::TweakDB::IsForeignKey(flatType))
+        if (aChangelog)
         {
-            const auto foreignKey = reinterpret_cast<RED4ext::TweakDBID*>(flatValue);
-            foreignKeys.insert(*foreignKey);
-        }
-        else if (Red::TweakDB::IsForeignKeyArray(flatType))
-        {
-            const auto foreignKeyList = reinterpret_cast<RED4ext::DynArray<RED4ext::TweakDBID>*>(flatValue);
-            for (const auto& foreignKey : *foreignKeyList)
-                foreignKeys.insert(foreignKey);
+            if (Red::TweakDB::IsForeignKey(flatType))
+            {
+                const auto foreignKey = reinterpret_cast<RED4ext::TweakDBID*>(flatValue);
+                aChangelog->RegisterForeignKey(*foreignKey);
+            }
+            else if (Red::TweakDB::IsForeignKeyArray(flatType))
+            {
+                const auto foreignKeyList = reinterpret_cast<RED4ext::DynArray<RED4ext::TweakDBID>*>(flatValue);
+                for (const auto& foreignKey : *foreignKeyList)
+                {
+                    aChangelog->RegisterForeignKey(foreignKey);
+                }
+            }
         }
     }
 
@@ -154,9 +224,9 @@ void App::TweakChangeset::Commit()
     {
         const auto& recordEntry = m_pendingRecords[recordId];
 
-        if (m_manager.IsRecordExists(recordId))
+        if (aManager->IsRecordExists(recordId))
         {
-            const auto success = m_manager.UpdateRecord(recordId);
+            const auto success = aManager->UpdateRecord(recordId);
 
             if (!success)
             {
@@ -166,7 +236,7 @@ void App::TweakChangeset::Commit()
         }
         else if (recordEntry.sourceId.IsValid())
         {
-            const auto success = m_manager.CloneRecord(recordId, recordEntry.sourceId);
+            const auto success = aManager->CloneRecord(recordId, recordEntry.sourceId);
 
             if (!success)
             {
@@ -176,7 +246,7 @@ void App::TweakChangeset::Commit()
         }
         else
         {
-            const auto success = m_manager.CreateRecord(recordId, recordEntry.type);
+            const auto success = aManager->CreateRecord(recordId, recordEntry.type);
 
             if (!success)
             {
@@ -186,101 +256,120 @@ void App::TweakChangeset::Commit()
         }
     }
 
-    m_manager.CommitBatch();
+    aManager->CommitBatch();
+
+    Core::Set<RED4ext::TweakDBID> postUpdates;
 
     for (const auto& altering : m_pendingAlterings)
     {
         const auto& flatId = altering.first;
-        const auto& flatData = m_manager.GetFlat(flatId);
+        const auto& flatData = aManager->GetFlat(flatId);
 
         if (!flatData.value)
         {
-            LogError("Cannot append to [{}], the flat doesn't exist.", AsString(flatId));
+            LogError("Cannot apply changes to [{}], the flat doesn't exist.", AsString(flatId));
             continue;
         }
 
         if (flatData.type->GetType() != RED4ext::ERTTIType::Array)
         {
-            LogError("Cannot append to [{}] as it's not an array.", AsString(flatId));
+            LogError("Cannot apply changes to [{}], it's not an array.", AsString(flatId));
             continue;
         }
 
-        const auto isForeignKey = Red::TweakDB::IsForeignKeyArray(flatData.type);
-
         auto* targetType = reinterpret_cast<RED4ext::CRTTIArrayType*>(flatData.type);
+        auto* elementType = targetType->innerType;
 
-        // Flat data returned by manager is a direct pointer to the TweakDB data buffer,
-        // so we have to make a copy of that array for all modifications.
-        auto targetArray = Red::TweakDB::MakeDefaultValue(targetType);
+        // The data returned by manager is a pointer to the TweakDB flat buffer,
+        // we must make a copy of the original array for modifications.
+        auto targetArray = Red::TweakDB::MakeDefault(targetType);
         targetType->Assign(targetArray.get(), flatData.value);
 
-        auto newIndex = targetType->GetLength(targetArray.get());
+        Core::Vector<ElementChange> deletions;
+        Core::Vector<ElementChange> insertions;
 
-        for (const auto& item : altering.second.items)
+        for (const auto& deletion : altering.second.deletions)
         {
-            const auto newItem = item.value.get();
+            const auto deletionValue = deletion.value;
+            const auto deletionIndex = FindElement(targetType, targetArray.get(), deletionValue.get());
 
-            if (item.unique && InArray(targetType, targetArray.get(), newItem))
-                continue;
-
-            targetType->InsertAt(targetArray.get(), static_cast<int32_t>(newIndex));
-            targetType->innerType->Assign(targetType->GetElement(targetArray.get(), newIndex), newItem);
-
-            ++newIndex;
-
-            if (isForeignKey)
+            if (deletionIndex >= 0)
             {
-                const auto foreignKey = reinterpret_cast<RED4ext::TweakDBID*>(newItem);
-                foreignKeys.insert(*foreignKey);
+                deletions.emplace_back(deletionIndex, deletionValue);
             }
         }
 
-        for (const auto& merge : altering.second.merges)
+        if (!deletions.empty())
         {
-            const auto sourceData = m_manager.GetFlat(merge.sourceId);
+            std::sort(deletions.begin(), deletions.end(), [](ElementChange& a, ElementChange& b)
+                                                          {
+                                                              return a.first > b.first;
+                                                          });
 
-            if (!sourceData.value || sourceData.type != targetType)
+            for (const auto& [deletionIndex, deletionEntry] : deletions)
             {
-                LogError("Cannot append from [{}] to [{}] as it's not an array.",
-                         AsString(merge.sourceId), AsString(flatId));
-                continue;
-            }
-
-            auto* sourceArray = reinterpret_cast<RED4ext::DynArray<void>*>(sourceData.value);
-            const auto sourceLength = targetType->GetLength(sourceArray);
-
-            for (uint32_t sourceIndex = 0; sourceIndex < sourceLength; ++sourceIndex)
-            {
-                auto sourceItem = targetType->GetElement(sourceArray, sourceIndex);
-
-                if (InArray(targetType, targetArray.get(), sourceItem))
-                    continue;
-
-                targetType->InsertAt(targetArray.get(), static_cast<int32_t>(newIndex));
-                targetType->innerType->Assign(targetType->GetElement(targetArray.get(), newIndex), sourceItem);
-
-                ++newIndex;
+                targetType->RemoveAt(targetArray.get(), deletionIndex);
             }
         }
 
-        const auto success = m_manager.SetFlat(flatId, targetType, targetArray.get());
+        {
+            InsertionHandler inserter{flatId, targetType, elementType, targetArray, insertions, aManager, *this};
+            inserter.Apply(altering.second.prependings, altering.second.prependingMerges, 0);
+            inserter.Apply(altering.second.appendings, altering.second.appendingMerges,
+                           static_cast<int32_t>(targetType->GetLength(targetArray.get())));
+        }
+
+        const auto success = aManager->SetFlat(flatId, targetType, targetArray.get());
 
         if (!success)
         {
-            LogError("Cannot update flat [{}].", AsString(flatId));
+            LogError("Cannot assign flat value [{}].", AsString(flatId));
             continue;
         }
 
-        const auto assocIt = m_associationMap.find(flatId);
+        {
+            const auto association = m_flatToRecordMap.find(flatId);
 
-        if (assocIt != m_associationMap.end())
-            m_manager.UpdateRecord(assocIt.value());
+            if (association != m_flatToRecordMap.end())
+            {
+                const auto& recordId = association.value();
+                postUpdates.insert(recordId);
+
+                if (aChangelog)
+                {
+                    aChangelog->AssociateRecord(recordId, flatId);
+                }
+            }
+        }
+
+        if (aChangelog)
+        {
+            const auto isForeignKey = Red::TweakDB::IsForeignKeyArray(targetType);
+
+            for (const auto& [deletionIndex, deletionValue] : deletions)
+            {
+                aChangelog->RegisterDeletion(flatId, deletionIndex, deletionValue);
+            }
+
+            for (const auto& [insertionIndex, insertionValue] : insertions)
+            {
+                aChangelog->RegisterInsertion(flatId, insertionIndex, insertionValue);
+
+                if (isForeignKey)
+                {
+                    const auto foreignKey = reinterpret_cast<RED4ext::TweakDBID*>(insertionValue.get());
+                    aChangelog->RegisterForeignKey(*foreignKey);
+                    aChangelog->RegisterName(*foreignKey, AsString(*foreignKey));
+                }
+            }
+
+            aChangelog->RegisterName(flatId, AsString(flatId));
+        }
     }
 
-    for (const auto& foreignKey : foreignKeys)
+    for (const auto recordId : postUpdates)
     {
-        if (!m_manager.IsRecordExists(foreignKey) && !m_manager.IsFlatExists(foreignKey))
-            LogWarning("Foreign key [{}] refers to a non-existent record / flat.", AsString(foreignKey));
+        aManager->UpdateRecord(recordId);
     }
 
     m_pendingFlats.clear();
@@ -290,18 +379,78 @@ void App::TweakChangeset::Commit()
     m_pendingAlterings.clear();
 }
 
-bool App::TweakChangeset::InArray(RED4ext::CRTTIArrayType* aArrayType, RED4ext::ScriptInstance aArray,
-                                  RED4ext::ScriptInstance aValue)
+void App::TweakChangeset::InsertionHandler::Apply(const Core::Vector<App::TweakChangeset::InsertionEntry>& aInsertions,
+                                                    const Core::Vector<App::TweakChangeset::MergingEntry>& aMerges,
+                                                    int32_t aStargIndex)
+{
+    auto appendingIndex = aStargIndex;
+
+    for (const auto& insertion : aInsertions)
+    {
+        const auto insertionValue = insertion.value;
+
+        if (insertion.unique && InArray(m_arrayType, m_array.get(), insertionValue.get()))
+            continue;
+
+        m_arrayType->InsertAt(m_array.get(), appendingIndex);
+        m_elementType->Assign(m_arrayType->GetElement(m_array.get(), appendingIndex), insertionValue.get());
+
+        m_changes.emplace_back(appendingIndex, insertionValue);
+
+        ++appendingIndex;
+    }
+
+    for (const auto& merge : aMerges)
+    {
+        const auto sourceData = m_manager->GetFlat(merge.sourceId);
+
+        if (!sourceData.value || sourceData.type != m_arrayType)
+        {
+            LogError("Cannot merge [{}] with [{}] because it's not an array.",
+                     m_changeset.AsString(merge.sourceId), m_changeset.AsString(m_arrayId));
+            continue;
+        }
+
+        auto* sourceArray = reinterpret_cast<RED4ext::DynArray<void>*>(sourceData.value);
+        const auto sourceLength = m_arrayType->GetLength(sourceArray);
+
+        for (uint32_t sourceIndex = 0; sourceIndex < sourceLength; ++sourceIndex)
+        {
+            auto insertionValuePtr = m_arrayType->GetElement(sourceArray, sourceIndex);
+
+            if (InArray(m_arrayType, m_array.get(), insertionValuePtr))
+                continue;
+
+            m_arrayType->InsertAt(m_array.get(), appendingIndex);
+            m_elementType->Assign(m_arrayType->GetElement(m_array.get(), appendingIndex), insertionValuePtr);
+
+            m_changes.emplace_back(appendingIndex, Red::TweakDB::CopyValue(m_elementType, insertionValuePtr));
+
+            ++appendingIndex;
+        }
+    }
+}
+
+int32_t App::TweakChangeset::FindElement(RED4ext::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
 {
     const auto length = aArrayType->GetLength(aArray);
 
-    for (uint32_t i = 0; i < length; ++i)
+    for (int32_t i = 0; i < length; ++i)
     {
-        if (aArrayType->innerType->IsEqual(aArrayType->GetElement(aArray, i), aValue))
-            return true;
+        const auto element = aArrayType->GetElement(aArray, i);
+
+        if (aArrayType->innerType->IsEqual(element, aValue))
+        {
+            return i;
+        }
     }
 
-    return false;
+    return -1;
+}
+
+bool App::TweakChangeset::InArray(RED4ext::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
+{
+    return FindElement(aArrayType, aArray, aValue) > 0;
 }
 
 std::string App::TweakChangeset::AsString(const RED4ext::CBaseRTTIType* aType)
@@ -311,10 +460,10 @@ std::string App::TweakChangeset::AsString(const RED4ext::CBaseRTTIType* aType)
 
 std::string App::TweakChangeset::AsString(RED4ext::TweakDBID aId)
 {
-    const auto nameIt = m_pendingNames.find(aId);
+    const auto name = m_pendingNames.find(aId);
 
-    if (nameIt != m_pendingNames.end())
-        return nameIt->second;
+    if (name != m_pendingNames.end())
+        return name.value();
 
     return fmt::format("<TDBID:{:08X}:{:02X}>", aId.name.hash, aId.name.length);
 }

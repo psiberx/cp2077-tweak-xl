@@ -14,7 +14,7 @@ class YamlReader
     , public Core::LoggingAgent
 {
 public:
-    YamlReader(Red::TweakDB::Manager& aManager, Red::TweakDB::Reflection& aReflection);
+    YamlReader(Red::TweakDB::Manager& aManager);
     ~YamlReader() override = default;
 
     bool Load(const std::filesystem::path& aPath) override;
@@ -28,11 +28,11 @@ private:
                         const RED4ext::CBaseRTTIType* aType = nullptr);
     void HandleRecordNode(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
                           const YAML::Node& aNode, const RED4ext::CClass* aType, RED4ext::TweakDBID aSourceId = 0);
-    void HandleInlineNode(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
-                          const YAML::Node& aNode, const RED4ext::CClass* aType);
+    bool ResolveInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath, const YAML::Node& aNode,
+                           const RED4ext::CClass*& aForeignType, RED4ext::TweakDBID aSourceId);
     bool HandleRelativeChanges(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
                                const YAML::Node& aNode, const RED4ext::CBaseRTTIType* aElementType);
-    bool IsRelativeChange(const YAML::Node& aNode);
+    static bool IsRelativeChange(const YAML::Node& aNode);
 
     const RED4ext::CBaseRTTIType* ResolveFlatType(const YAML::Node& aNode);
     const RED4ext::CBaseRTTIType* ResolveFlatType(RED4ext::CName aName);

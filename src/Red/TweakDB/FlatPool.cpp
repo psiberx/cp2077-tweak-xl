@@ -60,6 +60,8 @@ int32_t Red::TweakDB::FlatPool::AllocateDefault(const Red::CBaseRTTIType* aType)
     if (m_bufferEnd != m_tweakDb->flatDataBufferEnd)
         Initialize();
 
+    // TODO: Read and populate original .defaultValues
+
     const auto typeKey = aType->GetName();
     auto offsetIt = m_defaults.find(typeKey);
 
@@ -67,13 +69,11 @@ int32_t Red::TweakDB::FlatPool::AllocateDefault(const Red::CBaseRTTIType* aType)
 
     if (offsetIt == m_defaults.end())
     {
-        offset = AllocateValue(aType, MakeDefaultValue(aType).get());
+        offset = AllocateValue(aType, MakeDefault(aType).get());
 
         if (offset != InvalidOffset)
         {
             m_defaults.emplace(typeKey, offset);
-
-            // TODO: Populate original .defaultValues
 
             SyncBuffer();
         }
@@ -272,4 +272,13 @@ void Red::TweakDB::FlatPool::UpdateStats(float updateTime)
 Red::TweakDB::FlatPool::Stats Red::TweakDB::FlatPool::GetStats() const
 {
     return m_stats;
+}
+
+void Red::TweakDB::FlatPool::Invalidate()
+{
+    m_bufferEnd = 0;
+    m_offsetEnd = 0;
+    m_pools.clear();
+    m_defaults.clear();
+    m_stats = {};
 }

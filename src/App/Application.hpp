@@ -13,8 +13,5 @@ class Application
 {
 public:
     explicit Application(HMODULE aHandle, const RED4ext::Sdk* aSdk = nullptr);
-
-protected:
-    void OnBootstrap() override;
 };
 }

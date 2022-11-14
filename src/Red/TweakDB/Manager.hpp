@@ -34,6 +34,8 @@ public:
     void StartBatch();
     void CommitBatch();
 
+    void InvalidateFlatPool();
+
     Reflection& GetReflection();
 
 private:

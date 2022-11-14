@@ -255,7 +255,7 @@ Red::TweakDBID Red::TweakDB::GetDefaultValueID(Red::CName aTypeName, const std::
     return {flatName.c_str()};
 }
 
-Core::SharedPtr<void> Red::TweakDB::MakeDefaultValue(Red::CName aTypeName)
+Core::SharedPtr<void> Red::TweakDB::MakeDefault(Red::CName aTypeName)
 {
     switch (aTypeName)
     {
@@ -287,14 +287,56 @@ Core::SharedPtr<void> Red::TweakDB::MakeDefaultValue(Red::CName aTypeName)
     case EFlatType::ColorArray: return Core::MakeShared<Red::DynArray<Red::Color>>();
     }
 
-    return nullptr;
+    return {};
 }
 
-Core::SharedPtr<void> Red::TweakDB::MakeDefaultValue(const Red::CBaseRTTIType* aType)
+Core::SharedPtr<void> Red::TweakDB::MakeDefault(const Red::CBaseRTTIType* aType)
 {
     if (!aType)
         return {};
 
-    return MakeDefaultValue(aType->GetName());
+    return MakeDefault(aType->GetName());
 }
 
+Core::SharedPtr<void> Red::TweakDB::CopyValue(Red::CName aTypeName, void* aValue)
+{
+    switch (aTypeName)
+    {
+    case EFlatType::Int32: return Core::MakeShared<int>(*reinterpret_cast<int*>(aValue));
+    case EFlatType::Float: return Core::MakeShared<float>(*reinterpret_cast<float*>(aValue));
+    case EFlatType::Bool: return Core::MakeShared<bool>(*reinterpret_cast<bool*>(aValue));
+    case EFlatType::String: return Core::MakeShared<Red::CString>(*reinterpret_cast<Red::CString*>(aValue));
+    case EFlatType::CName: return Core::MakeShared<Red::CName>(*reinterpret_cast<Red::CName*>(aValue));
+    case EFlatType::TweakDBID: return Core::MakeShared<Red::TweakDBID>(*reinterpret_cast<Red::TweakDBID*>(aValue));
+    case EFlatType::LocKey: return Core::MakeShared<Red::gamedataLocKeyWrapper>(*reinterpret_cast<Red::gamedataLocKeyWrapper*>(aValue));
+    case EFlatType::Resource: return Core::MakeShared<Red::ResourceAsyncReference<>>(*reinterpret_cast<Red::ResourceAsyncReference<>*>(aValue));
+    case EFlatType::Quaternion: return Core::MakeShared<Red::Quaternion>(*reinterpret_cast<Red::Quaternion*>(aValue));
+    case EFlatType::EulerAngles: return Core::MakeShared<Red::EulerAngles>(*reinterpret_cast<Red::EulerAngles*>(aValue));
+    case EFlatType::Vector3: return Core::MakeShared<Red::Vector3>(*reinterpret_cast<Red::Vector3*>(aValue));
+    case EFlatType::Vector2: return Core::MakeShared<Red::Vector2>(*reinterpret_cast<Red::Vector2*>(aValue));
+    case EFlatType::Color: return Core::MakeShared<Red::Color>(*reinterpret_cast<Red::Color*>(aValue));
+    // case EFlatType::Int32Array: return Core::MakeShared<int>(*reinterpret_cast<Red::DynArray<int>*>(aValue));
+    // case EFlatType::FloatArray: return Core::MakeShared<float>(*reinterpret_cast<Red::DynArray<float>*>(aValue));
+    // case EFlatType::BoolArray: return Core::MakeShared<bool>(*reinterpret_cast<Red::DynArray<bool>*>(aValue));
+    // case EFlatType::StringArray: return Core::MakeShared<Red::CString>(*reinterpret_cast<Red::DynArray<Red::CString>*>(aValue));
+    // case EFlatType::CNameArray: return Core::MakeShared<Red::CName>(*reinterpret_cast<Red::DynArray<Red::CName>*>(aValue));
+    // case EFlatType::TweakDBIDArray: return Core::MakeShared<Red::TweakDBID>(*reinterpret_cast<Red::DynArray<Red::TweakDBID>*>(aValue));
+    // case EFlatType::LocKeyArray: return Core::MakeShared<Red::gamedataLocKeyWrapper>(*reinterpret_cast<Red::DynArray<Red::gamedataLocKeyWrapper>*>(aValue));
+    // case EFlatType::ResourceArray: return Core::MakeShared<Red::ResourceAsyncReference<>>(*reinterpret_cast<Red::DynArray<Red::ResourceAsyncReference<>>*>(aValue));
+    // case EFlatType::QuaternionArray: return Core::MakeShared<Red::Quaternion>(*reinterpret_cast<Red::DynArray<Red::Quaternion>*>(aValue));
+    // case EFlatType::EulerAnglesArray: return Core::MakeShared<Red::EulerAngles>(*reinterpret_cast<Red::DynArray<Red::EulerAngles>*>(aValue));
+    // case EFlatType::Vector3Array: return Core::MakeShared<Red::Vector3>(*reinterpret_cast<Red::DynArray<Red::Vector3>*>(aValue));
+    // case EFlatType::Vector2Array: return Core::MakeShared<Red::Vector2>(*reinterpret_cast<Red::DynArray<Red::Vector2>*>(aValue));
+    // case EFlatType::ColorArray: return Core::MakeShared<Red::Color>(*reinterpret_cast<Red::DynArray<Red::Color>*>(aValue));
+    }
+
+    return {};
+}
+
+Core::SharedPtr<void> Red::TweakDB::CopyValue(const Red::CBaseRTTIType* aType, void* aValue)
+{
+    if (!aType)
+        return {};
+
+    return CopyValue(aType->GetName(), aValue);
+}

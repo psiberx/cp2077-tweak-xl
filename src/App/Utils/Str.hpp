@@ -43,4 +43,15 @@ inline bool IsNumeric(const std::string& aIn, size_t aStart = 0)
 {
     return aIn.find_first_not_of("0123456789", aStart) == std::string::npos;
 }
+
+template<typename T>
+requires std::is_integral_v<T>
+inline std::string ToHex(T aValue)
+{
+    constexpr auto max = 2 * sizeof(uint64_t);
+    constexpr auto len = 2 * sizeof(aValue);
+    static char buffer[max + 1];
+    snprintf(buffer, max + 1, "%016X", aValue);
+    return {buffer + (max - len), len};
+}
 };

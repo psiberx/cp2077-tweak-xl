@@ -1,10 +1,12 @@
 #include "TweakImporter.hpp"
 #include "App/Tweaks/Declarative/Yaml/YamlReader.hpp"
 
-App::TweakImporter::TweakImporter(Red::TweakDB::Manager& aManager, std::filesystem::path aTweaksDir)
-    : m_manager(aManager)
-    , m_reflection(aManager.GetReflection())
+App::TweakImporter::TweakImporter(Core::SharedPtr<Red::TweakDB::Manager> aManager,
+                                  std::filesystem::path aTweaksDir,
+                                  Core::SharedPtr<App::TweakChangelog> aChangelog)
+    : m_manager(std::move(aManager))
     , m_tweaksDir(std::move(aTweaksDir))
+    , m_changelog(std::move(aChangelog))
 {
 }
 
@@ -22,7 +24,7 @@ void App::TweakImporter::ImportDir(const std::filesystem::path& aDir)
     {
         LogInfo("Scanning for tweaks...");
 
-        TweakChangeset changeset(m_manager);
+        TweakChangeset changeset;
 
         const auto tweakDir = m_tweaksDir / aDir;
         const auto tweakDirIt = std::filesystem::recursive_directory_iterator(
@@ -59,7 +61,7 @@ void App::TweakImporter::Import(const std::filesystem::path& aPath)
         return;
     }
 
-    TweakChangeset changeset(m_manager);
+    TweakChangeset changeset;
 
     if (ReadFile(changeset, m_tweaksDir / aPath))
         ApplyChangeset(changeset);
@@ -92,7 +94,7 @@ bool App::TweakImporter::ReadFile(App::TweakChangeset& aChangeset, const std::fi
 
         if (ext == L".yaml" || ext == L".yml")
         {
-            reader = Core::MakeShared<YamlReader>(m_manager, m_reflection);
+            reader = Core::MakeShared<YamlReader>(*m_manager);
         }
     }
 
@@ -134,7 +136,7 @@ bool App::TweakImporter::ApplyChangeset(App::TweakChangeset& aChangeset)
 
     LogInfo("Importing tweaks...");
 
-    aChangeset.Commit();
+    aChangeset.Commit(m_manager, m_changelog);
 
     LogInfo("Import completed.");
 

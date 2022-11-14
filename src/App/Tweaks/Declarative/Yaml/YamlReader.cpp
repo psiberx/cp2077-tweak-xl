@@ -1,4 +1,5 @@
 #include "YamlReader.hpp"
+#include "App/Utils/Str.hpp"
 
 namespace
 {
@@ -7,13 +8,18 @@ constexpr auto TypeAttrKey = "$type";
 constexpr auto ValueAttrKey = "$value";
 constexpr auto BaseAttrKey = "$base";
 
-constexpr auto InlineSeparator = "__";
-constexpr auto IndexSeparator = "_";
+constexpr auto InlineSeparator = "$";
 constexpr auto PropSeparator = ".";
+constexpr auto HashSeparator = "|";
 
-constexpr auto ArrayAppendOp = RED4ext::FNV1a64("!append");
-constexpr auto ArrayAppendOnceOp = RED4ext::FNV1a64("!append-once");
-constexpr auto ArrayAppendFromOp = RED4ext::FNV1a64("!append-from");
+constexpr auto AppendOp = RED4ext::FNV1a64("!append");
+constexpr auto AppendOnceOp = RED4ext::FNV1a64("!append-once");
+constexpr auto AppendFromOp = RED4ext::FNV1a64("!append-from");
+constexpr auto PrependOp = RED4ext::FNV1a64("!prepend");
+constexpr auto PrependOnceOp = RED4ext::FNV1a64("!prepend-once");
+constexpr auto PrependFromOp = RED4ext::FNV1a64("!prepend-from");
+constexpr auto MergeOp = RED4ext::FNV1a64("!merge");
+constexpr auto RemoveOp = RED4ext::FNV1a64("!remove");
 
 constexpr auto UIIconType = RED4ext::CName("gamedataUIIcon_Record");
 constexpr auto StringType = RED4ext::CName("String");
@@ -23,13 +29,11 @@ constexpr auto LegacyMembersNodeKey = "members";
 constexpr auto LegacyFlatsNodeKey = "flats";
 constexpr auto LegacyTypeNodeKey = "type";
 constexpr auto LegacyValueNodeKey = "value";
-
-size_t s_globalInlineIndex = 100000;
 }
 
-App::YamlReader::YamlReader(Red::TweakDB::Manager& aManager, Red::TweakDB::Reflection& aReflection)
+App::YamlReader::YamlReader(Red::TweakDB::Manager& aManager)
     : m_manager(aManager)
-    , m_reflection(aReflection)
+    , m_reflection(aManager.GetReflection())
     , m_converter{}
     , m_path{}
     , m_yaml{}
@@ -93,7 +97,31 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, const std::
 
             if (recordType)
             {
-                HandleRecordNode(aChangeset, aName, aName, aNode, recordType);
+                auto cloneAttr = aNode[BaseAttrKey];
+
+                if (cloneAttr.IsDefined())
+                {
+                    const auto sourceId = ResolveTweakDBID(cloneAttr);
+                    const auto sourceType = ResolveRecordType(aChangeset, sourceId);
+
+                    if (!sourceType)
+                    {
+                        LogWarning("{}: Cannot clone [{}], the record doesn't exists.", aName, cloneAttr.Scalar());
+                        break;
+                    }
+
+                    if (sourceType != recordType)
+                    {
+                        LogWarning("{}: Cannot clone [{}], the record has incompatible type.", aName, cloneAttr.Scalar());
+                        break;
+                    }
+
+                    HandleRecordNode(aChangeset, aName, aName, aNode, recordType, sourceId);
+                }
+                else
+                {
+                    HandleRecordNode(aChangeset, aName, aName, aNode, recordType);
+                }
                 break;
             }
         }
@@ -197,12 +225,8 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
 
     if (aType != nullptr)
     {
-        // TODO: Inlined records with suggested type?
-
         if (Red::TweakDB::IsArrayType(aType))
         {
-            // TODO: Extra check that flat exists?
-
             const auto elementType = ResolveFlatType(Red::TweakDB::GetElementType(aType));
 
             if (HandleRelativeChanges(aChangeset, aName, aName, aNode, elementType))
@@ -249,6 +273,8 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
             {
                 aChangeset.UpdateRecord(recordId);
             }
+
+            aChangeset.AssociateRecord(recordId, flatId);
         }
     }
 }
@@ -269,10 +295,24 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
         return;
     }
 
-    // TODO: Notify about overwrites?
-    // if (aChangeset.HasRecord(recordId)) ...
-
     aChangeset.MakeRecord(recordId, aType, aSourceId);
+
+    if (aSourceId.IsValid() && aChangeset.HasRecord(aSourceId))
+    {
+        for (const auto& [_, propInfo] : recordInfo->props)
+        {
+            if (propInfo->isArray)
+            {
+                const auto propId = RED4ext::TweakDBID(recordId, propInfo->appendix);
+                const auto baseId = RED4ext::TweakDBID(aSourceId, propInfo->appendix);
+
+                if (aChangeset.InheritChanges(propId, baseId))
+                {
+                    aChangeset.AssociateRecord(recordId, propId);
+                }
+            }
+        }
+    }
 
     for (const auto& nodeIt : aNode)
     {
@@ -293,7 +333,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
 
         const auto propId = RED4ext::TweakDBID(recordId, propInfo->appendix);
 
-        aChangeset.AssociateRecord(recordId, propKey, propId);
+        aChangeset.AssociateRecord(recordId, propId);
 
         const auto originalData = nodeIt.second;
         YAML::Node overrideData;
@@ -309,21 +349,34 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
 
                     if (itemData.IsMap())
                     {
-                        auto isRelative = IsRelativeChange(itemData);
-                        auto inlineIndex = isRelative ? ++s_globalInlineIndex : itemIndex;
-
                         auto inlinePath = aPath;
                         inlinePath.append(propInfo->appendix);
                         inlinePath.append(PropSeparator);
-                        inlinePath.append(std::to_string(inlineIndex));
+                        inlinePath.append(std::to_string(itemIndex));
+
+                        auto sourceId = RED4ext::TweakDBID();
+                        auto foreignType = propInfo->foreignType;
+
+                        if (!ResolveInlineNode(aChangeset, inlinePath, itemData, foreignType, sourceId))
+                            continue;
+
+                        auto inlineHash = m_path.string();
+                        inlineHash.append(HashSeparator);
+                        inlineHash.append(aName);
+                        inlineHash.append(HashSeparator);
+                        inlineHash.append(nodeKey);
+                        inlineHash.append(HashSeparator);
+                        inlineHash.append(std::to_string(itemIndex));
+                        inlineHash.append(HashSeparator);
+                        inlineHash.append(foreignType->name.ToString());
 
                         auto inlineName = aName;
                         inlineName.append(InlineSeparator);
                         inlineName.append(nodeKey);
-                        inlineName.append(IndexSeparator);
-                        inlineName.append(std::to_string(inlineIndex));
+                        inlineName.append(InlineSeparator);
+                        inlineName.append(ToHex(Red::FNV1a32(inlineHash.c_str(), inlineHash.size())));
 
-                        HandleInlineNode(aChangeset, inlinePath, inlineName, itemData, propInfo->foreignType);
+                        HandleRecordNode(aChangeset, inlinePath, inlineName, itemData, foreignType, sourceId);
 
                         if (overrideData.IsNull())
                         {
@@ -339,6 +392,12 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
             {
                 auto inlinePath = aPath;
                 inlinePath.append(propInfo->appendix);
+
+                auto sourceId = RED4ext::TweakDBID();
+                auto foreignType = propInfo->foreignType;
+
+                if (!ResolveInlineNode(aChangeset, inlinePath, originalData, foreignType, sourceId))
+                    continue;
 
                 auto inlineName = aName;
                 inlineName.append(InlineSeparator);
@@ -359,7 +418,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
                     inlineName.insert(0, "UIIcon.");
                 }
 
-                HandleInlineNode(aChangeset, inlinePath, inlineName, originalData, propInfo->foreignType);
+                HandleRecordNode(aChangeset, inlinePath, inlineName, originalData, foreignType, sourceId);
 
                 // Overwrite inline data with foreign key
                 overrideData = inlineName;
@@ -377,8 +436,6 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
             auto propPath = aPath;
             propPath.append(propInfo->appendix);
 
-            // TODO: Extra check that record exists?
-
             if (HandleRelativeChanges(aChangeset, propPath, propName, nodeData, propInfo->elementType))
                 continue;
         }
@@ -387,23 +444,53 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, const st
 
         if (!propValue)
         {
-            LogError("{}.{}: Invalid value, expected [{}].", aPath, nodeKey, propInfo->type->GetName().ToString());
+            LogError("{}.{}: Invalid value, expected {}.", aPath, nodeKey, propInfo->type->GetName().ToString());
             continue;
         }
 
         aChangeset.SetFlat(propId, propInfo->type, propValue);
+        aChangeset.RegisterName(propId, aName + propInfo->appendix);
     }
 
     aChangeset.RegisterName(recordId, aName);
 }
 
-void App::YamlReader::HandleInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
-                                       const YAML::Node& aNode, const RED4ext::CClass* aType)
+bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath,
+                                        const YAML::Node& aNode, const RED4ext::CClass*& aForeignType,
+                                        RED4ext::TweakDBID aSourceId)
 {
-    auto foreignType = aType;
-    auto sourceId = RED4ext::TweakDBID();
+    {
+        const auto cloneAttr = aNode[BaseAttrKey];
 
-    // User can suggest inline type using attribute
+        if (cloneAttr.IsDefined())
+        {
+            const auto sourceId = ResolveTweakDBID(cloneAttr);
+            const auto sourceType = ResolveRecordType(aChangeset, sourceId);
+
+            if (sourceType)
+            {
+                if (sourceType->IsA(aForeignType))
+                {
+                    aSourceId = sourceId;
+                    aForeignType = sourceType;
+                    return true;
+                }
+                else
+                {
+                    LogError("{}: Cannot inline from [{}], the record has incompatible type.",
+                             aPath, cloneAttr.Scalar());
+                }
+            }
+            else
+            {
+                LogWarning("{}: Cannot clone from [{}], the record doesn't exists.",
+                           aPath, cloneAttr.Scalar());
+            }
+
+            return false;
+        }
+    }
+
     {
         const auto typeAttr = aNode[TypeAttrKey];
 
@@ -413,61 +500,32 @@ void App::YamlReader::HandleInlineNode(App::TweakChangeset& aChangeset, const st
 
             if (suggestedType)
             {
-                if (suggestedType->IsA(foreignType))
+                if (suggestedType->IsA(aForeignType))
                 {
-                    foreignType = suggestedType;
+                    aForeignType = suggestedType;
+                    return true;
                 }
                 else
                 {
                     LogError("{}: Cannot be inlined, provided type [{}] is incompatible with property type.",
                              aPath, typeAttr.Scalar());
-                    return;
                 }
             }
             else
             {
                 LogError("{}: Cannot be inlined, provided type [{}] is not a known record type or abstract.",
                          aPath, typeAttr.Scalar());
-                return;
+
             }
         }
     }
 
-    {
-        const auto cloneAttr = aNode[BaseAttrKey];
-
-        if (cloneAttr.IsDefined())
-        {
-            sourceId = ResolveTweakDBID(cloneAttr);
-            const auto sourceType = ResolveRecordType(aChangeset, sourceId);
-
-            if (sourceType)
-            {
-                if (sourceType->IsA(foreignType))
-                {
-                    foreignType = sourceType;
-                }
-                else
-                {
-                    LogError("{}: Cannot inline from [{}], record has incompatible type.",
-                             aPath, cloneAttr.Scalar());
-                    return;
-                }
-            }
-            else
-            {
-                LogWarning("{}: Cannot clone from [{}], record doesn't exists.",
-                           aPath, cloneAttr.Scalar());
-                return;
-            }
-        }
-    }
-
-    HandleRecordNode(aChangeset, aPath, aName, aNode, foreignType, sourceId);
+    return false;
 }
 
-bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
-                                            const YAML::Node& aNode, const RED4ext::CBaseRTTIType* aElementType)
+bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const std::string& aPath,
+                                            const std::string& aName, const YAML::Node& aNode,
+                                            const RED4ext::CBaseRTTIType* aElementType)
 {
     if (!aNode.IsSequence())
         return false;
@@ -491,24 +549,40 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
 
         switch (tag)
         {
-        case ArrayAppendOp:
-        case ArrayAppendOnceOp:
+        case AppendOp:
+        case AppendOnceOp:
         {
             const auto itemValue = m_converter.Convert(aElementType, itemData);
 
             if (!itemValue)
             {
-                LogError("{}.{}: Invalid value, expected [{}].",
+                LogError("{}.{}: Invalid value, expected {}.",
                          aPath, std::to_string(itemIndex), aElementType->GetName().ToString());
                 continue;
             }
 
-            aChangeset.AppendElement(flatId, aElementType, itemValue, tag == ArrayAppendOnceOp);
-
+            aChangeset.AppendElement(flatId, aElementType, itemValue, tag == AppendOnceOp);
             isRelative = true;
             break;
         }
-        case ArrayAppendFromOp:
+        case PrependOp:
+        case PrependOnceOp:
+        {
+            const auto itemValue = m_converter.Convert(aElementType, itemData);
+
+            if (!itemValue)
+            {
+                LogError("{}.{}: Invalid value, expected {}.",
+                         aPath, std::to_string(itemIndex), aElementType->GetName().ToString());
+                continue;
+            }
+
+            aChangeset.PrependElement(flatId, aElementType, itemValue, tag == PrependOnceOp);
+            isRelative = true;
+            break;
+        }
+        case MergeOp:
+        case AppendFromOp:
         {
             const auto sourceId = ResolveTweakDBID(itemData);
 
@@ -519,7 +593,35 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
             }
 
             aChangeset.AppendFrom(flatId, sourceId);
+            isRelative = true;
+            break;
+        }
+        case PrependFromOp:
+        {
+            const auto sourceId = ResolveTweakDBID(itemData);
 
+            if (!sourceId.IsValid())
+            {
+                LogError("{}.{}: Invalid value, expected [TweakDBID].", aPath, std::to_string(itemIndex));
+                continue;
+            }
+
+            aChangeset.PrependFrom(flatId, sourceId);
+            isRelative = true;
+            break;
+        }
+        case RemoveOp:
+        {
+            const auto itemValue = m_converter.Convert(aElementType, itemData);
+
+            if (!itemValue)
+            {
+                LogError("{}.{}: Invalid value, expected {}.",
+                         aPath, std::to_string(itemIndex), aElementType->GetName().ToString());
+                continue;
+            }
+
+            aChangeset.RemoveElement(flatId, aElementType, itemValue);
             isRelative = true;
             break;
         }
@@ -532,8 +634,8 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
 
     if (isRelative && isAbsolute)
     {
-        LogWarning("{}: Mixed definition with static and relative elements (!append). "
-                   "Only valid relative elements will take effect.", aPath);
+        LogWarning("{}: Mixed definition with array replacement and relative changes. "
+                   "Only relative changes will take effect.", aPath);
     }
 
     return isRelative;
@@ -548,9 +650,14 @@ bool App::YamlReader::IsRelativeChange(const YAML::Node& aNode)
 
     switch (tag)
     {
-    case ArrayAppendOp:
-    case ArrayAppendOnceOp:
-    case ArrayAppendFromOp:
+    case AppendOp:
+    case AppendOnceOp:
+    case AppendFromOp:
+    case PrependOp:
+    case PrependOnceOp:
+    case PrependFromOp:
+    case MergeOp:
+    case RemoveOp:
         return true;
     default:
         return false;
@@ -608,12 +715,15 @@ const RED4ext::CClass* App::YamlReader::ResolveRecordType(App::TweakChangeset& a
 
 RED4ext::TweakDBID App::YamlReader::ResolveTweakDBID(const YAML::Node& aNode)
 {
-    const auto id = m_converter.Convert<RED4ext::TweakDBID>(aNode);
+    if (!aNode.IsDefined())
+        return {};
 
-    if (id)
-        return *id;
+    const auto resolvedId = m_converter.Convert<RED4ext::TweakDBID>(aNode);
 
-    return {};
+    if (!resolvedId)
+        return {};
+
+    return *resolvedId;
 }
 
 void App::YamlReader::ConvertLegacyNodes()

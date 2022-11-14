@@ -2,45 +2,61 @@
 #include "App/Tweaks/Declarative/TweakImporter.hpp"
 #include "App/Tweaks/Executable/TweakExecutor.hpp"
 #include "Red/TweakDB/Manager.hpp"
+#include "Red/TweakDB/Raws.hpp"
 
 App::TweakService::TweakService(std::filesystem::path mTweakDir)
     : m_tweakDir(std::move(mTweakDir))
 {
 }
 
-void App::TweakService::LoadAll()
+void App::TweakService::OnBootstrap()
 {
-    Red::TweakDB::Manager manager;
-    TweakImporter(manager, m_tweakDir).ImportAll();
-    TweakExecutor(manager).ExecuteAll();
+    HookAfter<Raw::LoadTweakDB>([&]() {
+        m_manager = Core::MakeShared<Red::TweakDB::Manager>();
+        m_changelog = Core::MakeShared<App::TweakChangelog>();
+
+        LoadTweaks();
+    });
 }
 
-void App::TweakService::ImportAll()
+void App::TweakService::LoadTweaks()
 {
-    Red::TweakDB::Manager manager;
-    TweakImporter(manager, m_tweakDir).ImportAll();
+    if (m_manager)
+    {
+        TweakImporter(m_manager, m_tweakDir, m_changelog).ImportAll();
+        TweakExecutor(*m_manager).ExecuteAll();
+
+        m_changelog->CheckForIssues(m_manager);
+        m_manager->InvalidateFlatPool();
+    }
 }
 
-void App::TweakService::ImportDir(const std::filesystem::path& aPath)
+void App::TweakService::ImportTweaks()
 {
-    Red::TweakDB::Manager manager;
-    TweakImporter(manager, m_tweakDir).ImportDir(aPath);
+    if (m_manager)
+    {
+        TweakImporter(m_manager, m_tweakDir, m_changelog).ImportAll();
+
+        m_manager->InvalidateFlatPool();
+    }
 }
 
-void App::TweakService::ImportTweak(const std::filesystem::path& aPath)
+void App::TweakService::ExecuteTweaks()
 {
-    Red::TweakDB::Manager manager;
-    TweakImporter(manager, m_tweakDir).Import(aPath);
-}
+    if (m_manager)
+    {
+        TweakExecutor(*m_manager).ExecuteAll();
 
-void App::TweakService::ExecuteAll()
-{
-    Red::TweakDB::Manager manager;
-    TweakExecutor(manager).ExecuteAll();
+        m_manager->InvalidateFlatPool();
+    }
 }
 
 void App::TweakService::ExecuteTweak(RED4ext::CName aName)
 {
-    Red::TweakDB::Manager manager;
-    TweakExecutor(manager).Execute(aName);
+    if (m_manager)
+    {
+        TweakExecutor(*m_manager).Execute(aName);
+
+        m_manager->InvalidateFlatPool();
+    }
 }

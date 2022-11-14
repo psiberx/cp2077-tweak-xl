@@ -33,6 +33,8 @@ public:
 
     [[nodiscard]] Stats GetStats() const;
 
+    void Invalidate();
+
 private:
     struct FlatTypeInfo
     {

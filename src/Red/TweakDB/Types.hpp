@@ -75,6 +75,9 @@ std::string GetRecordShortName(const char* aName);
 
 Red::TweakDBID GetDefaultValueID(Red::CName aTypeName, const std::string& aPropName);
 
-Core::SharedPtr<void> MakeDefaultValue(Red::CName aTypeName);
-Core::SharedPtr<void> MakeDefaultValue(const Red::CBaseRTTIType* aType);
+Core::SharedPtr<void> MakeDefault(Red::CName aTypeName);
+Core::SharedPtr<void> MakeDefault(const Red::CBaseRTTIType* aType);
+
+Core::SharedPtr<void> CopyValue(Red::CName aTypeName, void* aValue);
+Core::SharedPtr<void> CopyValue(const Red::CBaseRTTIType* aType, void* aValue);
 }

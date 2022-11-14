@@ -369,6 +369,11 @@ void Red::TweakDB::Manager::CommitBatch()
     m_batchMode = false;
 }
 
+void Red::TweakDB::Manager::InvalidateFlatPool()
+{
+    m_flatPool.Invalidate();
+}
+
 Red::TweakDB::Reflection& Red::TweakDB::Manager::GetReflection()
 {
     return m_reflection;
