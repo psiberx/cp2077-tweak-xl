@@ -1,7 +1,7 @@
 set_xmakever("2.5.9")
 
 set_project("TweakXL")
-set_version("1.0.8", {build = "%y%m%d%H%M"})
+set_version("1.1.0", {build = "%y%m%d%H%M"})
 
 set_arch("x64")
 set_languages("cxx20", "cxx2a")
@@ -63,6 +63,13 @@ target("semver")
     set_group("vendor")
     add_headerfiles("vendor/semver/include/**.hpp")
     add_includedirs("vendor/semver/include/", { public = true })
+
+target("pegtl")
+    set_default(false)
+    set_kind("static")
+    set_group("vendor")
+    add_headerfiles("vendor/pegtl/include/**.hpp")
+    add_includedirs("vendor/pegtl/include/", { public = true })
 
 target("wil")
     set_default(false)
