@@ -256,14 +256,15 @@ bool Red::TweakDB::Manager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID
 
     {
         std::shared_lock flatLockR(m_tweakDb->mutex00);
-        for (const auto& propIt : recordInfo->props)
+        for (const auto& [_, propInfo] : recordInfo->props)
         {
-            const auto& propInfo = propIt.second;
-
             const auto sourcePropId = Red::TweakDBID(aSourceId, propInfo->appendix);
-            const auto* sourceFlat = fromBatch ? m_batchFlats.Find(sourcePropId) : m_tweakDb->flats.Find(sourcePropId);
+            const auto* sourceFlat = fromBatch ? m_batchFlats.Find(sourcePropId) : m_batchFlats.end();
 
-            assert(sourceFlat->IsValid());
+            if (sourceFlat == m_batchFlats.end())
+            {
+                sourceFlat = m_tweakDb->flats.Find(sourcePropId);
+            }
 
             auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);
             propFlat.SetTDBOffset(sourceFlat->ToTDBOffset());
