@@ -39,7 +39,7 @@ private:
                           const std::string& aName, const YAML::Node& aNode, const RED4ext::CClass* aType,
                           RED4ext::TweakDBID aSourceId = 0);
     bool ResolveInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath, const YAML::Node& aNode,
-                           const RED4ext::CClass*& aForeignType, RED4ext::TweakDBID aSourceId);
+                           const RED4ext::CClass*& aForeignType, RED4ext::TweakDBID& aSourceId);
     bool HandleRelativeChanges(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
                                const YAML::Node& aNode, const RED4ext::CBaseRTTIType* aElementType);
     static bool IsRelativeChange(const YAML::Node& aNode);

@@ -232,12 +232,15 @@ bool Red::TweakDB::Manager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID
     if (record)
         return false;
 
-    bool batch = false;
+    bool fromBatch = false;
     const RecordTypeInfo* recordInfo;
 
     if (source)
     {
         recordInfo = m_reflection.GetRecordInfo(source->GetPtr()->GetType());
+
+        if (m_batchMode && m_batchRecords.contains(aSourceId))
+            fromBatch = true;
     }
     else
     {
@@ -245,7 +248,7 @@ bool Red::TweakDB::Manager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID
             return false;
 
         recordInfo = m_batchRecords.at(aSourceId);
-        batch = true;
+        fromBatch = true;
     }
 
     decltype(m_tweakDb->flats) propFlats;
@@ -258,7 +261,7 @@ bool Red::TweakDB::Manager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID
             const auto& propInfo = propIt.second;
 
             const auto sourcePropId = Red::TweakDBID(aSourceId, propInfo->appendix);
-            const auto* sourceFlat = batch ? m_batchFlats.Find(sourcePropId) : m_tweakDb->flats.Find(sourcePropId);
+            const auto* sourceFlat = fromBatch ? m_batchFlats.Find(sourcePropId) : m_tweakDb->flats.Find(sourcePropId);
 
             assert(sourceFlat->IsValid());
 

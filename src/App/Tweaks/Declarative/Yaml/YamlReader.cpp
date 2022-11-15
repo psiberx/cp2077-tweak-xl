@@ -489,7 +489,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
 
 bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath,
                                         const YAML::Node& aNode, const RED4ext::CClass*& aForeignType,
-                                        RED4ext::TweakDBID aSourceId)
+                                        RED4ext::TweakDBID& aSourceId)
 {
     {
         const auto cloneAttr = aNode[BaseAttrKey];
