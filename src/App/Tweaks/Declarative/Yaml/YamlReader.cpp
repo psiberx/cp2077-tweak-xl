@@ -9,7 +9,7 @@ constexpr auto ValueAttrKey = "$value";
 constexpr auto BaseAttrKey = "$base";
 
 constexpr auto PropModeKey = "$props";
-constexpr auto PropModeAuto = "Auto";
+constexpr auto PropModeAuto = "AutoFlats";
 
 constexpr auto InlineSeparator = "$";
 constexpr auto PropSeparator = ".";
@@ -549,10 +549,12 @@ bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const s
                          aPath, typeAttr.Scalar());
 
             }
+
+            return false;
         }
     }
 
-    return false;
+    return true;
 }
 
 bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const std::string& aPath,
