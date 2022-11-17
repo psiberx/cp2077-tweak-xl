@@ -10,11 +10,11 @@
 namespace App
 {
 class YamlReader
-    : public ITweakReader
+    : public App::ITweakReader
     , public Core::LoggingAgent
 {
 public:
-    YamlReader(Red::TweakDB::Manager& aManager);
+    YamlReader(Core::SharedPtr<Red::TweakDBManager> aManager);
     ~YamlReader() override = default;
 
     bool Load(const std::filesystem::path& aPath) override;
@@ -34,29 +34,29 @@ private:
     void HandleTopNode(TweakChangeset& aChangeset, PropertyMode aPropMode, const std::string& aName,
                        const YAML::Node& aNode);
     void HandleFlatNode(TweakChangeset& aChangeset, const std::string& aName, const YAML::Node& aNode,
-                        const RED4ext::CBaseRTTIType* aType = nullptr);
+                        const Red::CBaseRTTIType* aType = nullptr);
     void HandleRecordNode(TweakChangeset& aChangeset, PropertyMode aPropMode, const std::string& aPath,
-                          const std::string& aName, const YAML::Node& aNode, const RED4ext::CClass* aType,
-                          RED4ext::TweakDBID aSourceId = 0);
+                          const std::string& aName, const YAML::Node& aNode, const Red::CClass* aType,
+                          Red::TweakDBID aSourceId = 0);
     bool ResolveInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath, const YAML::Node& aNode,
-                           const RED4ext::CClass*& aForeignType, RED4ext::TweakDBID& aSourceId);
+                           const Red::CClass*& aForeignType, Red::TweakDBID& aSourceId);
     bool HandleRelativeChanges(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
-                               const YAML::Node& aNode, const RED4ext::CBaseRTTIType* aElementType);
+                               const YAML::Node& aNode, const Red::CBaseRTTIType* aElementType);
     static bool IsRelativeChange(const YAML::Node& aNode);
 
-    const RED4ext::CBaseRTTIType* ResolveFlatType(const YAML::Node& aNode);
-    const RED4ext::CBaseRTTIType* ResolveFlatType(RED4ext::CName aName);
-    const RED4ext::CBaseRTTIType* ResolveFlatType(TweakChangeset& aChangeset, RED4ext::TweakDBID aFlatId);
-    const RED4ext::CClass* ResolveRecordType(const YAML::Node& aNode);
-    const RED4ext::CClass* ResolveRecordType(TweakChangeset& aChangeset, RED4ext::TweakDBID aRecordId);
-    RED4ext::TweakDBID ResolveTweakDBID(const YAML::Node& aNode);
+    const Red::CBaseRTTIType* ResolveFlatType(const YAML::Node& aNode);
+    const Red::CBaseRTTIType* ResolveFlatType(Red::CName aName);
+    const Red::CBaseRTTIType* ResolveFlatType(TweakChangeset& aChangeset, Red::TweakDBID aFlatId);
+    const Red::CClass* ResolveRecordType(const YAML::Node& aNode);
+    const Red::CClass* ResolveRecordType(TweakChangeset& aChangeset, Red::TweakDBID aRecordId);
+    Red::TweakDBID ResolveTweakDBID(const YAML::Node& aNode);
 
     void ConvertLegacyNodes();
 
-    YAML::Node m_yaml;
     std::filesystem::path m_path;
-    Red::TweakDB::Manager& m_manager;
-    Red::TweakDB::Reflection& m_reflection;
+    YAML::Node m_data;
+    Core::SharedPtr<Red::TweakDBManager> m_manager;
+    Core::SharedPtr<Red::TweakDBReflection> m_reflection;
     YamlConverter m_converter;
 };
 }

@@ -1,20 +1,28 @@
 #include "Manager.hpp"
-#include "Raws.hpp"
+#include "Red/TweakDB/Raws.hpp"
 
-Red::TweakDB::Manager::Manager()
-    : Manager(Instance::Get())
+Red::TweakDBManager::TweakDBManager()
+    : TweakDBManager(Red::TweakDB::Get())
 {
 }
 
-Red::TweakDB::Manager::Manager(Instance* aTweakDb)
+Red::TweakDBManager::TweakDBManager(Red::TweakDB* aTweakDb)
     : m_tweakDb(aTweakDb)
-    , m_flatPool(aTweakDb)
-    , m_reflection(aTweakDb)
+    , m_buffer(Core::MakeShared<Red::TweakDBBuffer>(m_tweakDb))
+    , m_reflection(Core::MakeShared<Red::TweakDBReflection>(m_tweakDb))
     , m_batchMode(false)
 {
 }
 
-Red::CStackType Red::TweakDB::Manager::GetFlat(Red::TweakDBID aFlatId)
+Red::TweakDBManager::TweakDBManager(Core::SharedPtr<Red::TweakDBReflection> aReflection)
+    : m_tweakDb(aReflection->GetTweakDB())
+    , m_buffer(Core::MakeShared<Red::TweakDBBuffer>(m_tweakDb))
+    , m_reflection(std::move(aReflection))
+    , m_batchMode(false)
+{
+}
+
+Red::CStackType Red::TweakDBManager::GetFlat(Red::TweakDBID aFlatId)
 {
     if (!aFlatId.IsValid())
         return {};
@@ -25,10 +33,10 @@ Red::CStackType Red::TweakDB::Manager::GetFlat(Red::TweakDBID aFlatId)
     if (flat == m_tweakDb->flats.End())
         return {};
 
-    return m_flatPool.GetData(flat->ToTDBOffset());
+    return m_buffer->GetData(flat->ToTDBOffset());
 }
 
-Red::Handle<Red::gamedataTweakDBRecord> Red::TweakDB::Manager::GetRecord(Red::TweakDBID aRecordId)
+Red::Handle<Red::TweakDBRecord> Red::TweakDBManager::GetRecord(Red::TweakDBID aRecordId)
 {
     if (!aRecordId.IsValid())
         return {};
@@ -43,10 +51,10 @@ Red::Handle<Red::gamedataTweakDBRecord> Red::TweakDB::Manager::GetRecord(Red::Tw
     if (!record)
         return {};
 
-    return *reinterpret_cast<Red::Handle<Red::gamedataTweakDBRecord>*>(record);
+    return *reinterpret_cast<Red::Handle<Red::TweakDBRecord>*>(record);
 }
 
-bool Red::TweakDB::Manager::IsFlatExists(Red::TweakDBID aFlatId)
+bool Red::TweakDBManager::IsFlatExists(Red::TweakDBID aFlatId)
 {
     if (!aFlatId.IsValid())
         return false;
@@ -56,7 +64,7 @@ bool Red::TweakDB::Manager::IsFlatExists(Red::TweakDBID aFlatId)
     return m_tweakDb->flats.Find(aFlatId) != m_tweakDb->flats.End();
 }
 
-bool Red::TweakDB::Manager::IsRecordExists(Red::TweakDBID aRecordId)
+bool Red::TweakDBManager::IsRecordExists(Red::TweakDBID aRecordId)
 {
     if (!aRecordId.IsValid())
         return false;
@@ -66,7 +74,7 @@ bool Red::TweakDB::Manager::IsRecordExists(Red::TweakDBID aRecordId)
     return m_tweakDb->recordsByID.Get(aRecordId) != nullptr;
 }
 
-bool Red::TweakDB::Manager::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
+bool Red::TweakDBManager::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
                                Red::ScriptInstance aValue)
 {
     if (!aValue)
@@ -75,7 +83,7 @@ bool Red::TweakDB::Manager::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTI
     if (!aFlatId.IsValid())
         return false;
 
-    if (!IsFlatType(aType))
+    if (!m_reflection->IsFlatType(aType))
         return false;
 
     std::shared_lock flatLockR(m_tweakDb->mutex00);
@@ -86,9 +94,9 @@ bool Red::TweakDB::Manager::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTI
     {
         flatLockR.unlock();
 
-        auto offset = m_flatPool.AllocateValue(aType, aValue);
+        auto offset = m_buffer->AllocateValue(aType, aValue);
 
-        if (offset == FlatPool::InvalidOffset)
+        if (offset == Red::TweakDBBuffer::InvalidOffset)
             return false;
 
         aFlatId.SetTDBOffset(offset);
@@ -109,7 +117,7 @@ bool Red::TweakDB::Manager::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTI
     }
     else
     {
-        const auto data = m_flatPool.GetData(existing->ToTDBOffset());
+        const auto data = m_buffer->GetData(existing->ToTDBOffset());
 
         flatLockR.unlock();
 
@@ -118,9 +126,9 @@ bool Red::TweakDB::Manager::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTI
 
         if (!data.type->IsEqual(data.value, aValue))
         {
-            auto offset = m_flatPool.AllocateValue(aType, aValue);
+            auto offset = m_buffer->AllocateValue(aType, aValue);
 
-            if (offset == FlatPool::InvalidOffset)
+            if (offset == Red::TweakDBBuffer::InvalidOffset)
                 return false;
 
             if (m_batchMode)
@@ -138,14 +146,14 @@ bool Red::TweakDB::Manager::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTI
     return true;
 }
 
-bool Red::TweakDB::Manager::SetFlat(Red::TweakDBID aFlatId, Red::CStackType aData)
+bool Red::TweakDBManager::SetFlat(Red::TweakDBID aFlatId, Red::CStackType aData)
 {
     return SetFlat(aFlatId, aData.type, aData.value);
 }
 
-bool Red::TweakDB::Manager::CreateRecord(Red::TweakDBID aRecordId, const Red::CClass* aType)
+bool Red::TweakDBManager::CreateRecord(Red::TweakDBID aRecordId, const Red::CClass* aType)
 {
-    if (!IsRecordType(aType))
+    if (!m_reflection->IsRecordType(aType))
         return false;
 
     if (m_batchMode && m_batchRecords.contains(aRecordId))
@@ -162,7 +170,7 @@ bool Red::TweakDB::Manager::CreateRecord(Red::TweakDBID aRecordId, const Red::CC
     if (record)
         return false;
 
-    const auto recordInfo = m_reflection.GetRecordInfo(aType);
+    const auto recordInfo = m_reflection->GetRecordInfo(aType);
 
     decltype(m_tweakDb->flats) propFlats;
     propFlats.Reserve(recordInfo->props.size());
@@ -176,10 +184,10 @@ bool Red::TweakDB::Manager::CreateRecord(Red::TweakDBID aRecordId, const Red::CC
 
             auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);
 
-            if (propInfo->defaultValue != FlatPool::InvalidOffset)
+            if (propInfo->defaultValue != Red::TweakDBBuffer::InvalidOffset)
                 propFlat.SetTDBOffset(propInfo->defaultValue);
             else
-                propFlat.SetTDBOffset(m_flatPool.AllocateDefault(propInfo->type));
+                propFlat.SetTDBOffset(m_buffer->AllocateDefault(propInfo->type));
 
             propFlats.Emplace(propFlat);
         }
@@ -207,7 +215,7 @@ bool Red::TweakDB::Manager::CreateRecord(Red::TweakDBID aRecordId, const Red::CC
     return true;
 }
 
-bool Red::TweakDB::Manager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId)
+bool Red::TweakDBManager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId)
 {
     if (!aRecordId.IsValid())
         return false;
@@ -229,11 +237,11 @@ bool Red::TweakDB::Manager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID
         return false;
 
     bool fromBatch = false;
-    const Reflection::RecordInfo* recordInfo;
+    const Red::TweakDBRecordInfo* recordInfo;
 
     if (source)
     {
-        recordInfo = m_reflection.GetRecordInfo(source->GetPtr()->GetType());
+        recordInfo = m_reflection->GetRecordInfo(source->GetPtr()->GetType());
 
         if (m_batchMode && m_batchRecords.contains(aSourceId))
             fromBatch = true;
@@ -294,7 +302,7 @@ bool Red::TweakDB::Manager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID
     return true;
 }
 
-bool Red::TweakDB::Manager::UpdateRecord(Red::TweakDBID aRecordId)
+bool Red::TweakDBManager::UpdateRecord(Red::TweakDBID aRecordId)
 {
     if (!aRecordId.IsValid())
         return false;
@@ -319,25 +327,25 @@ bool Red::TweakDB::Manager::UpdateRecord(Red::TweakDBID aRecordId)
     }
     else
     {
-        if (!m_tweakDb->UpdateRecord(record->GetPtr<Red::gamedataTweakDBRecord>()))
+        if (!m_tweakDb->UpdateRecord(record->GetPtr<Red::TweakDBRecord>()))
             return false;
     }
 
     return true;
 }
 
-void Red::TweakDB::Manager::RegisterName(Red::TweakDBID aId, const std::string& aName)
+void Red::TweakDBManager::RegisterName(Red::TweakDBID aId, const std::string& aName)
 {
     Red::TweakDBID base;
     Raw::CreateTweakDBID(&base, &aId, aName.c_str());
 }
 
-void Red::TweakDB::Manager::StartBatch()
+void Red::TweakDBManager::StartBatch()
 {
     m_batchMode = true;
 }
 
-void Red::TweakDB::Manager::CommitBatch()
+void Red::TweakDBManager::CommitBatch()
 {
     if (!m_batchMode)
         return;
@@ -362,7 +370,7 @@ void Red::TweakDB::Manager::CommitBatch()
             if (!recordInfo)
             {
                 auto* record = m_tweakDb->recordsByID.Get(recordId);
-                m_tweakDb->UpdateRecord(record->GetPtr<Red::gamedataTweakDBRecord>());
+                m_tweakDb->UpdateRecord(record->GetPtr<Red::TweakDBRecord>());
             }
         }
     }
@@ -372,12 +380,17 @@ void Red::TweakDB::Manager::CommitBatch()
     m_batchMode = false;
 }
 
-void Red::TweakDB::Manager::InvalidateFlatPool()
+void Red::TweakDBManager::Invalidate()
 {
-    m_flatPool.Invalidate();
+    m_buffer->Invalidate();
 }
 
-Red::TweakDB::Reflection& Red::TweakDB::Manager::GetReflection()
+Red::TweakDB* Red::TweakDBManager::GetTweakDB()
+{
+    return m_tweakDb;
+}
+
+Core::SharedPtr<Red::TweakDBReflection>& Red::TweakDBManager::GetReflection()
 {
     return m_reflection;
 }

@@ -1,43 +1,44 @@
 #include "ScriptedManager.hpp"
 
-namespace
+void App::ScriptedManager::SetManager(Core::SharedPtr<Red::TweakDBManager> aManager)
 {
-Red::TweakDB::Manager* s_manager;
+    s_manager = std::move(aManager);
+    s_reflection = s_manager->GetReflection();
 }
 
-App::ScriptedManager::ScriptedManager(Red::TweakDB::Manager& aManager)
-{
-    s_manager = &aManager;
-}
+// App::ScriptedManager::ScriptedManager(Core::SharedPtr<Red::TweakDBManager> aManager)
+// {
+//     s_manager = aManager;
+// }
+//
+// App::ScriptedManager::~ScriptedManager()
+// {
+//     s_manager.reset();
+// }
 
-App::ScriptedManager::~ScriptedManager()
+void App::ScriptedManager::SetFlat(Red::IScriptable*, Red::CStackFrame* aFrame, bool* aRet, void*)
 {
-    s_manager = nullptr;
-}
+    Red::TweakDBID flatID;
+    Red::Variant variant;
 
-void App::ScriptedManager::SetFlat(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aRet, void*)
-{
-    RED4ext::TweakDBID flatID;
-    RED4ext::Variant variant;
-
-    RED4ext::GetParameter(aFrame, &flatID);
-    RED4ext::GetParameter(aFrame, &variant);
+    Red::GetParameter(aFrame, &flatID);
+    Red::GetParameter(aFrame, &variant);
     aFrame->code++;
 
     if (!s_manager)
         return;
 
-    if (Red::TweakDB::IsResRefToken(variant.GetType()))
+    if (s_reflection->IsResRefToken(variant.GetType()))
     {
-        const auto rtti = RED4ext::CRTTISystem::Get();
-        const auto type = rtti->GetType(Red::TweakDB::EFlatType::Resource);
-        variant = RED4ext::Variant(type, variant.GetDataPtr());
+        const auto rtti = Red::CRTTISystem::Get();
+        const auto type = rtti->GetType(Red::ETweakDBFlatType::Resource);
+        variant = Red::Variant(type, variant.GetDataPtr());
     }
-    else if (Red::TweakDB::IsResRefTokenArray(variant.GetType()))
+    else if (s_reflection->IsResRefTokenArray(variant.GetType()))
     {
-        const auto rtti = RED4ext::CRTTISystem::Get();
-        const auto type = rtti->GetType(Red::TweakDB::EFlatType::ResourceArray);
-        variant = RED4ext::Variant(type, variant.GetDataPtr());
+        const auto rtti = Red::CRTTISystem::Get();
+        const auto type = rtti->GetType(Red::ETweakDBFlatType::ResourceArray);
+        variant = Red::Variant(type, variant.GetDataPtr());
     }
 
     // TODO: Convert LocKey
@@ -48,19 +49,19 @@ void App::ScriptedManager::SetFlat(RED4ext::IScriptable*, RED4ext::CStackFrame* 
         *aRet = success;
 }
 
-void App::ScriptedManager::CreateRecord(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aRet, void*)
+void App::ScriptedManager::CreateRecord(Red::IScriptable*, Red::CStackFrame* aFrame, bool* aRet, void*)
 {
-    RED4ext::TweakDBID recordID;
-    RED4ext::CName typeName;
+    Red::TweakDBID recordID;
+    Red::CName typeName;
 
-    RED4ext::GetParameter(aFrame, &recordID);
-    RED4ext::GetParameter(aFrame, &typeName);
+    Red::GetParameter(aFrame, &recordID);
+    Red::GetParameter(aFrame, &typeName);
     aFrame->code++;
 
     if (!s_manager)
         return;
 
-    auto recordType = s_manager->GetReflection().GetRecordType(typeName);
+    auto recordType = s_reflection->GetRecordType(typeName);
 
     if (!recordType)
         return;
@@ -71,13 +72,13 @@ void App::ScriptedManager::CreateRecord(RED4ext::IScriptable*, RED4ext::CStackFr
         *aRet = success;
 }
 
-void App::ScriptedManager::CloneRecord(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aRet, void*)
+void App::ScriptedManager::CloneRecord(Red::IScriptable*, Red::CStackFrame* aFrame, bool* aRet, void*)
 {
-    RED4ext::TweakDBID recordID;
-    RED4ext::TweakDBID sourceID;
+    Red::TweakDBID recordID;
+    Red::TweakDBID sourceID;
 
-    RED4ext::GetParameter(aFrame, &recordID);
-    RED4ext::GetParameter(aFrame, &sourceID);
+    Red::GetParameter(aFrame, &recordID);
+    Red::GetParameter(aFrame, &sourceID);
     aFrame->code++;
 
     if (!s_manager)
@@ -89,11 +90,11 @@ void App::ScriptedManager::CloneRecord(RED4ext::IScriptable*, RED4ext::CStackFra
         *aRet = success;
 }
 
-void App::ScriptedManager::UpdateRecord(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aRet, void*)
+void App::ScriptedManager::UpdateRecord(Red::IScriptable*, Red::CStackFrame* aFrame, bool* aRet, void*)
 {
-    RED4ext::TweakDBID recordID;
+    Red::TweakDBID recordID;
 
-    RED4ext::GetParameter(aFrame, &recordID);
+    Red::GetParameter(aFrame, &recordID);
     aFrame->code++;
 
     if (!s_manager)
@@ -105,17 +106,17 @@ void App::ScriptedManager::UpdateRecord(RED4ext::IScriptable*, RED4ext::CStackFr
         *aRet = success;
 }
 
-void App::ScriptedManager::RegisterName(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aRet, void*)
+void App::ScriptedManager::RegisterName(Red::IScriptable*, Red::CStackFrame* aFrame, bool* aRet, void*)
 {
-    RED4ext::CName name;
+    Red::CName name;
 
-    RED4ext::GetParameter(aFrame, &name);
+    Red::GetParameter(aFrame, &name);
     aFrame->code++;
 
     if (!s_manager || name.IsNone())
         return;
 
-    auto id = RED4ext::TweakDBID(name.ToString());
+    auto id = Red::TweakDBID(name.ToString());
     auto str = std::string(name.ToString());
 
     s_manager->RegisterName(id, str);

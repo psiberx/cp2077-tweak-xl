@@ -33,6 +33,9 @@
 #include <RED4ext/RTTISystem.hpp>
 #include <RED4ext/SortedArray.hpp>
 #include <RED4ext/TweakDB.hpp>
+#include <RED4ext/Scripting/CProperty.hpp>
+#include <RED4ext/Scripting/Functions.hpp>
+#include <RED4ext/Scripting/Stack.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Color.hpp>
 #include <RED4ext/Scripting/Natives/Generated/EulerAngles.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Vector2.hpp>
@@ -47,6 +50,7 @@
 
 #include "Red/Alias.hpp"
 #include "Red/Stl.hpp"
+#include "Red/Value.hpp"
 
 #ifdef VERBOSE
 #include "Red/Log.hpp"

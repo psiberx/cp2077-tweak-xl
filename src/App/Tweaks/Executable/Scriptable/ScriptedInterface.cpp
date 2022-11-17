@@ -1,18 +1,22 @@
 #include "ScriptedInterface.hpp"
-#include "Red/TweakDB/Types.hpp"
 
-void App::ScriptedInterface::GetFlat(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame,
-                                     RED4ext::Variant* aRet, RED4ext::CBaseRTTIType*)
+void App::ScriptedInterface::SetReflection(Core::SharedPtr<Red::TweakDBReflection> aReflection)
 {
-    RED4ext::TweakDBID flatID;
+    s_reflection = std::move(aReflection);
+}
 
-    RED4ext::GetParameter(aFrame, &flatID);
+void App::ScriptedInterface::GetFlat(Red::IScriptable*, Red::CStackFrame* aFrame,
+                                     Red::Variant* aRet, Red::CBaseRTTIType*)
+{
+    Red::TweakDBID flatID;
+
+    Red::GetParameter(aFrame, &flatID);
     aFrame->code++;
 
     if (!aRet)
         return;
 
-    auto* tdb = RED4ext::TweakDB::Get();
+    auto* tdb = Red::TweakDB::Get();
     if (!tdb)
         return;
 
@@ -28,18 +32,18 @@ void App::ScriptedInterface::GetFlat(RED4ext::IScriptable*, RED4ext::CStackFrame
     aRet->Fill(data.type, data.value);
 }
 
-void App::ScriptedInterface::GetRecord(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame,
-                                       RecordHandle* aRet, RED4ext::CRTTIHandleType* aRetType)
+void App::ScriptedInterface::GetRecord(Red::IScriptable*, Red::CStackFrame* aFrame,
+                                       RecordHandle* aRet, Red::CRTTIHandleType* aRetType)
 {
-    RED4ext::TweakDBID recordID;
+    Red::TweakDBID recordID;
 
-    RED4ext::GetParameter(aFrame, &recordID);
+    Red::GetParameter(aFrame, &recordID);
     aFrame->code++;
 
     if (!aRet)
         return;
 
-    auto* tdb = RED4ext::TweakDB::Get();
+    auto* tdb = Red::TweakDB::Get();
     if (!tdb)
         return;
 
@@ -52,18 +56,18 @@ void App::ScriptedInterface::GetRecord(RED4ext::IScriptable*, RED4ext::CStackFra
     aRetType->Assign(aRet, &record);
 }
 
-void App::ScriptedInterface::GetRecords(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame,
-                                        RecordArray* aRet, RED4ext::CRTTIBaseArrayType* aRetType)
+void App::ScriptedInterface::GetRecords(Red::IScriptable*, Red::CStackFrame* aFrame,
+                                        RecordArray* aRet, Red::CRTTIBaseArrayType* aRetType)
 {
-    RED4ext::CName recordTypeName;
+    Red::CName recordTypeName;
 
-    RED4ext::GetParameter(aFrame, &recordTypeName);
+    Red::GetParameter(aFrame, &recordTypeName);
     aFrame->code++;
 
     if (!aRet)
         return;
 
-    auto records = FetchRecords(Red::TweakDB::GetRecordFullName(recordTypeName));
+    auto records = FetchRecords(s_reflection->GetRecordFullName(recordTypeName));
 
     if (records->size <= 0)
         return;
@@ -71,11 +75,11 @@ void App::ScriptedInterface::GetRecords(RED4ext::IScriptable*, RED4ext::CStackFr
     aRetType->Assign(aRet, records);
 }
 
-void App::ScriptedInterface::GetRecordCount(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, uint32_t* aRet, void*)
+void App::ScriptedInterface::GetRecordCount(Red::IScriptable*, Red::CStackFrame* aFrame, uint32_t* aRet, void*)
 {
-    RED4ext::CName recordTypeName;
+    Red::CName recordTypeName;
 
-    RED4ext::GetParameter(aFrame, &recordTypeName);
+    Red::GetParameter(aFrame, &recordTypeName);
     aFrame->code++;
 
     if (!aRet)
@@ -86,14 +90,14 @@ void App::ScriptedInterface::GetRecordCount(RED4ext::IScriptable*, RED4ext::CSta
     *aRet = records->size;
 }
 
-void App::ScriptedInterface::GetRecordByIndex(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame,
-                                              RecordHandle* aRet, RED4ext::CRTTIHandleType* aRetType)
+void App::ScriptedInterface::GetRecordByIndex(Red::IScriptable*, Red::CStackFrame* aFrame,
+                                              RecordHandle* aRet, Red::CRTTIHandleType* aRetType)
 {
-    RED4ext::CName recordTypeName;
+    Red::CName recordTypeName;
     uint32_t recordIndex;
 
-    RED4ext::GetParameter(aFrame, &recordTypeName);
-    RED4ext::GetParameter(aFrame, &recordIndex);
+    Red::GetParameter(aFrame, &recordTypeName);
+    Red::GetParameter(aFrame, &recordIndex);
     aFrame->code++;
 
     if (!aRet)
@@ -110,9 +114,9 @@ void App::ScriptedInterface::GetRecordByIndex(RED4ext::IScriptable*, RED4ext::CS
     aRetType->Assign(aRet, &records->entries[recordIndex]);
 }
 
-App::ScriptedInterface::ScriptableArray* App::ScriptedInterface::FetchRecords(RED4ext::CName aTypeName)
+App::ScriptedInterface::ScriptableArray* App::ScriptedInterface::FetchRecords(Red::CName aTypeName)
 {
-    auto* rtti = RED4ext::CRTTISystem::Get();
+    auto* rtti = Red::CRTTISystem::Get();
     if (!rtti)
         return nullptr;
 
@@ -120,11 +124,11 @@ App::ScriptedInterface::ScriptableArray* App::ScriptedInterface::FetchRecords(RE
     if (!recordType)
         return nullptr;
 
-    auto* tdb = RED4ext::TweakDB::Get();
+    auto* tdb = Red::TweakDB::Get();
     if (!tdb)
         return nullptr;
 
-    std::shared_lock<RED4ext::SharedMutex> _(tdb->mutex01);
+    std::shared_lock<Red::SharedMutex> _(tdb->mutex01);
 
     return tdb->recordsByType.Get(recordType);
 }

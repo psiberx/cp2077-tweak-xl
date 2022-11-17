@@ -8,19 +8,24 @@ namespace App
 class ScriptedManager : public Red::Rtti::Class<ScriptedManager>
 {
 public:
-    ScriptedManager() = default;
-    explicit ScriptedManager(Red::TweakDB::Manager& aManager);
-    ~ScriptedManager() override;
+    // ScriptedManager() = default;
+    // explicit ScriptedManager(Core::SharedPtr<Red::TweakDBManager> aManager);
+    // ~ScriptedManager() override;
+
+    static void SetManager(Core::SharedPtr<Red::TweakDBManager> aManager);
 
 private:
-    static void SetFlat(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, bool* aRet, void*);
-    static void CreateRecord(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, bool* aRet, void*);
-    static void CloneRecord(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, bool* aRet, void*);
-    static void UpdateRecord(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, bool* aRet, void*);
-    static void RegisterName(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, bool* aRet, void*);
+    static void SetFlat(Red::IScriptable* aContext, Red::CStackFrame* aFrame, bool* aRet, void*);
+    static void CreateRecord(Red::IScriptable* aContext, Red::CStackFrame* aFrame, bool* aRet, void*);
+    static void CloneRecord(Red::IScriptable* aContext, Red::CStackFrame* aFrame, bool* aRet, void*);
+    static void UpdateRecord(Red::IScriptable* aContext, Red::CStackFrame* aFrame, bool* aRet, void*);
+    static void RegisterName(Red::IScriptable* aContext, Red::CStackFrame* aFrame, bool* aRet, void*);
 
     friend Descriptor;
     static void OnRegister(Descriptor* aType);
     static void OnDescribe(Descriptor* aType);
+
+    inline static Core::SharedPtr<Red::TweakDBManager> s_manager;
+    inline static Core::SharedPtr<Red::TweakDBReflection> s_reflection;
 };
 }

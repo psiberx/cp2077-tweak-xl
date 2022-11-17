@@ -1,21 +1,22 @@
 #include "TweakImporter.hpp"
+#include "App/Tweaks/Declarative/TweakChangeset.hpp"
 #include "App/Tweaks/Declarative/Yaml/YamlReader.hpp"
 
-App::TweakImporter::TweakImporter(Core::SharedPtr<Red::TweakDB::Manager> aManager,
-                                  std::filesystem::path aTweaksDir,
-                                  Core::SharedPtr<App::TweakChangelog> aChangelog)
+App::TweakImporter::TweakImporter(Core::SharedPtr<Red::TweakDBManager> aManager,
+                                  Core::SharedPtr<App::TweakChangelog> aChangelog,
+                                  std::filesystem::path aTweaksDir)
     : m_manager(std::move(aManager))
-    , m_tweaksDir(std::move(aTweaksDir))
     , m_changelog(std::move(aChangelog))
+    , m_tweaksDir(std::move(aTweaksDir))
 {
 }
 
-void App::TweakImporter::ImportAll()
+void App::TweakImporter::ImportTweaks()
 {
-    ImportDir("");
+    ImportTweaks("");
 }
 
-void App::TweakImporter::ImportDir(const std::filesystem::path& aDir)
+void App::TweakImporter::ImportTweaks(const std::filesystem::path& aDir)
 {
     if (!EnsureDirExists())
         return;
@@ -50,7 +51,7 @@ void App::TweakImporter::ImportDir(const std::filesystem::path& aDir)
     }
 }
 
-void App::TweakImporter::Import(const std::filesystem::path& aPath)
+void App::TweakImporter::ImportTweak(const std::filesystem::path& aPath)
 {
     if (!EnsureDirExists())
         return;
@@ -94,7 +95,7 @@ bool App::TweakImporter::ReadFile(App::TweakChangeset& aChangeset, const std::fi
 
         if (ext == L".yaml" || ext == L".yml")
         {
-            reader = Core::MakeShared<YamlReader>(*m_manager);
+            reader = Core::MakeShared<YamlReader>(m_manager);
         }
     }
 

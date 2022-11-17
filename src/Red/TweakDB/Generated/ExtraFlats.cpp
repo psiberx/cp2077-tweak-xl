@@ -3,7 +3,7 @@
 
 #include "Red/TweakDB/Reflection.hpp"
 
-const Core::Map<Red::CName, Core::Vector<Red::TweakDB::Reflection::ExtraFlat>> Red::TweakDB::Reflection::s_extraFlats = {
+Red::TweakDBReflection::ExtraFlatMap Red::TweakDBReflection::s_extraFlats = {
     {"gamedataSubCharacter_Record", {
         {"Bool", "None", ".humanoid"},
         {"Float", "None", ".tiltAngleOnSpeed"},

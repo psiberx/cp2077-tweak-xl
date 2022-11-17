@@ -15,17 +15,17 @@ constexpr auto InlineSeparator = "$";
 constexpr auto PropSeparator = ".";
 constexpr auto HashSeparator = "|";
 
-constexpr auto AppendOp = RED4ext::FNV1a64("!append");
-constexpr auto AppendOnceOp = RED4ext::FNV1a64("!append-once");
-constexpr auto AppendFromOp = RED4ext::FNV1a64("!append-from");
-constexpr auto PrependOp = RED4ext::FNV1a64("!prepend");
-constexpr auto PrependOnceOp = RED4ext::FNV1a64("!prepend-once");
-constexpr auto PrependFromOp = RED4ext::FNV1a64("!prepend-from");
-constexpr auto MergeOp = RED4ext::FNV1a64("!merge");
-constexpr auto RemoveOp = RED4ext::FNV1a64("!remove");
+constexpr auto AppendOp = Red::FNV1a64("!append");
+constexpr auto AppendOnceOp = Red::FNV1a64("!append-once");
+constexpr auto AppendFromOp = Red::FNV1a64("!append-from");
+constexpr auto PrependOp = Red::FNV1a64("!prepend");
+constexpr auto PrependOnceOp = Red::FNV1a64("!prepend-once");
+constexpr auto PrependFromOp = Red::FNV1a64("!prepend-from");
+constexpr auto MergeOp = Red::FNV1a64("!merge");
+constexpr auto RemoveOp = Red::FNV1a64("!remove");
 
-constexpr auto UIIconType = RED4ext::CName("gamedataUIIcon_Record");
-constexpr auto StringType = RED4ext::CName("String");
+constexpr auto UIIconType = Red::CName("gamedataUIIcon_Record");
+constexpr auto StringType = Red::CName("String");
 
 constexpr auto LegacyGroupsNodeKey = "groups";
 constexpr auto LegacyMembersNodeKey = "members";
@@ -34,32 +34,32 @@ constexpr auto LegacyTypeNodeKey = "type";
 constexpr auto LegacyValueNodeKey = "value";
 }
 
-App::YamlReader::YamlReader(Red::TweakDB::Manager& aManager)
-    : m_manager(aManager)
-    , m_reflection(aManager.GetReflection())
+App::YamlReader::YamlReader(Core::SharedPtr<Red::TweakDBManager> aManager)
+    : m_manager(std::move(aManager))
+    , m_reflection(m_manager->GetReflection())
     , m_converter{}
     , m_path{}
-    , m_yaml{}
+    , m_data{}
 {
 }
 
 bool App::YamlReader::Load(const std::filesystem::path& aPath)
 {
     m_path = aPath;
-    m_yaml = YAML::LoadFile(aPath.string());
+    m_data = YAML::LoadFile(aPath.string());
 
     return IsLoaded();
 }
 
 bool App::YamlReader::IsLoaded() const
 {
-    return m_yaml.IsDefined() && !m_yaml.IsNull();
+    return m_data.IsDefined() && !m_data.IsNull();
 }
 
 void App::YamlReader::Unload()
 {
     m_path = "";
-    m_yaml = YAML::Node();
+    m_data = YAML::Node();
 }
 
 void App::YamlReader::Read(App::TweakChangeset& aChangeset)
@@ -67,7 +67,7 @@ void App::YamlReader::Read(App::TweakChangeset& aChangeset)
     if (!IsLoaded())
         return;
 
-    if (!m_yaml.IsMap())
+    if (!m_data.IsMap())
     {
         LogError("Bad format. Unexpected data at the top level.");
         return;
@@ -75,9 +75,9 @@ void App::YamlReader::Read(App::TweakChangeset& aChangeset)
 
     ConvertLegacyNodes();
 
-    auto propMode = ResolvePropertyMode(m_yaml);
+    auto propMode = ResolvePropertyMode(m_data);
 
-    for (const auto& it : m_yaml)
+    for (const auto& it : m_data)
     {
         HandleTopNode(aChangeset, propMode, it.first.Scalar(), it.second);
     }
@@ -104,7 +104,7 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
         return;
     }
 
-    const auto targetId = RED4ext::TweakDBID(aName);
+    const auto targetId = Red::TweakDBID(aName);
 
     switch (aNode.Type())
     {
@@ -216,7 +216,7 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
     case YAML::NodeType::Scalar:
     case YAML::NodeType::Sequence:
     {
-        const auto flat = m_manager.GetFlat(targetId);
+        const auto flat = m_manager->GetFlat(targetId);
 
         if (!flat.value)
         {
@@ -236,16 +236,16 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 }
 
 void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std::string& aName, const YAML::Node& aNode,
-                                     const RED4ext::CBaseRTTIType* aType)
+                                     const Red::CBaseRTTIType* aType)
 {
-    const RED4ext::CBaseRTTIType* flatType;
+    const Red::CBaseRTTIType* flatType;
     Core::SharedPtr<void> flatValue;
 
     if (aType != nullptr)
     {
-        if (Red::TweakDB::IsArrayType(aType))
+        if (m_reflection->IsArrayType(aType))
         {
-            const auto elementType = ResolveFlatType(Red::TweakDB::GetElementType(aType));
+            const auto elementType = ResolveFlatType(m_reflection->GetElementType(aType));
 
             if (HandleRelativeChanges(aChangeset, aName, aName, aNode, elementType))
                 return;
@@ -270,11 +270,11 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
             return;
         }
 
-        flatType = m_reflection.GetFlatType(x.first);
+        flatType = m_reflection->GetFlatType(x.first);
         flatValue = x.second;
     }
 
-    const auto flatId = RED4ext::TweakDBID(aName);
+    const auto flatId = Red::TweakDBID(aName);
 
     aChangeset.SetFlat(flatId, flatType, flatValue);
     aChangeset.RegisterName(flatId, aName);
@@ -287,7 +287,7 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
             const auto recordName = aName.substr(0, separatorPos);
             const auto recordId = Red::TweakDBID(recordName);
 
-            if (m_manager.IsRecordExists(recordId))
+            if (m_manager->IsRecordExists(recordId))
             {
                 aChangeset.UpdateRecord(recordId);
             }
@@ -299,15 +299,15 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
 
 void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, PropertyMode aPropMode,
                                        const std::string& aPath, const std::string& aName,
-                                       const YAML::Node& aNode, const RED4ext::CClass* aType,
-                                       RED4ext::TweakDBID aSourceId)
+                                       const YAML::Node& aNode, const Red::CClass* aType,
+                                       Red::TweakDBID aSourceId)
 {
-    const auto recordId = RED4ext::TweakDBID(aName);
-    const auto recordInfo = m_reflection.GetRecordInfo(aType);
+    const auto recordId = Red::TweakDBID(aName);
+    const auto recordInfo = m_reflection->GetRecordInfo(aType);
 
     if (!recordInfo)
     {
-        if (Red::TweakDB::IsRecordType(aType))
+        if (m_reflection->IsRecordType(aType))
             LogError("{}: Cannot create record, the record type [{}] is abstract.", aPath, aType->name.ToString());
         else
             LogError("{}: Cannot create record, the record type [{}] is unknown.", aPath, aType->name.ToString());
@@ -326,8 +326,8 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
             {
                 if (inChangeset && propInfo->isArray)
                 {
-                    const auto propId = RED4ext::TweakDBID(recordId, propInfo->appendix);
-                    const auto baseId = RED4ext::TweakDBID(aSourceId, propInfo->appendix);
+                    const auto propId = Red::TweakDBID(recordId, propInfo->appendix);
+                    const auto baseId = Red::TweakDBID(aSourceId, propInfo->appendix);
 
                     if (aChangeset.InheritChanges(propId, baseId))
                     {
@@ -337,7 +337,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
 
                 if (!propInfo->offset)
                 {
-                    const auto propId = RED4ext::TweakDBID(recordId, propInfo->appendix);
+                    const auto propId = Red::TweakDBID(recordId, propInfo->appendix);
                     const auto propName = aName + propInfo->appendix;
 
                     aChangeset.RegisterName(propId, propName);
@@ -356,7 +356,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
         if (nodeKey[0] == AttrSymbol)
             continue;
 
-        const auto propKey = RED4ext::CName(nodeKey.c_str());
+        const auto propKey = Red::CName(nodeKey.c_str());
         const auto propInfo = recordInfo->GetPropInfo(propKey);
 
         if (!propInfo)
@@ -376,7 +376,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
             continue;
         }
 
-        const auto propId = RED4ext::TweakDBID(recordId, propInfo->appendix);
+        const auto propId = Red::TweakDBID(recordId, propInfo->appendix);
 
         aChangeset.AssociateRecord(recordId, propId);
 
@@ -399,7 +399,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
                         inlinePath.append(PropSeparator);
                         inlinePath.append(std::to_string(itemIndex));
 
-                        auto sourceId = RED4ext::TweakDBID();
+                        auto sourceId = Red::TweakDBID();
                         auto foreignType = propInfo->foreignType;
 
                         if (!ResolveInlineNode(aChangeset, inlinePath, itemData, foreignType, sourceId))
@@ -438,7 +438,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
                 auto inlinePath = aPath;
                 inlinePath.append(propInfo->appendix);
 
-                auto sourceId = RED4ext::TweakDBID();
+                auto sourceId = Red::TweakDBID();
                 auto foreignType = propInfo->foreignType;
 
                 if (!ResolveInlineNode(aChangeset, inlinePath, originalData, foreignType, sourceId))
@@ -455,8 +455,8 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
                     // So if parent record has .iconPath property then auto fill it with our inline icon name.
                     if (recordInfo->props.contains("iconPath") && !aNode["iconPath"])
                     {
-                        aChangeset.SetFlat(RED4ext::TweakDBID(recordId, ".iconPath"), ResolveFlatType("String"),
-                                       Core::MakeShared<RED4ext::CString>(inlineName.c_str()));
+                        aChangeset.SetFlat(Red::TweakDBID(recordId, ".iconPath"), ResolveFlatType("String"),
+                                       Core::MakeShared<Red::CString>(inlineName.c_str()));
                     }
 
                     // Then force type prefix to make it accessible by short name that we just set in .iconPath.
@@ -501,8 +501,8 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
 }
 
 bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath,
-                                        const YAML::Node& aNode, const RED4ext::CClass*& aForeignType,
-                                        RED4ext::TweakDBID& aSourceId)
+                                        const YAML::Node& aNode, const Red::CClass*& aForeignType,
+                                        Red::TweakDBID& aSourceId)
 {
     {
         const auto cloneAttr = aNode[BaseAttrKey];
@@ -572,12 +572,12 @@ bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const s
 
 bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const std::string& aPath,
                                             const std::string& aName, const YAML::Node& aNode,
-                                            const RED4ext::CBaseRTTIType* aElementType)
+                                            const Red::CBaseRTTIType* aElementType)
 {
     if (!aNode.IsSequence())
         return false;
 
-    const auto flatId = RED4ext::TweakDBID(aName);
+    const auto flatId = Red::TweakDBID(aName);
 
     bool isRelative = false;
     bool isAbsolute = false;
@@ -592,7 +592,7 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
             continue;
         }
 
-        const auto tag = RED4ext::FNV1a64(itemData.Tag().c_str());
+        const auto tag = Red::FNV1a64(itemData.Tag().c_str());
 
         switch (tag)
         {
@@ -693,7 +693,7 @@ bool App::YamlReader::IsRelativeChange(const YAML::Node& aNode)
     if (aNode.Tag().length() <= 1)
         return false;
 
-    const auto tag = RED4ext::FNV1a64(aNode.Tag().c_str());
+    const auto tag = Red::FNV1a64(aNode.Tag().c_str());
 
     switch (tag)
     {
@@ -711,20 +711,20 @@ bool App::YamlReader::IsRelativeChange(const YAML::Node& aNode)
     }
 }
 
-const RED4ext::CBaseRTTIType* App::YamlReader::ResolveFlatType(const YAML::Node& aNode)
+const Red::CBaseRTTIType* App::YamlReader::ResolveFlatType(const YAML::Node& aNode)
 {
-    return m_reflection.GetFlatType(aNode.Scalar().c_str());
+    return m_reflection->GetFlatType(aNode.Scalar().c_str());
 }
 
-const RED4ext::CBaseRTTIType* App::YamlReader::ResolveFlatType(RED4ext::CName aName)
+const Red::CBaseRTTIType* App::YamlReader::ResolveFlatType(Red::CName aName)
 {
-    return m_reflection.GetFlatType(aName);
+    return m_reflection->GetFlatType(aName);
 }
 
-const RED4ext::CBaseRTTIType* App::YamlReader::ResolveFlatType(App::TweakChangeset& aChangeset,
-                                                               RED4ext::TweakDBID aFlatId)
+const Red::CBaseRTTIType* App::YamlReader::ResolveFlatType(App::TweakChangeset& aChangeset,
+                                                               Red::TweakDBID aFlatId)
 {
-    const auto existingFlat = m_manager.GetFlat(aFlatId);
+    const auto existingFlat = m_manager->GetFlat(aFlatId);
     if (existingFlat.value)
     {
         return existingFlat.type;
@@ -739,14 +739,14 @@ const RED4ext::CBaseRTTIType* App::YamlReader::ResolveFlatType(App::TweakChanges
     return nullptr;
 }
 
-const RED4ext::CClass* App::YamlReader::ResolveRecordType(const YAML::Node& aNode)
+const Red::CClass* App::YamlReader::ResolveRecordType(const YAML::Node& aNode)
 {
-    return m_reflection.GetRecordType(aNode.Scalar().c_str());
+    return m_reflection->GetRecordType(aNode.Scalar().c_str());
 }
 
-const RED4ext::CClass* App::YamlReader::ResolveRecordType(App::TweakChangeset& aChangeset, RED4ext::TweakDBID aRecordId)
+const Red::CClass* App::YamlReader::ResolveRecordType(App::TweakChangeset& aChangeset, Red::TweakDBID aRecordId)
 {
-    const auto existingRecord = m_manager.GetRecord(aRecordId);
+    const auto existingRecord = m_manager->GetRecord(aRecordId);
     if (existingRecord)
     {
         return existingRecord->GetType();
@@ -761,12 +761,12 @@ const RED4ext::CClass* App::YamlReader::ResolveRecordType(App::TweakChangeset& a
     return nullptr;
 }
 
-RED4ext::TweakDBID App::YamlReader::ResolveTweakDBID(const YAML::Node& aNode)
+Red::TweakDBID App::YamlReader::ResolveTweakDBID(const YAML::Node& aNode)
 {
     if (!aNode.IsDefined())
         return {};
 
-    const auto resolvedId = m_converter.Convert<RED4ext::TweakDBID>(aNode);
+    const auto resolvedId = m_converter.Convert<Red::TweakDBID>(aNode);
 
     if (!resolvedId)
         return {};
@@ -776,7 +776,7 @@ RED4ext::TweakDBID App::YamlReader::ResolveTweakDBID(const YAML::Node& aNode)
 
 void App::YamlReader::ConvertLegacyNodes()
 {
-    const auto groupsNode = m_yaml[LegacyGroupsNodeKey];
+    const auto groupsNode = m_data[LegacyGroupsNodeKey];
 
     if (groupsNode.IsMap())
     {
@@ -814,13 +814,13 @@ void App::YamlReader::ConvertLegacyNodes()
                 convertedNode[memberKey] = memberValueNode;
             }
 
-            m_yaml[groupKey] = convertedNode;
+            m_data[groupKey] = convertedNode;
         }
 
-        m_yaml.remove(LegacyGroupsNodeKey);
+        m_data.remove(LegacyGroupsNodeKey);
     }
 
-    const auto flatsNode = m_yaml[LegacyFlatsNodeKey];
+    const auto flatsNode = m_data[LegacyFlatsNodeKey];
 
     if (flatsNode.IsMap())
     {
@@ -842,9 +842,9 @@ void App::YamlReader::ConvertLegacyNodes()
             convertedNode[TypeAttrKey] = flatTypeNode;
             convertedNode[ValueAttrKey] = flatValueNode;
 
-            m_yaml[flatKey] = convertedNode;
+            m_data[flatKey] = convertedNode;
         }
 
-        m_yaml.remove(LegacyFlatsNodeKey);
+        m_data.remove(LegacyFlatsNodeKey);
     }
 }

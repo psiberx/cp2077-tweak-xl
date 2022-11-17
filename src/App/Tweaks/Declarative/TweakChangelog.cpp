@@ -1,6 +1,6 @@
 #include "TweakChangelog.hpp"
 
-bool App::TweakChangelog::AssociateRecord(RED4ext::TweakDBID aRecordId, RED4ext::TweakDBID aFlatId)
+bool App::TweakChangelog::AssociateRecord(Red::TweakDBID aRecordId, Red::TweakDBID aFlatId)
 {
     if (!aRecordId.IsValid() || !aFlatId.IsValid())
         return false;
@@ -10,7 +10,7 @@ bool App::TweakChangelog::AssociateRecord(RED4ext::TweakDBID aRecordId, RED4ext:
     return true;
 }
 
-bool App::TweakChangelog::RegisterInsertion(RED4ext::TweakDBID aFlatId, int32_t aIndex,
+bool App::TweakChangelog::RegisterInsertion(Red::TweakDBID aFlatId, int32_t aIndex,
                                             const Core::SharedPtr<void>& aValue)
 {
     if (!aFlatId.IsValid() || !aValue)
@@ -22,7 +22,7 @@ bool App::TweakChangelog::RegisterInsertion(RED4ext::TweakDBID aFlatId, int32_t 
     return true;
 }
 
-bool App::TweakChangelog::RegisterDeletion(RED4ext::TweakDBID aFlatId, int32_t aIndex,
+bool App::TweakChangelog::RegisterDeletion(Red::TweakDBID aFlatId, int32_t aIndex,
                                            const Core::SharedPtr<void>& aValue)
 {
     if (!aFlatId.IsValid() || !aValue)
@@ -34,17 +34,17 @@ bool App::TweakChangelog::RegisterDeletion(RED4ext::TweakDBID aFlatId, int32_t a
     return true;
 }
 
-void App::TweakChangelog::ForgetChanges(RED4ext::TweakDBID aFlatId)
+void App::TweakChangelog::ForgetChanges(Red::TweakDBID aFlatId)
 {
     m_alterings.erase(aFlatId);
 }
 
-void App::TweakChangelog::RegisterForeignKey(RED4ext::TweakDBID aForeignKey)
+void App::TweakChangelog::RegisterForeignKey(Red::TweakDBID aForeignKey)
 {
     m_foreignKeys.insert(aForeignKey);
 }
 
-void App::TweakChangelog::ForgetForeignKey(RED4ext::TweakDBID aForeignKey)
+void App::TweakChangelog::ForgetForeignKey(Red::TweakDBID aForeignKey)
 {
     m_foreignKeys.erase(aForeignKey);
 }
@@ -54,12 +54,12 @@ void App::TweakChangelog::ForgetForeignKeys()
     m_foreignKeys.clear();
 }
 
-void App::TweakChangelog::RegisterName(RED4ext::TweakDBID aId, const std::string& aName)
+void App::TweakChangelog::RegisterName(Red::TweakDBID aId, const std::string& aName)
 {
     m_knownNames[aId] = aName;
 }
 
-void App::TweakChangelog::CheckForIssues(Core::SharedPtr<Red::TweakDB::Manager>& aManager)
+void App::TweakChangelog::CheckForIssues(Core::SharedPtr<Red::TweakDBManager>& aManager)
 {
     for (const auto& foreignKey : m_foreignKeys)
     {
@@ -70,7 +70,7 @@ void App::TweakChangelog::CheckForIssues(Core::SharedPtr<Red::TweakDB::Manager>&
     }
 }
 
-void App::TweakChangelog::RevertChanges(Core::SharedPtr<Red::TweakDB::Manager>& aManager)
+void App::TweakChangelog::RevertChanges(Core::SharedPtr<Red::TweakDBManager>& aManager)
 {
     for (const auto& [flatId, altering] : m_alterings)
     {
@@ -82,13 +82,13 @@ void App::TweakChangelog::RevertChanges(Core::SharedPtr<Red::TweakDB::Manager>& 
             continue;
         }
 
-        if (flatData.type->GetType() != RED4ext::ERTTIType::Array)
+        if (flatData.type->GetType() != Red::ERTTIType::Array)
         {
             LogWarning("Cannot restore [{}], it's not an array.", AsString(flatId));
             continue;
         }
 
-        auto arrayType = reinterpret_cast<RED4ext::CRTTIArrayType*>(flatData.type);
+        auto arrayType = reinterpret_cast<Red::CRTTIArrayType*>(flatData.type);
         auto elementType = arrayType->innerType;
         auto canRestore = true;
 
@@ -132,7 +132,7 @@ void App::TweakChangelog::RevertChanges(Core::SharedPtr<Red::TweakDB::Manager>& 
             continue;
         }
 
-        auto restoredArray = Red::TweakDB::MakeDefault(arrayType);
+        auto restoredArray = aManager->GetReflection()->Construct(arrayType);
         arrayType->Assign(restoredArray.get(), flatData.value);
 
         for (const auto& [insertionIndex, insertionValue] : altering.insertions | std::views::reverse)
@@ -163,7 +163,7 @@ void App::TweakChangelog::RevertChanges(Core::SharedPtr<Red::TweakDB::Manager>& 
     m_alterings.clear();
 }
 
-std::string App::TweakChangelog::AsString(RED4ext::TweakDBID aId)
+std::string App::TweakChangelog::AsString(Red::TweakDBID aId)
 {
     const auto name = m_knownNames.find(aId);
 

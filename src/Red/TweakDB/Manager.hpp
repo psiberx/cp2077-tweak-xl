@@ -1,20 +1,20 @@
 #pragma once
 
-#include "Alias.hpp"
-#include "FlatPool.hpp"
-#include "Reflection.hpp"
-#include "Types.hpp"
+#include "Red/TweakDB/Alias.hpp"
+#include "Red/TweakDB/Buffer.hpp"
+#include "Red/TweakDB/Reflection.hpp"
 
-namespace Red::TweakDB
+namespace Red
 {
-class Manager
+class TweakDBManager
 {
 public:
-    Manager();
-    explicit Manager(Instance* aTweakDb);
+    TweakDBManager();
+    explicit TweakDBManager(Red::TweakDB* aTweakDb);
+    explicit TweakDBManager(Core::SharedPtr<Red::TweakDBReflection> aReflection);
 
-    Manager(const Manager&) = delete;
-    Manager& operator=(const Manager&) = delete;
+    TweakDBManager(const TweakDBManager&) = delete;
+    TweakDBManager& operator=(const TweakDBManager&) = delete;
 
     Red::CStackType GetFlat(Red::TweakDBID aFlatId);
     Red::Handle<Red::TweakDBRecord> GetRecord(Red::TweakDBID aRecordId);
@@ -34,16 +34,19 @@ public:
     void StartBatch();
     void CommitBatch();
 
-    void InvalidateFlatPool();
+    void Invalidate();
 
-    Reflection& GetReflection();
+    Red::TweakDB* GetTweakDB();
+    Core::SharedPtr<Red::TweakDBReflection>& GetReflection();
 
 private:
-    Instance* m_tweakDb;
-    FlatPool m_flatPool;
-    Reflection m_reflection;
+    Red::TweakDB* m_tweakDb;
+
+    Core::SharedPtr<Red::TweakDBBuffer> m_buffer;
+    Core::SharedPtr<Red::TweakDBReflection> m_reflection;
+
     bool m_batchMode;
     Red::SortedUniqueArray<Red::TweakDBID> m_batchFlats;
-    Core::Map<Red::TweakDBID, const Reflection::RecordInfo*> m_batchRecords; // todo: use type name
+    Core::Map<Red::TweakDBID, const Red::TweakDBRecordInfo*> m_batchRecords;
 };
 }

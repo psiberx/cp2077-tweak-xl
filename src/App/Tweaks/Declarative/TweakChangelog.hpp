@@ -8,32 +8,32 @@ namespace App
 class TweakChangelog : public Core::LoggingAgent
 {
 public:
-    bool AssociateRecord(RED4ext::TweakDBID aRecordId, RED4ext::TweakDBID aFlatId);
-    bool RegisterInsertion(RED4ext::TweakDBID aFlatId, int32_t aIndex, const Core::SharedPtr<void>& aValue);
-    bool RegisterDeletion(RED4ext::TweakDBID aFlatId, int32_t aIndex, const Core::SharedPtr<void>& aValue);
-    void ForgetChanges(RED4ext::TweakDBID aFlatId);
+    bool AssociateRecord(Red::TweakDBID aRecordId, Red::TweakDBID aFlatId);
+    bool RegisterInsertion(Red::TweakDBID aFlatId, int32_t aIndex, const Core::SharedPtr<void>& aValue);
+    bool RegisterDeletion(Red::TweakDBID aFlatId, int32_t aIndex, const Core::SharedPtr<void>& aValue);
+    void ForgetChanges(Red::TweakDBID aFlatId);
 
-    void RegisterForeignKey(RED4ext::TweakDBID aForeignKey);
-    void ForgetForeignKey(RED4ext::TweakDBID aForeignKey);
+    void RegisterForeignKey(Red::TweakDBID aForeignKey);
+    void ForgetForeignKey(Red::TweakDBID aForeignKey);
     void ForgetForeignKeys();
 
-    void RegisterName(RED4ext::TweakDBID aId, const std::string& aName);
+    void RegisterName(Red::TweakDBID aId, const std::string& aName);
 
-    void CheckForIssues(Core::SharedPtr<Red::TweakDB::Manager>& aManager);
-    void RevertChanges(Core::SharedPtr<Red::TweakDB::Manager>& aManager);
+    void CheckForIssues(Core::SharedPtr<Red::TweakDBManager>& aManager);
+    void RevertChanges(Core::SharedPtr<Red::TweakDBManager>& aManager);
 
 private:
     struct AlteringEntry
     {
-        RED4ext::TweakDBID recordId;
+        Red::TweakDBID recordId;
         Core::SortedMap<int32_t, Core::SharedPtr<void>> insertions;
         Core::SortedMap<int32_t, Core::SharedPtr<void>> deletions;
     };
 
-    std::string AsString(RED4ext::TweakDBID aId);
+    std::string AsString(Red::TweakDBID aId);
 
-    Core::Map<RED4ext::TweakDBID, AlteringEntry> m_alterings;
-    Core::Map<RED4ext::TweakDBID, std::string> m_knownNames;
-    Core::Set<RED4ext::TweakDBID> m_foreignKeys;
+    Core::Map<Red::TweakDBID, AlteringEntry> m_alterings;
+    Core::Map<Red::TweakDBID, std::string> m_knownNames;
+    Core::Set<Red::TweakDBID> m_foreignKeys;
 };
 }

@@ -1,5 +1,6 @@
 #include "TweakExecutor.hpp"
 #include "App/Tweaks/Executable/Scriptable/ScriptableTweak.hpp"
+#include "App/Tweaks/Executable/Scriptable/ScriptedInterface.hpp"
 #include "App/Tweaks/Executable/Scriptable/ScriptedManager.hpp"
 
 namespace
@@ -7,17 +8,24 @@ namespace
 constexpr auto ApplyMethodName = "OnApply";
 }
 
-App::TweakExecutor::TweakExecutor(Red::TweakDB::Manager& aManager)
-    : m_manager(aManager)
-    , m_rtti(RED4ext::CRTTISystem::Get())
+App::TweakExecutor::TweakExecutor(Core::SharedPtr<Red::TweakDBManager> aManager)
+    : m_manager(std::move(aManager))
+    , m_rtti(Red::CRTTISystem::Get())
 {
+    InitializeRuntime();
 }
 
-void App::TweakExecutor::ExecuteAll()
+void App::TweakExecutor::InitializeRuntime()
+{
+    ScriptedManager::SetManager(m_manager);
+    ScriptedInterface::SetReflection(m_manager->GetReflection());
+}
+
+void App::TweakExecutor::ExecuteTweaks()
 {
     try
     {
-        RED4ext::DynArray<RED4ext::CClass*> tweakClasses;
+        Red::DynArray<Red::CClass*> tweakClasses;
         m_rtti->GetDerivedClasses(ScriptableTweak::GetRTTIType(), tweakClasses);
 
         if (tweakClasses.size == 0)
@@ -25,7 +33,7 @@ void App::TweakExecutor::ExecuteAll()
 
         LogInfo("Executing scriptable tweaks...");
 
-        ScriptedManager scopedManager(m_manager);
+        // ScriptedManager scopedManager(m_manager);
 
         for (auto* tweakClass : tweakClasses)
             Execute(tweakClass);
@@ -42,7 +50,7 @@ void App::TweakExecutor::ExecuteAll()
     }
 }
 
-void App::TweakExecutor::Execute(RED4ext::CName aTweakName)
+void App::TweakExecutor::ExecuteTweak(Red::CName aTweakName)
 {
     auto tweakClass = m_rtti->GetClass(aTweakName);
 
@@ -59,13 +67,13 @@ void App::TweakExecutor::Execute(RED4ext::CName aTweakName)
         return;
     }
 
-    ScriptedManager scopedManager(m_manager);
+    // ScriptedManager scopedManager(m_manager);
 
     if (Execute(tweakClass))
         LogInfo("Execution completed.");
 }
 
-bool App::TweakExecutor::Execute(RED4ext::CClass* aTweakClass)
+bool App::TweakExecutor::Execute(Red::CClass* aTweakClass)
 {
     try
     {
@@ -87,7 +95,7 @@ bool App::TweakExecutor::Execute(RED4ext::CClass* aTweakClass)
 
         LogInfo(R"(Executing "{}"...)", aTweakClass->GetName().ToString());
 
-        auto stack = RED4ext::CStack(tweakHandle.instance);
+        auto stack = Red::CStack(tweakHandle.instance);
 
         applyCallback->Execute(&stack);
     }

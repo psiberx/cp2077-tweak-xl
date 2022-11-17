@@ -8,15 +8,17 @@ namespace App
 class TweakExecutor : Core::LoggingAgent
 {
 public:
-    explicit TweakExecutor(Red::TweakDB::Manager& aManager);
+    explicit TweakExecutor(Core::SharedPtr<Red::TweakDBManager> aManager);
 
-    void ExecuteAll();
-    void Execute(RED4ext::CName aTweakName);
+    void InitializeRuntime();
+
+    void ExecuteTweaks();
+    void ExecuteTweak(Red::CName aTweakName);
 
 private:
-    bool Execute(RED4ext::CClass* aTweakClass);
+    bool Execute(Red::CClass* aTweakClass);
 
-    Red::TweakDB::Manager& m_manager;
-    RED4ext::CRTTISystem* m_rtti;
+    Red::CRTTISystem* m_rtti;
+    Core::SharedPtr<Red::TweakDBManager> m_manager;
 };
 }

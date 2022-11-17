@@ -1,6 +1,7 @@
 #include "YamlConverter.hpp"
 #include "App/Utils/Str.hpp"
-#include "Red/TweakDB/Types.hpp"
+#include "Red/Rtti/Utils.hpp"
+#include "Red/TweakDB/Reflection.hpp"
 
 template<typename T>
 Core::SharedPtr<T> App::YamlConverter::Convert(const YAML::Node& aNode, bool)
@@ -13,7 +14,7 @@ Core::SharedPtr<T> App::YamlConverter::Convert(const YAML::Node& aNode, bool)
 }
 
 template<>
-Core::SharedPtr<RED4ext::CName> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<Red::CName> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     // Quoted format: n"Name"
     constexpr const char* QuotedPrefix = "n\"";
@@ -36,19 +37,19 @@ Core::SharedPtr<RED4ext::CName> App::YamlConverter::Convert(const YAML::Node& aN
 
         if (str.starts_with(QuotedPrefix) && str.ends_with(QuotedSuffix))
         {
-            return Core::MakeShared<RED4ext::CName>(
-                RED4ext::CNamePool::Add(str.substr(QuotedSkip, str.length() - QuotedDiff).c_str()));
+            return Core::MakeShared<Red::CName>(
+                Red::CNamePool::Add(str.substr(QuotedSkip, str.length() - QuotedDiff).c_str()));
         }
 
         if (str.starts_with(WrappedPrefix) && str.ends_with(WrappedSuffix))
         {
-            return Core::MakeShared<RED4ext::CName>(
-                RED4ext::CNamePool::Add(str.substr(WrappedSkip, str.length() - WrappedDiff).c_str()));
+            return Core::MakeShared<Red::CName>(
+                Red::CNamePool::Add(str.substr(WrappedSkip, str.length() - WrappedDiff).c_str()));
         }
 
         if (!aStrict)
         {
-            return Core::MakeShared<RED4ext::CName>(RED4ext::CNamePool::Add(str.c_str()));
+            return Core::MakeShared<Red::CName>(Red::CNamePool::Add(str.c_str()));
         }
     }
 
@@ -56,7 +57,7 @@ Core::SharedPtr<RED4ext::CName> App::YamlConverter::Convert(const YAML::Node& aN
 }
 
 template<>
-Core::SharedPtr<RED4ext::TweakDBID> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<Red::TweakDBID> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     // Quoted format: t"Package.Item"
     constexpr const char* QuotedPrefix = "t\"";
@@ -92,13 +93,13 @@ Core::SharedPtr<RED4ext::TweakDBID> App::YamlConverter::Convert(const YAML::Node
 
         if (str.starts_with(QuotedPrefix) && str.ends_with(QuotedSuffix))
         {
-            return Core::MakeShared<RED4ext::TweakDBID>(
+            return Core::MakeShared<Red::TweakDBID>(
                 str.substr(QuotedSkip, str.length() - QuotedDiff));
         }
 
         if (str.starts_with(WrappedPrefix) && str.ends_with(WrappedSuffix))
         {
-            return Core::MakeShared<RED4ext::TweakDBID>(
+            return Core::MakeShared<Red::TweakDBID>(
                 str.substr(WrappedSkip, str.length() - WrappedDiff));
         }
 
@@ -107,15 +108,15 @@ Core::SharedPtr<RED4ext::TweakDBID> App::YamlConverter::Convert(const YAML::Node
             auto hash = ParseInt<uint32_t>(str.substr(DebugHashPos, DebugHashSize), 16);
             auto len = ParseInt<uint8_t>(str.substr(DebugLenPos, DebugLenSize), 16);
 
-            return Core::MakeShared<RED4ext::TweakDBID>(hash, len);
+            return Core::MakeShared<Red::TweakDBID>(hash, len);
         }
 
         if (!aStrict)
         {
             if (str == EmptyValue)
-                return Core::MakeShared<RED4ext::TweakDBID>();
+                return Core::MakeShared<Red::TweakDBID>();
 
-            return Core::MakeShared<RED4ext::TweakDBID>(str);
+            return Core::MakeShared<Red::TweakDBID>(str);
         }
     }
 
@@ -123,7 +124,7 @@ Core::SharedPtr<RED4ext::TweakDBID> App::YamlConverter::Convert(const YAML::Node
 }
 
 template<>
-Core::SharedPtr<RED4ext::gamedataLocKeyWrapper> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<Red::LocKeyWrapper> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     // Quoted format: l"Secondary-Loc-Key"
     constexpr const char* QuotedPrefix = "l\"";
@@ -151,7 +152,7 @@ Core::SharedPtr<RED4ext::gamedataLocKeyWrapper> App::YamlConverter::Convert(cons
 
         if (str.starts_with(QuotedPrefix) && str.ends_with(QuotedSuffix))
         {
-            return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(
+            return Core::MakeShared<Red::LocKeyWrapper>(
                 str.substr(QuotedSkip, str.length() - QuotedDiff).c_str());
         }
 
@@ -161,11 +162,11 @@ Core::SharedPtr<RED4ext::gamedataLocKeyWrapper> App::YamlConverter::Convert(cons
             auto value = str.substr(WrappedSkip + quoted, str.length() - WrappedDiff - (quoted << 1));
 
             if (quoted)
-                return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(value.c_str());
+                return Core::MakeShared<Red::LocKeyWrapper>(value.c_str());
 
             uint64_t key;
             if (ParseInt(value, key))
-                return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(key);
+                return Core::MakeShared<Red::LocKeyWrapper>(key);
 
             return nullptr;
         }
@@ -176,18 +177,18 @@ Core::SharedPtr<RED4ext::gamedataLocKeyWrapper> App::YamlConverter::Convert(cons
 
             uint64_t key;
             if (ParseInt(value, key))
-                return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(key);
+                return Core::MakeShared<Red::LocKeyWrapper>(key);
 
-            return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(value.c_str());
+            return Core::MakeShared<Red::LocKeyWrapper>(value.c_str());
         }
 
         if (!aStrict)
         {
             uint64_t key;
             if (ParseInt(str, key))
-                return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(key);
+                return Core::MakeShared<Red::LocKeyWrapper>(key);
 
-            return Core::MakeShared<RED4ext::gamedataLocKeyWrapper>(str.c_str());
+            return Core::MakeShared<Red::LocKeyWrapper>(str.c_str());
         }
     }
 
@@ -195,7 +196,7 @@ Core::SharedPtr<RED4ext::gamedataLocKeyWrapper> App::YamlConverter::Convert(cons
 }
 
 template<>
-Core::SharedPtr<RED4ext::ResourceAsyncReference<>> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<Red::ResourceAsyncReference<>> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     // Quoted format: r"base\gameplay\resource.ext"
     constexpr const char* QuotedPrefix = "r\"";
@@ -220,7 +221,7 @@ Core::SharedPtr<RED4ext::ResourceAsyncReference<>> App::YamlConverter::Convert(c
         {
             auto value = str.substr(QuotedSkip, str.length() - QuotedDiff);
 
-            return Core::MakeShared<RED4ext::ResourceAsyncReference<>>(value.c_str());
+            return Core::MakeShared<Red::ResourceAsyncReference<>>(value.c_str());
         }
 
         if (str.starts_with(WrappedPrefix) && str.ends_with(WrappedSuffix))
@@ -229,11 +230,11 @@ Core::SharedPtr<RED4ext::ResourceAsyncReference<>> App::YamlConverter::Convert(c
             auto value = str.substr(WrappedSkip + quoted, str.length() - WrappedDiff - (quoted << 1));
 
             if (quoted)
-                return Core::MakeShared<RED4ext::ResourceAsyncReference<>>(value.c_str());
+                return Core::MakeShared<Red::ResourceAsyncReference<>>(value.c_str());
 
             uint64_t hash;
             if (ParseInt(value, hash))
-                return Core::MakeShared<RED4ext::ResourceAsyncReference<>>(hash);
+                return Core::MakeShared<Red::ResourceAsyncReference<>>(hash);
 
             return nullptr;
         }
@@ -242,9 +243,9 @@ Core::SharedPtr<RED4ext::ResourceAsyncReference<>> App::YamlConverter::Convert(c
         {
             uint64_t hash;
             if (ParseInt(str, hash))
-                return Core::MakeShared<RED4ext::ResourceAsyncReference<>>(hash);
+                return Core::MakeShared<Red::ResourceAsyncReference<>>(hash);
 
-            return Core::MakeShared<RED4ext::ResourceAsyncReference<>>(str.c_str());
+            return Core::MakeShared<Red::ResourceAsyncReference<>>(str.c_str());
         }
     }
 
@@ -252,7 +253,7 @@ Core::SharedPtr<RED4ext::ResourceAsyncReference<>> App::YamlConverter::Convert(c
 }
 
 template<>
-Core::SharedPtr<RED4ext::CString> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<Red::CString> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (!aNode.IsScalar())
         return nullptr;
@@ -271,22 +272,22 @@ Core::SharedPtr<RED4ext::CString> App::YamlConverter::Convert(const YAML::Node& 
         {
             const auto locKeyStr = std::string("LocKey#").append(std::to_string(locKey->primaryKey));
 
-            return Core::MakeShared<RED4ext::CString>(locKeyStr.c_str());
+            return Core::MakeShared<Red::CString>(locKeyStr.c_str());
         }
     }
 
-    return Core::MakeShared<RED4ext::CString>(aNode.Scalar().c_str());
+    return Core::MakeShared<Red::CString>(aNode.Scalar().c_str());
 }
 
 template<>
-Core::SharedPtr<RED4ext::Quaternion> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<Red::Quaternion> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (aNode.IsMap())
     {
         if (aStrict && (!aNode["i"] || !aNode["j"] || !aNode["k"] || !aNode["r"]))
             return nullptr;
 
-        auto value = Core::MakeShared<RED4ext::Quaternion>();
+        auto value = Core::MakeShared<Red::Quaternion>();
         value->i = aNode["i"].as<float>(0.0f);
         value->j = aNode["j"].as<float>(0.0f);
         value->k = aNode["k"].as<float>(0.0f);
@@ -299,14 +300,14 @@ Core::SharedPtr<RED4ext::Quaternion> App::YamlConverter::Convert(const YAML::Nod
 }
 
 template<>
-Core::SharedPtr<RED4ext::EulerAngles> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<Red::EulerAngles> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (aNode.IsMap())
     {
         if (aStrict && (!aNode["roll"] || !aNode["pitch"] || !aNode["yaw"]))
             return nullptr;
 
-        auto value = Core::MakeShared<RED4ext::EulerAngles>();
+        auto value = Core::MakeShared<Red::EulerAngles>();
         value->Roll = aNode["roll"].as<float>(0.0f);
         value->Pitch = aNode["pitch"].as<float>(0.0f);
         value->Yaw = aNode["yaw"].as<float>(0.0f);
@@ -318,14 +319,14 @@ Core::SharedPtr<RED4ext::EulerAngles> App::YamlConverter::Convert(const YAML::No
 }
 
 template<>
-Core::SharedPtr<RED4ext::Vector3> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<Red::Vector3> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (aNode.IsMap())
     {
         if (aStrict && (!aNode["x"] || !aNode["y"] || !aNode["z"]))
             return nullptr;
 
-        auto value = Core::MakeShared<RED4ext::Vector3>();
+        auto value = Core::MakeShared<Red::Vector3>();
         value->X = aNode["x"].as<float>(0.0f);
         value->Y = aNode["y"].as<float>(0.0f);
         value->Z = aNode["z"].as<float>(0.0f);
@@ -337,14 +338,14 @@ Core::SharedPtr<RED4ext::Vector3> App::YamlConverter::Convert(const YAML::Node& 
 }
 
 template<>
-Core::SharedPtr<RED4ext::Vector2> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<Red::Vector2> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (aNode.IsMap())
     {
         if (aStrict && (!aNode["x"] || !aNode["y"]))
             return nullptr;
 
-        auto value = Core::MakeShared<RED4ext::Vector2>();
+        auto value = Core::MakeShared<Red::Vector2>();
         value->X = aNode["x"].as<float>(0.0f);
         value->Y = aNode["y"].as<float>(0.0f);
 
@@ -355,14 +356,14 @@ Core::SharedPtr<RED4ext::Vector2> App::YamlConverter::Convert(const YAML::Node& 
 }
 
 template<>
-Core::SharedPtr<RED4ext::Color> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Core::SharedPtr<Red::Color> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (aNode.IsMap())
     {
         if (aStrict && (!aNode["red"] || !aNode["green"] || !aNode["blue"] || !aNode["alpha"]))
             return nullptr;
 
-        auto value = Core::MakeShared<RED4ext::Color>();
+        auto value = Core::MakeShared<Red::Color>();
         value->Red = aNode["red"].as<uint8_t>(0);
         value->Green = aNode["green"].as<uint8_t>(0);
         value->Blue = aNode["blue"].as<uint8_t>(0);
@@ -375,11 +376,11 @@ Core::SharedPtr<RED4ext::Color> App::YamlConverter::Convert(const YAML::Node& aN
 }
 
 template<typename E>
-Core::SharedPtr<RED4ext::DynArray<E>> App::YamlConverter::ConvertArray(const YAML::Node& aNode, bool)
+Core::SharedPtr<Red::DynArray<E>> App::YamlConverter::ConvertArray(const YAML::Node& aNode, bool)
 {
     if (aNode.IsSequence())
     {
-        auto array = Core::MakeShared<RED4ext::DynArray<E>>();
+        auto array = Core::MakeShared<Red::DynArray<E>>();
 
         if (aNode.size() > 0)
         {
@@ -417,85 +418,85 @@ bool App::YamlConverter::ConvertArray(const YAML::Node& aNode, Core::SharedPtr<v
     return aValue != nullptr;
 }
 
-Core::SharedPtr<void> App::YamlConverter::Convert(const RED4ext::CBaseRTTIType* aType, const YAML::Node& aNode)
+Core::SharedPtr<void> App::YamlConverter::Convert(const Red::CBaseRTTIType* aType, const YAML::Node& aNode)
 {
     return Convert(aType->GetName(), aNode);
 }
 
-Core::SharedPtr<void> App::YamlConverter::Convert(RED4ext::CName aTypeName, const YAML::Node& aNode)
+Core::SharedPtr<void> App::YamlConverter::Convert(Red::CName aTypeName, const YAML::Node& aNode)
 {
     switch (aTypeName)
     {
-    case Red::TweakDB::EFlatType::Int32:
+    case Red::ETweakDBFlatType::Int:
         return Convert<int>(aNode);
-    case Red::TweakDB::EFlatType::Int32Array:
+    case Red::ETweakDBFlatType::IntArray:
         return ConvertArray<int>(aNode);
 
-    case Red::TweakDB::EFlatType::Float:
+    case Red::ETweakDBFlatType::Float:
         return Convert<float>(aNode);
-    case Red::TweakDB::EFlatType::FloatArray:
+    case Red::ETweakDBFlatType::FloatArray:
         return ConvertArray<float>(aNode);
 
-    case Red::TweakDB::EFlatType::Bool:
+    case Red::ETweakDBFlatType::Bool:
         return Convert<bool>(aNode);
-    case Red::TweakDB::EFlatType::BoolArray:
+    case Red::ETweakDBFlatType::BoolArray:
         return ConvertArray<bool>(aNode);
 
-    case Red::TweakDB::EFlatType::String:
-        return Convert<RED4ext::CString>(aNode);
-    case Red::TweakDB::EFlatType::StringArray:
-        return ConvertArray<RED4ext::CString>(aNode);
+    case Red::ETweakDBFlatType::String:
+        return Convert<Red::CString>(aNode);
+    case Red::ETweakDBFlatType::StringArray:
+        return ConvertArray<Red::CString>(aNode);
 
-    case Red::TweakDB::EFlatType::CName:
-        return Convert<RED4ext::CName>(aNode);
-    case Red::TweakDB::EFlatType::CNameArray:
-        return ConvertArray<RED4ext::CName>(aNode);
+    case Red::ETweakDBFlatType::CName:
+        return Convert<Red::CName>(aNode);
+    case Red::ETweakDBFlatType::CNameArray:
+        return ConvertArray<Red::CName>(aNode);
 
-    case Red::TweakDB::EFlatType::TweakDBID:
-        return Convert<RED4ext::TweakDBID>(aNode);
-    case Red::TweakDB::EFlatType::TweakDBIDArray:
-        return ConvertArray<RED4ext::TweakDBID>(aNode);
+    case Red::ETweakDBFlatType::TweakDBID:
+        return Convert<Red::TweakDBID>(aNode);
+    case Red::ETweakDBFlatType::TweakDBIDArray:
+        return ConvertArray<Red::TweakDBID>(aNode);
 
-    case Red::TweakDB::EFlatType::LocKey:
-        return Convert<RED4ext::gamedataLocKeyWrapper>(aNode);
-    case Red::TweakDB::EFlatType::LocKeyArray:
-        return ConvertArray<RED4ext::gamedataLocKeyWrapper>(aNode);
+    case Red::ETweakDBFlatType::LocKey:
+        return Convert<Red::LocKeyWrapper>(aNode);
+    case Red::ETweakDBFlatType::LocKeyArray:
+        return ConvertArray<Red::LocKeyWrapper>(aNode);
 
-    case Red::TweakDB::EFlatType::Resource:
-        return Convert<RED4ext::ResourceAsyncReference<>>(aNode);
-    case Red::TweakDB::EFlatType::ResourceArray:
-        return ConvertArray<RED4ext::ResourceAsyncReference<>>(aNode);
+    case Red::ETweakDBFlatType::Resource:
+        return Convert<Red::ResourceAsyncReference<>>(aNode);
+    case Red::ETweakDBFlatType::ResourceArray:
+        return ConvertArray<Red::ResourceAsyncReference<>>(aNode);
 
-    case Red::TweakDB::EFlatType::Quaternion:
-        return Convert<RED4ext::Quaternion>(aNode);
-    case Red::TweakDB::EFlatType::QuaternionArray:
-        return ConvertArray<RED4ext::Quaternion>(aNode);
+    case Red::ETweakDBFlatType::Quaternion:
+        return Convert<Red::Quaternion>(aNode);
+    case Red::ETweakDBFlatType::QuaternionArray:
+        return ConvertArray<Red::Quaternion>(aNode);
 
-    case Red::TweakDB::EFlatType::EulerAngles:
-        return Convert<RED4ext::EulerAngles>(aNode);
-    case Red::TweakDB::EFlatType::EulerAnglesArray:
-        return ConvertArray<RED4ext::EulerAngles>(aNode);
+    case Red::ETweakDBFlatType::EulerAngles:
+        return Convert<Red::EulerAngles>(aNode);
+    case Red::ETweakDBFlatType::EulerAnglesArray:
+        return ConvertArray<Red::EulerAngles>(aNode);
 
-    case Red::TweakDB::EFlatType::Vector3:
-        return Convert<RED4ext::Vector3>(aNode);
-    case Red::TweakDB::EFlatType::Vector3Array:
-        return ConvertArray<RED4ext::Vector3>(aNode);
+    case Red::ETweakDBFlatType::Vector3:
+        return Convert<Red::Vector3>(aNode);
+    case Red::ETweakDBFlatType::Vector3Array:
+        return ConvertArray<Red::Vector3>(aNode);
 
-    case Red::TweakDB::EFlatType::Vector2:
-        return Convert<RED4ext::Vector2>(aNode);
-    case Red::TweakDB::EFlatType::Vector2Array:
-        return ConvertArray<RED4ext::Vector2>(aNode);
+    case Red::ETweakDBFlatType::Vector2:
+        return Convert<Red::Vector2>(aNode);
+    case Red::ETweakDBFlatType::Vector2Array:
+        return ConvertArray<Red::Vector2>(aNode);
 
-    case Red::TweakDB::EFlatType::Color:
-        return Convert<RED4ext::Color>(aNode);
-    case Red::TweakDB::EFlatType::ColorArray:
-        return ConvertArray<RED4ext::Color>(aNode);
+    case Red::ETweakDBFlatType::Color:
+        return Convert<Red::Color>(aNode);
+    case Red::ETweakDBFlatType::ColorArray:
+        return ConvertArray<Red::Color>(aNode);
     }
 
     return nullptr;
 }
 
-std::pair<RED4ext::CName, Core::SharedPtr<void>> App::YamlConverter::Convert(const YAML::Node& aNode)
+std::pair<Red::CName, Core::SharedPtr<void>> App::YamlConverter::Convert(const YAML::Node& aNode)
 {
     Core::SharedPtr<void> value;
 
@@ -503,48 +504,48 @@ std::pair<RED4ext::CName, Core::SharedPtr<void>> App::YamlConverter::Convert(con
     {
     case YAML::NodeType::Scalar:
     {
-        if (Convert<RED4ext::CString>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::String, value };
+        if (Convert<Red::CString>(aNode, value, true))
+            return { Red::ETweakDBFlatType::String, value };
 
         if (Convert<int>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::Int32, value };
+            return { Red::ETweakDBFlatType::Int, value };
 
         if (Convert<float>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::Float, value };
+            return { Red::ETweakDBFlatType::Float, value };
 
         if (Convert<bool>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::Bool, value };
+            return { Red::ETweakDBFlatType::Bool, value };
 
-        if (Convert<RED4ext::CName>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::CName, value };
+        if (Convert<Red::CName>(aNode, value, true))
+            return { Red::ETweakDBFlatType::CName, value };
 
-        if (Convert<RED4ext::TweakDBID>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::TweakDBID, value };
+        if (Convert<Red::TweakDBID>(aNode, value, true))
+            return { Red::ETweakDBFlatType::TweakDBID, value };
 
-        if (Convert<RED4ext::gamedataLocKeyWrapper>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::LocKey, value };
+        if (Convert<Red::LocKeyWrapper>(aNode, value, true))
+            return { Red::ETweakDBFlatType::LocKey, value };
 
-        if (Convert<RED4ext::ResourceAsyncReference<>>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::Resource, value };
+        if (Convert<Red::ResourceAsyncReference<>>(aNode, value, true))
+            return { Red::ETweakDBFlatType::Resource, value };
 
         break;
     }
     case YAML::NodeType::Map:
     {
-        if (Convert<RED4ext::Quaternion>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::Quaternion, value };
+        if (Convert<Red::Quaternion>(aNode, value, true))
+            return { Red::ETweakDBFlatType::Quaternion, value };
 
-        if (Convert<RED4ext::EulerAngles>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::EulerAngles, value };
+        if (Convert<Red::EulerAngles>(aNode, value, true))
+            return { Red::ETweakDBFlatType::EulerAngles, value };
 
-        if (Convert<RED4ext::Vector3>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::Vector3, value };
+        if (Convert<Red::Vector3>(aNode, value, true))
+            return { Red::ETweakDBFlatType::Vector3, value };
 
-        if (Convert<RED4ext::Vector2>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::Vector2, value };
+        if (Convert<Red::Vector2>(aNode, value, true))
+            return { Red::ETweakDBFlatType::Vector2, value };
 
-        if (Convert<RED4ext::Color>(aNode, value, true))
-            return { Red::TweakDB::EFlatType::Color, value };
+        if (Convert<Red::Color>(aNode, value, true))
+            return { Red::ETweakDBFlatType::Color, value };
 
         break;
     }
@@ -557,11 +558,10 @@ std::pair<RED4ext::CName, Core::SharedPtr<void>> App::YamlConverter::Convert(con
 
             if (item.second)
             {
-                const auto arrayTypeName = Red::TweakDB::GetArrayType(item.first);
+                auto arrayTypeName = Red::ToArrayType(item.first);
                 return { arrayTypeName, Convert(arrayTypeName, aNode) };
             }
         }
-
         break;
     }
     }

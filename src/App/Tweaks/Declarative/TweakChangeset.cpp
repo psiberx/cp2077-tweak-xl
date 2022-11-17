@@ -1,6 +1,6 @@
 #include "TweakChangeset.hpp"
 
-bool App::TweakChangeset::SetFlat(RED4ext::TweakDBID aFlatId, const RED4ext::CBaseRTTIType* aType,
+bool App::TweakChangeset::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
                                   const Core::SharedPtr<void>& aValue)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
@@ -16,8 +16,8 @@ bool App::TweakChangeset::SetFlat(RED4ext::TweakDBID aFlatId, const RED4ext::CBa
     return true;
 }
 
-bool App::TweakChangeset::MakeRecord(RED4ext::TweakDBID aRecordId, const RED4ext::CClass* aType,
-                                     RED4ext::TweakDBID aSourceId)
+bool App::TweakChangeset::MakeRecord(Red::TweakDBID aRecordId, const Red::CClass* aType,
+                                     Red::TweakDBID aSourceId)
 {
     if (!aRecordId.IsValid() || !aType)
         return false;
@@ -33,7 +33,7 @@ bool App::TweakChangeset::MakeRecord(RED4ext::TweakDBID aRecordId, const RED4ext
     return true;
 }
 
-bool App::TweakChangeset::UpdateRecord(RED4ext::TweakDBID aRecordId)
+bool App::TweakChangeset::UpdateRecord(Red::TweakDBID aRecordId)
 {
     if (!aRecordId.IsValid())
         return false;
@@ -47,7 +47,7 @@ bool App::TweakChangeset::UpdateRecord(RED4ext::TweakDBID aRecordId)
     return true;
 }
 
-bool App::TweakChangeset::AssociateRecord(RED4ext::TweakDBID aRecordId, RED4ext::TweakDBID aFlatId)
+bool App::TweakChangeset::AssociateRecord(Red::TweakDBID aRecordId, Red::TweakDBID aFlatId)
 {
     if (!aRecordId.IsValid() || !aFlatId.IsValid())
         return false;
@@ -57,7 +57,7 @@ bool App::TweakChangeset::AssociateRecord(RED4ext::TweakDBID aRecordId, RED4ext:
     return true;
 }
 
-bool App::TweakChangeset::AppendElement(RED4ext::TweakDBID aFlatId, const RED4ext::CBaseRTTIType* aType,
+bool App::TweakChangeset::AppendElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
                                         const Core::SharedPtr<void>& aValue, bool aUnique)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
@@ -69,7 +69,7 @@ bool App::TweakChangeset::AppendElement(RED4ext::TweakDBID aFlatId, const RED4ex
     return true;
 }
 
-bool App::TweakChangeset::PrependElement(RED4ext::TweakDBID aFlatId, const RED4ext::CBaseRTTIType* aType,
+bool App::TweakChangeset::PrependElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
                                          const Core::SharedPtr<void>& aValue, bool aUnique)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
@@ -81,7 +81,7 @@ bool App::TweakChangeset::PrependElement(RED4ext::TweakDBID aFlatId, const RED4e
     return true;
 }
 
-bool App::TweakChangeset::RemoveElement(RED4ext::TweakDBID aFlatId, const RED4ext::CBaseRTTIType* aType,
+bool App::TweakChangeset::RemoveElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
                                         const Core::SharedPtr<void>& aValue)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
@@ -93,7 +93,7 @@ bool App::TweakChangeset::RemoveElement(RED4ext::TweakDBID aFlatId, const RED4ex
     return true;
 }
 
-bool App::TweakChangeset::AppendFrom(RED4ext::TweakDBID aFlatId, RED4ext::TweakDBID aSourceId)
+bool App::TweakChangeset::AppendFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId)
 {
     if (!aFlatId.IsValid() || !aSourceId.IsValid())
         return false;
@@ -104,7 +104,7 @@ bool App::TweakChangeset::AppendFrom(RED4ext::TweakDBID aFlatId, RED4ext::TweakD
     return true;
 }
 
-bool App::TweakChangeset::PrependFrom(RED4ext::TweakDBID aFlatId, RED4ext::TweakDBID aSourceId)
+bool App::TweakChangeset::PrependFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId)
 {
     if (!aFlatId.IsValid() || !aSourceId.IsValid())
         return false;
@@ -115,29 +115,30 @@ bool App::TweakChangeset::PrependFrom(RED4ext::TweakDBID aFlatId, RED4ext::Tweak
     return true;
 }
 
-bool App::TweakChangeset::InheritChanges(RED4ext::TweakDBID aFlatId, RED4ext::TweakDBID aBaseId)
+bool App::TweakChangeset::InheritChanges(Red::TweakDBID aFlatId, Red::TweakDBID aBaseId)
 {
     if (!aFlatId.IsValid() || !aBaseId.IsValid())
         return false;
 
-    auto alteringIt = m_pendingAlterings.find(aBaseId);
-    if (alteringIt == m_pendingAlterings.end())
+    if (!m_pendingAlterings.contains(aBaseId))
         return false;
 
-    auto& entry = alteringIt.value();
-    m_pendingAlterings[aFlatId] = entry;
+    auto& targetEntry = m_pendingAlterings[aFlatId];
+    auto& baseEntry = m_pendingAlterings[aBaseId];
 
-    return false;
+    targetEntry = baseEntry;
+
+    return true;
 }
 
-bool App::TweakChangeset::RegisterName(RED4ext::TweakDBID aId, const std::string& aName)
+bool App::TweakChangeset::RegisterName(Red::TweakDBID aId, const std::string& aName)
 {
     m_pendingNames[aId] = aName;
 
     return true;
 }
 
-const App::TweakChangeset::FlatEntry* App::TweakChangeset::GetFlat(RED4ext::TweakDBID aFlatId)
+const App::TweakChangeset::FlatEntry* App::TweakChangeset::GetFlat(Red::TweakDBID aFlatId)
 {
     const auto it = m_pendingFlats.find(aFlatId);
 
@@ -147,7 +148,7 @@ const App::TweakChangeset::FlatEntry* App::TweakChangeset::GetFlat(RED4ext::Twea
     return &it->second;
 }
 
-const App::TweakChangeset::RecordEntry* App::TweakChangeset::GetRecord(RED4ext::TweakDBID aRecordId)
+const App::TweakChangeset::RecordEntry* App::TweakChangeset::GetRecord(Red::TweakDBID aRecordId)
 {
     const auto it = m_pendingRecords.find(aRecordId);
 
@@ -157,7 +158,7 @@ const App::TweakChangeset::RecordEntry* App::TweakChangeset::GetRecord(RED4ext::
     return &it->second;
 }
 
-bool App::TweakChangeset::HasRecord(RED4ext::TweakDBID aRecordId)
+bool App::TweakChangeset::HasRecord(Red::TweakDBID aRecordId)
 {
     return m_pendingRecords.find(aRecordId) != m_pendingRecords.end();
 }
@@ -167,7 +168,7 @@ bool App::TweakChangeset::IsEmpty()
     return m_pendingFlats.empty() && m_pendingRecords.empty() && m_pendingAlterings.empty() && m_pendingNames.empty();
 }
 
-void App::TweakChangeset::Commit(Core::SharedPtr<Red::TweakDB::Manager>& aManager,
+void App::TweakChangeset::Commit(Core::SharedPtr<Red::TweakDBManager>& aManager,
                                  Core::SharedPtr<App::TweakChangelog>& aChangelog)
 {
     if (!aManager)
@@ -204,14 +205,14 @@ void App::TweakChangeset::Commit(Core::SharedPtr<Red::TweakDB::Manager>& aManage
 
         if (aChangelog)
         {
-            if (Red::TweakDB::IsForeignKey(flatType))
+            if (aManager->GetReflection()->IsForeignKey(flatType))
             {
-                const auto foreignKey = reinterpret_cast<RED4ext::TweakDBID*>(flatValue);
+                const auto foreignKey = reinterpret_cast<Red::TweakDBID*>(flatValue);
                 aChangelog->RegisterForeignKey(*foreignKey);
             }
-            else if (Red::TweakDB::IsForeignKeyArray(flatType))
+            else if (aManager->GetReflection()->IsForeignKeyArray(flatType))
             {
-                const auto foreignKeyList = reinterpret_cast<RED4ext::DynArray<RED4ext::TweakDBID>*>(flatValue);
+                const auto foreignKeyList = reinterpret_cast<Red::DynArray<Red::TweakDBID>*>(flatValue);
                 for (const auto& foreignKey : *foreignKeyList)
                 {
                     aChangelog->RegisterForeignKey(foreignKey);
@@ -258,7 +259,7 @@ void App::TweakChangeset::Commit(Core::SharedPtr<Red::TweakDB::Manager>& aManage
 
     aManager->CommitBatch();
 
-    Core::Set<RED4ext::TweakDBID> postUpdates;
+    Core::Set<Red::TweakDBID> postUpdates;
 
     for (const auto& altering : m_pendingAlterings)
     {
@@ -271,18 +272,18 @@ void App::TweakChangeset::Commit(Core::SharedPtr<Red::TweakDB::Manager>& aManage
             continue;
         }
 
-        if (flatData.type->GetType() != RED4ext::ERTTIType::Array)
+        if (flatData.type->GetType() != Red::ERTTIType::Array)
         {
             LogError("Cannot apply changes to [{}], it's not an array.", AsString(flatId));
             continue;
         }
 
-        auto* targetType = reinterpret_cast<RED4ext::CRTTIArrayType*>(flatData.type);
+        auto* targetType = reinterpret_cast<Red::CRTTIArrayType*>(flatData.type);
         auto* elementType = targetType->innerType;
 
         // The data returned by manager is a pointer to the TweakDB flat buffer,
         // we must make a copy of the original array for modifications.
-        auto targetArray = Red::TweakDB::MakeDefault(targetType);
+        auto targetArray = aManager->GetReflection()->Construct(targetType);
         targetType->Assign(targetArray.get(), flatData.value);
 
         Core::Vector<ElementChange> deletions;
@@ -313,10 +314,64 @@ void App::TweakChangeset::Commit(Core::SharedPtr<Red::TweakDB::Manager>& aManage
         }
 
         {
-            InsertionHandler inserter{flatId, targetType, elementType, targetArray, insertions, aManager, *this};
-            inserter.Apply(altering.second.prependings, altering.second.prependingMerges, 0);
-            inserter.Apply(altering.second.appendings, altering.second.appendingMerges,
-                           static_cast<int32_t>(targetType->GetLength(targetArray.get())));
+            auto insert = [&](const Core::Vector<App::TweakChangeset::InsertionEntry>& aInsertions,
+                              const Core::Vector<App::TweakChangeset::MergingEntry>& aMerges,
+                              int32_t aStartIndex)
+            {
+                auto insertionIndex = aStartIndex;
+
+                for (const auto& insertion : aInsertions)
+                {
+                    const auto insertionValue = insertion.value;
+
+                    if (insertion.unique && InArray(targetType, targetArray.get(), insertionValue.get()))
+                        continue;
+
+                    targetType->InsertAt(targetArray.get(), insertionIndex);
+                    elementType->Assign(targetType->GetElement(targetArray.get(), insertionIndex), insertionValue.get());
+
+                    insertions.emplace_back(insertionIndex, insertionValue);
+
+                    ++insertionIndex;
+                }
+
+                for (const auto& merge : aMerges)
+                {
+                    const auto sourceData = aManager->GetFlat(merge.sourceId);
+
+                    if (!sourceData.value || sourceData.type != targetType)
+                    {
+                        LogError("Cannot merge [{}] with [{}] because it's not an array.",
+                                 AsString(merge.sourceId), AsString(flatId));
+                        continue;
+                    }
+
+                    auto* sourceArray = reinterpret_cast<Red::DynArray<void>*>(sourceData.value);
+                    const auto sourceLength = targetType->GetLength(sourceArray);
+
+                    for (uint32_t sourceIndex = 0; sourceIndex < sourceLength; ++sourceIndex)
+                    {
+                        auto insertionValuePtr = targetType->GetElement(sourceArray, sourceIndex);
+
+                        if (InArray(targetType, targetArray.get(), insertionValuePtr))
+                            continue;
+
+                        targetType->InsertAt(targetArray.get(), insertionIndex);
+                        elementType->Assign(targetType->GetElement(targetArray.get(), insertionIndex), insertionValuePtr);
+
+                        auto clonedValue = aManager->GetReflection()->Construct(elementType);
+                        elementType->Assign(clonedValue.get(), insertionValuePtr);
+
+                        insertions.emplace_back(insertionIndex, clonedValue);
+
+                        ++insertionIndex;
+                    }
+                }
+            };
+
+            insert(altering.second.prependings, altering.second.prependingMerges, 0);
+            insert(altering.second.appendings, altering.second.appendingMerges,
+                   static_cast<int32_t>(targetType->GetLength(targetArray.get())));
         }
 
         const auto success = aManager->SetFlat(flatId, targetType, targetArray.get());
@@ -344,7 +399,7 @@ void App::TweakChangeset::Commit(Core::SharedPtr<Red::TweakDB::Manager>& aManage
 
         if (aChangelog)
         {
-            const auto isForeignKey = Red::TweakDB::IsForeignKeyArray(targetType);
+            const auto isForeignKey = aManager->GetReflection()->IsForeignKeyArray(targetType);
 
             for (const auto& [deletionIndex, deletionValue] : deletions)
             {
@@ -357,7 +412,7 @@ void App::TweakChangeset::Commit(Core::SharedPtr<Red::TweakDB::Manager>& aManage
 
                 if (isForeignKey)
                 {
-                    const auto foreignKey = reinterpret_cast<RED4ext::TweakDBID*>(insertionValue.get());
+                    const auto foreignKey = reinterpret_cast<Red::TweakDBID*>(insertionValue.get());
                     aChangelog->RegisterForeignKey(*foreignKey);
                     aChangelog->RegisterName(*foreignKey, AsString(*foreignKey));
                 }
@@ -379,59 +434,7 @@ void App::TweakChangeset::Commit(Core::SharedPtr<Red::TweakDB::Manager>& aManage
     m_pendingAlterings.clear();
 }
 
-void App::TweakChangeset::InsertionHandler::Apply(const Core::Vector<App::TweakChangeset::InsertionEntry>& aInsertions,
-                                                    const Core::Vector<App::TweakChangeset::MergingEntry>& aMerges,
-                                                    int32_t aStargIndex)
-{
-    auto appendingIndex = aStargIndex;
-
-    for (const auto& insertion : aInsertions)
-    {
-        const auto insertionValue = insertion.value;
-
-        if (insertion.unique && InArray(m_arrayType, m_array.get(), insertionValue.get()))
-            continue;
-
-        m_arrayType->InsertAt(m_array.get(), appendingIndex);
-        m_elementType->Assign(m_arrayType->GetElement(m_array.get(), appendingIndex), insertionValue.get());
-
-        m_changes.emplace_back(appendingIndex, insertionValue);
-
-        ++appendingIndex;
-    }
-
-    for (const auto& merge : aMerges)
-    {
-        const auto sourceData = m_manager->GetFlat(merge.sourceId);
-
-        if (!sourceData.value || sourceData.type != m_arrayType)
-        {
-            LogError("Cannot merge [{}] with [{}] because it's not an array.",
-                     m_changeset.AsString(merge.sourceId), m_changeset.AsString(m_arrayId));
-            continue;
-        }
-
-        auto* sourceArray = reinterpret_cast<RED4ext::DynArray<void>*>(sourceData.value);
-        const auto sourceLength = m_arrayType->GetLength(sourceArray);
-
-        for (uint32_t sourceIndex = 0; sourceIndex < sourceLength; ++sourceIndex)
-        {
-            auto insertionValuePtr = m_arrayType->GetElement(sourceArray, sourceIndex);
-
-            if (InArray(m_arrayType, m_array.get(), insertionValuePtr))
-                continue;
-
-            m_arrayType->InsertAt(m_array.get(), appendingIndex);
-            m_elementType->Assign(m_arrayType->GetElement(m_array.get(), appendingIndex), insertionValuePtr);
-
-            m_changes.emplace_back(appendingIndex, Red::TweakDB::CopyValue(m_elementType, insertionValuePtr));
-
-            ++appendingIndex;
-        }
-    }
-}
-
-int32_t App::TweakChangeset::FindElement(RED4ext::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
+int32_t App::TweakChangeset::FindElement(Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
 {
     const auto length = aArrayType->GetLength(aArray);
 
@@ -448,17 +451,17 @@ int32_t App::TweakChangeset::FindElement(RED4ext::CRTTIArrayType* aArrayType, vo
     return -1;
 }
 
-bool App::TweakChangeset::InArray(RED4ext::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
+bool App::TweakChangeset::InArray(Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
 {
     return FindElement(aArrayType, aArray, aValue) > 0;
 }
 
-std::string App::TweakChangeset::AsString(const RED4ext::CBaseRTTIType* aType)
+std::string App::TweakChangeset::AsString(const Red::CBaseRTTIType* aType)
 {
     return aType->GetName().ToString();
 }
 
-std::string App::TweakChangeset::AsString(RED4ext::TweakDBID aId)
+std::string App::TweakChangeset::AsString(Red::TweakDBID aId)
 {
     const auto name = m_pendingNames.find(aId);
 
