@@ -78,6 +78,10 @@ Core::SharedPtr<RED4ext::TweakDBID> App::YamlConverter::Convert(const YAML::Node
     constexpr size_t DebugHashSize = 8;
     constexpr size_t DebugLenPos = DebugHashPos + DebugHashSize + sizeof(DebugSuffix);
     constexpr size_t DebugLenSize = 2;
+    static_assert(DebugLength == DebugHashPos + DebugHashSize + 1 + DebugLenSize + sizeof(DebugSuffix));
+
+    // Special values
+    constexpr const char* EmptyValue = "None";
 
     if (aNode.IsScalar())
     {
@@ -108,6 +112,9 @@ Core::SharedPtr<RED4ext::TweakDBID> App::YamlConverter::Convert(const YAML::Node
 
         if (!aStrict)
         {
+            if (str == EmptyValue)
+                return Core::MakeShared<RED4ext::TweakDBID>();
+
             return Core::MakeShared<RED4ext::TweakDBID>(str);
         }
     }
