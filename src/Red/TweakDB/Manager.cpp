@@ -169,13 +169,14 @@ bool Red::TweakDB::Manager::CreateRecord(Red::TweakDBID aRecordId, const Red::CC
 
     {
         std::shared_lock flatLockR(m_tweakDb->mutex00);
-        for (const auto& propIt : recordInfo->props)
+        for (const auto& [_, propInfo] : recordInfo->props)
         {
-            const auto& propInfo = propIt.second;
+            if (!propInfo->offset)
+                continue;
 
             auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);
 
-            if (propInfo->defaultValue > 0)
+            if (propInfo->defaultValue != FlatPool::InvalidOffset)
                 propFlat.SetTDBOffset(propInfo->defaultValue);
             else
                 propFlat.SetTDBOffset(m_flatPool.AllocateDefault(propInfo->type));
@@ -193,11 +194,6 @@ bool Red::TweakDB::Manager::CreateRecord(Red::TweakDBID aRecordId, const Red::CC
         std::unique_lock flatLockRW(m_tweakDb->mutex00);
         m_tweakDb->flats.Insert(propFlats);
     }
-
-    // {
-    //     std::shared_lock recordLockR(m_tweakDb->mutex01);
-    //     record = m_tweakDb->recordsByType.Get(const_cast<Red::CClass*>(aType))->Begin();
-    // }
 
     if (m_batchMode)
     {
@@ -233,7 +229,7 @@ bool Red::TweakDB::Manager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID
         return false;
 
     bool fromBatch = false;
-    const RecordTypeInfo* recordInfo;
+    const Reflection::RecordInfo* recordInfo;
 
     if (source)
     {
@@ -264,6 +260,9 @@ bool Red::TweakDB::Manager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID
             if (sourceFlat == m_batchFlats.end())
             {
                 sourceFlat = m_tweakDb->flats.Find(sourcePropId);
+
+                if (sourceFlat == m_tweakDb->flats.End())
+                    continue;
             }
 
             auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);

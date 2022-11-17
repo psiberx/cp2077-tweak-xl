@@ -17,7 +17,7 @@ public:
     Manager& operator=(const Manager&) = delete;
 
     Red::CStackType GetFlat(Red::TweakDBID aFlatId);
-    Red::Handle<Red::gamedataTweakDBRecord> GetRecord(Red::TweakDBID aRecordId);
+    Red::Handle<Red::TweakDBRecord> GetRecord(Red::TweakDBID aRecordId);
 
     bool IsFlatExists(Red::TweakDBID aFlatId);
     bool IsRecordExists(Red::TweakDBID aRecordId);
@@ -44,6 +44,6 @@ private:
     Reflection m_reflection;
     bool m_batchMode;
     Red::SortedUniqueArray<Red::TweakDBID> m_batchFlats;
-    Core::Map<Red::TweakDBID, const RecordTypeInfo*> m_batchRecords;
+    Core::Map<Red::TweakDBID, const Reflection::RecordInfo*> m_batchRecords; // todo: use type name
 };
 }

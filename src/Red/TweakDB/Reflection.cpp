@@ -1,5 +1,6 @@
-#include "Reflection.hpp"
-#include "Types.hpp"
+#include "Red/TweakDB/FlatPool.hpp"
+#include "Red/TweakDB/Reflection.hpp"
+#include "Red/TweakDB/Types.hpp"
 
 #include <RED4ext/Scripting/Functions.hpp>
 #include <RED4ext/Scripting/CProperty.hpp>
@@ -47,30 +48,30 @@ const Red::CClass* Red::TweakDB::Reflection::GetRecordType(const char* aTypeName
     return type;
 }
 
-const Red::TweakDB::RecordTypeInfo* Red::TweakDB::Reflection::GetRecordInfo(const Red::CClass* aType)
+const Red::TweakDB::Reflection::RecordInfo* Red::TweakDB::Reflection::GetRecordInfo(const Red::CClass* aType)
 {
     if (!IsRecordType(aType))
         return nullptr;
 
-    auto iter = m_data.find(aType->GetName());
+    auto iter = m_resolved.find(aType->GetName());
 
-    if (iter != m_data.end())
+    if (iter != m_resolved.end())
         return iter->second.get();
 
     return CollectRecordInfo(aType).get();
 }
 
-const Red::TweakDB::RecordTypeInfo* Red::TweakDB::Reflection::GetRecordInfo(Red::CName aTypeName)
+const Red::TweakDB::Reflection::RecordInfo* Red::TweakDB::Reflection::GetRecordInfo(Red::CName aTypeName)
 {
-    auto iter = m_data.find(aTypeName);
+    auto iter = m_resolved.find(aTypeName);
 
-    if (iter != m_data.end())
+    if (iter != m_resolved.end())
         return iter->second.get();
 
     return CollectRecordInfo(m_rtti->GetClass(aTypeName)).get();
 }
 
-Core::SharedPtr<Red::TweakDB::RecordTypeInfo> Red::TweakDB::Reflection::CollectRecordInfo(
+Core::SharedPtr<Red::TweakDB::Reflection::RecordInfo> Red::TweakDB::Reflection::CollectRecordInfo(
     const Red::CClass* aType, Red::TweakDBID aSampleId)
 {
     if (!IsRecordType(aType))
@@ -85,7 +86,7 @@ Core::SharedPtr<Red::TweakDB::RecordTypeInfo> Red::TweakDB::Reflection::CollectR
             return nullptr;
     }
 
-    auto recordInfo = Core::MakeShared<RecordTypeInfo>();
+    auto recordInfo = Core::MakeShared<RecordInfo>();
     recordInfo->name = aType->name;
     recordInfo->type = aType;
     recordInfo->typeHash = GetRecordTypeHash(aType);
@@ -96,6 +97,7 @@ Core::SharedPtr<Red::TweakDB::RecordTypeInfo> Red::TweakDB::Reflection::CollectR
     {
         recordInfo->parent = aType->parent;
         recordInfo->props.insert(parentInfo->props.begin(), parentInfo->props.end());
+        recordInfo->extraFlats = parentInfo->extraFlats;
     }
 
     const auto baseOffset = aType->parent->size;
@@ -219,12 +221,50 @@ Core::SharedPtr<Red::TweakDB::RecordTypeInfo> Red::TweakDB::Reflection::CollectR
         recordInfo->props.insert({ propInfo->name, propInfo });
     }
 
-    for (auto& [_, propInfo] : recordInfo->props)
     {
-        propInfo->defaultValue = ResolveDefaultValue(aType, propInfo->appendix);
+        auto extraFlatsIt = s_extraFlats.find(aType->name);
+        if (extraFlatsIt != s_extraFlats.end())
+        {
+            recordInfo->extraFlats = true;
+
+            for (const auto& extraFlat : extraFlatsIt.value())
+            {
+                auto propInfo = Core::MakeShared<PropertyInfo>();
+                propInfo->name = Red::CName(extraFlat.appendix.c_str() + 1);
+                propInfo->appendix = extraFlat.appendix;
+
+                propInfo->type = m_rtti->GetType(extraFlat.typeName);
+                propInfo->isArray = propInfo->type->GetType() == Red::ERTTIType::Array;
+                propInfo->isForeignKey = !extraFlat.foreignTypeName.IsNone();
+
+                if (propInfo->isArray)
+                {
+                    const auto arrayType = reinterpret_cast<const Red::CRTTIArrayType*>(propInfo->type);
+                    propInfo->elementType = arrayType->innerType;
+                }
+
+                if (propInfo->isArray)
+                {
+                    propInfo->foreignType = m_rtti->GetClass(extraFlat.foreignTypeName);
+                }
+
+                propInfo->offset = 0;
+                propInfo->defaultValue = FlatPool::InvalidOffset;
+
+                recordInfo->props.insert({propInfo->name, propInfo});
+            }
+        }
     }
 
-    m_data.insert({ recordInfo->name, recordInfo });
+    for (auto& [_, propInfo] : recordInfo->props)
+    {
+        if (propInfo->offset)
+        {
+            propInfo->defaultValue = ResolveDefaultValue(aType, propInfo->appendix);
+        }
+    }
+
+    m_resolved.insert({ recordInfo->name, recordInfo });
 
     return recordInfo;
 }
@@ -278,7 +318,7 @@ int32_t Red::TweakDB::Reflection::ResolveDefaultValue(const Red::CClass* aType, 
     auto defaultFlat = m_tweakDb->flats.Find(defaultFlatId);
 
     if (defaultFlat == m_tweakDb->flats.End())
-        return 0;
+        return FlatPool::InvalidOffset;
 
     return defaultFlat->ToTDBOffset();
 }

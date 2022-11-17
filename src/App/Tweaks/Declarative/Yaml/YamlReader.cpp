@@ -316,18 +316,31 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
 
     aChangeset.MakeRecord(recordId, aType, aSourceId);
 
-    if (aSourceId.IsValid() && aChangeset.HasRecord(aSourceId))
+    if (aSourceId.IsValid())
     {
-        for (const auto& [_, propInfo] : recordInfo->props)
-        {
-            if (propInfo->isArray)
-            {
-                const auto propId = RED4ext::TweakDBID(recordId, propInfo->appendix);
-                const auto baseId = RED4ext::TweakDBID(aSourceId, propInfo->appendix);
+        const auto inChangeset = aChangeset.HasRecord(aSourceId);
 
-                if (aChangeset.InheritChanges(propId, baseId))
+        if (recordInfo->extraFlats || inChangeset)
+        {
+            for (const auto& [_, propInfo] : recordInfo->props)
+            {
+                if (inChangeset && propInfo->isArray)
                 {
-                    aChangeset.AssociateRecord(recordId, propId);
+                    const auto propId = RED4ext::TweakDBID(recordId, propInfo->appendix);
+                    const auto baseId = RED4ext::TweakDBID(aSourceId, propInfo->appendix);
+
+                    if (aChangeset.InheritChanges(propId, baseId))
+                    {
+                        aChangeset.AssociateRecord(recordId, propId);
+                    }
+                }
+
+                if (!propInfo->offset)
+                {
+                    const auto propId = RED4ext::TweakDBID(recordId, propInfo->appendix);
+                    const auto propName = aName + propInfo->appendix;
+
+                    aChangeset.RegisterName(propId, propName);
                 }
             }
         }
