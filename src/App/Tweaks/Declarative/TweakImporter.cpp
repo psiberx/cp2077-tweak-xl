@@ -1,25 +1,21 @@
 #include "TweakImporter.hpp"
-#include "App/Tweaks/Declarative/TweakChangeset.hpp"
+#include "App/Tweaks/Batch/TweakChangeset.hpp"
 #include "App/Tweaks/Declarative/Yaml/YamlReader.hpp"
 
-App::TweakImporter::TweakImporter(Core::SharedPtr<Red::TweakDBManager> aManager,
-                                  Core::SharedPtr<App::TweakChangelog> aChangelog,
-                                  std::filesystem::path aTweaksDir)
+App::TweakImporter::TweakImporter(Core::SharedPtr<Red::TweakDBManager> aManager)
     : m_manager(std::move(aManager))
-    , m_changelog(std::move(aChangelog))
-    , m_tweaksDir(std::move(aTweaksDir))
 {
 }
 
-void App::TweakImporter::ImportTweaks()
+void App::TweakImporter::ImportTweaks(const std::filesystem::path& aDir,
+                                      const Core::SharedPtr<App::TweakChangelog>& aChangelog)
 {
-    ImportTweaks("");
-}
-
-void App::TweakImporter::ImportTweaks(const std::filesystem::path& aDir)
-{
-    if (!EnsureDirExists())
+    std::error_code error;
+    if (!std::filesystem::is_directory(aDir, error))
+    {
+        LogError(R"(Directory "{}" not found.)", aDir.string());
         return;
+    }
 
     try
     {
@@ -27,19 +23,18 @@ void App::TweakImporter::ImportTweaks(const std::filesystem::path& aDir)
 
         TweakChangeset changeset;
 
-        const auto tweakDir = m_tweaksDir / aDir;
         const auto tweakDirIt = std::filesystem::recursive_directory_iterator(
-            tweakDir, std::filesystem::directory_options::follow_directory_symlink);
+            aDir, std::filesystem::directory_options::follow_directory_symlink);
 
         for (const auto& entry : tweakDirIt)
         {
             if (entry.is_regular_file())
             {
-                ReadFile(changeset, entry.path());
+                Read(changeset, entry.path(), aDir);
             }
         }
 
-        ApplyChangeset(changeset);
+        Apply(changeset, aChangelog);
     }
     catch (const std::exception& ex)
     {
@@ -51,12 +46,11 @@ void App::TweakImporter::ImportTweaks(const std::filesystem::path& aDir)
     }
 }
 
-void App::TweakImporter::ImportTweak(const std::filesystem::path& aPath)
+void App::TweakImporter::ImportTweak(const std::filesystem::path& aPath,
+                                      const Core::SharedPtr<App::TweakChangelog>& aChangelog)
 {
-    if (!EnsureDirExists())
-        return;
-
-    if (!std::filesystem::exists(m_tweaksDir / aPath))
+    std::error_code error;
+    if (!std::filesystem::is_regular_file(aPath, error))
     {
         LogError(R"(Tweak "{}" not found.)", aPath.string());
         return;
@@ -64,29 +58,12 @@ void App::TweakImporter::ImportTweak(const std::filesystem::path& aPath)
 
     TweakChangeset changeset;
 
-    if (ReadFile(changeset, m_tweaksDir / aPath))
-        ApplyChangeset(changeset);
+    if (Read(changeset, aPath, aPath.parent_path()))
+        Apply(changeset, aChangelog);
 }
 
-bool App::TweakImporter::EnsureDirExists()
-{
-    std::error_code error;
-
-    if (!std::filesystem::exists(m_tweaksDir, error))
-    {
-        if (!std::filesystem::create_directories(m_tweaksDir, error))
-        {
-            LogError("Cannot create tweaks directory [{}]: {}.",
-                     m_tweaksDir.string(), error.message());
-
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool App::TweakImporter::ReadFile(App::TweakChangeset& aChangeset, const std::filesystem::path& aPath)
+bool App::TweakImporter::Read(App::TweakChangeset& aChangeset, const std::filesystem::path& aPath,
+                              const std::filesystem::path& aDir)
 {
     Core::SharedPtr<ITweakReader> reader;
 
@@ -106,7 +83,7 @@ bool App::TweakImporter::ReadFile(App::TweakChangeset& aChangeset, const std::fi
 
     try
     {
-        LogInfo("Reading \"{}\"...", std::filesystem::relative(aPath, m_tweaksDir).string());
+        LogInfo("Reading \"{}\"...", std::filesystem::relative(aPath, aDir).string());
 
         if (reader->Load(aPath))
         {
@@ -127,7 +104,7 @@ bool App::TweakImporter::ReadFile(App::TweakChangeset& aChangeset, const std::fi
     return true;
 }
 
-bool App::TweakImporter::ApplyChangeset(App::TweakChangeset& aChangeset)
+bool App::TweakImporter::Apply(App::TweakChangeset& aChangeset, const Core::SharedPtr<App::TweakChangelog>& aChangelog)
 {
     if (aChangeset.IsEmpty())
     {
@@ -137,7 +114,7 @@ bool App::TweakImporter::ApplyChangeset(App::TweakChangeset& aChangeset)
 
     LogInfo("Importing tweaks...");
 
-    aChangeset.Commit(m_manager, m_changelog);
+    aChangeset.Commit(m_manager, aChangelog);
 
     LogInfo("Import completed.");
 

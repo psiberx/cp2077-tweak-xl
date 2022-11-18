@@ -1,6 +1,6 @@
 #pragma once
 
-#include "App/Tweaks/Declarative/TweakChangeset.hpp"
+#include "App/Tweaks/Batch/TweakChangeset.hpp"
 #include "App/Tweaks/Declarative/TweakReader.hpp"
 #include "App/Tweaks/Declarative/Yaml/YamlConverter.hpp"
 #include "Core/Logging/LoggingAgent.hpp"

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "App/Tweaks/Declarative/TweakChangelog.hpp"
+#include "App/Tweaks/Batch/TweakChangelog.hpp"
+#include "App/Tweaks/Batch/TweakChangeset.hpp"
 #include "App/Tweaks/Declarative/TweakReader.hpp"
 #include "Core/Logging/LoggingAgent.hpp"
 #include "Red/TweakDB/Manager.hpp"
@@ -10,20 +11,17 @@ namespace App
 class TweakImporter : Core::LoggingAgent
 {
 public:
-    TweakImporter(Core::SharedPtr<Red::TweakDBManager> aManager, Core::SharedPtr<App::TweakChangelog> aChangelog,
-                  std::filesystem::path aTweaksDir);
+    TweakImporter(Core::SharedPtr<Red::TweakDBManager> aManager);
 
-    void ImportTweaks();
-    void ImportTweaks(const std::filesystem::path& aPath);
-    void ImportTweak(const std::filesystem::path& aPath);
+    void ImportTweaks(const std::filesystem::path& aPath,
+                      const Core::SharedPtr<App::TweakChangelog>& aChangelog = nullptr);
+    void ImportTweak(const std::filesystem::path& aPath,
+                     const Core::SharedPtr<App::TweakChangelog>& aChangelog = nullptr);
 
 private:
-    bool EnsureDirExists();
-    bool ReadFile(TweakChangeset& aChangeset, const std::filesystem::path& aFullPath);
-    bool ApplyChangeset(TweakChangeset& aChangeset);
+    bool Read(App::TweakChangeset& aChangeset, const std::filesystem::path& aPath, const std::filesystem::path& aDir);
+    bool Apply(TweakChangeset& aChangeset, const Core::SharedPtr<App::TweakChangelog>& aChangelog);
 
     Core::SharedPtr<Red::TweakDBManager> m_manager;
-    Core::SharedPtr<App::TweakChangelog> m_changelog;
-    std::filesystem::path m_tweaksDir;
 };
 }

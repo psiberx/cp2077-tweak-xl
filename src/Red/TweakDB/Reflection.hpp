@@ -46,8 +46,8 @@ struct TweakDBPropertyInfo
     bool isArray;
     bool isForeignKey;
     std::string appendix; // The name used to build ID of the property
-    uintptr_t offset; // Offset of the property in record instance
-    int32_t defaultValue; // Offset of the value in the buffer todo: default
+    uintptr_t dataOffset; // Offset of the property in record instance
+    int32_t defaultValue; // Offset of the default value in the buffer
 };
 
 struct TweakDBRecordInfo

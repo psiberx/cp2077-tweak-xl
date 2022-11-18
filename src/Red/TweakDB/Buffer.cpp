@@ -83,7 +83,7 @@ int32_t Red::TweakDBBuffer::AllocateDefault(const Red::CBaseRTTIType* aType)
             aType->Destruct(value.memory);
             aType->GetAllocator()->Free(value);
 
-            // todo: Add to the TweakDB::defaultValues
+            // TODO: Add to the TweakDB::defaultValues?
         }
 
         if (offset != InvalidOffset)

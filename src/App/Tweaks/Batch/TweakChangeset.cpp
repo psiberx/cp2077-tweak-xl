@@ -168,8 +168,8 @@ bool App::TweakChangeset::IsEmpty()
     return m_pendingFlats.empty() && m_pendingRecords.empty() && m_pendingAlterings.empty() && m_pendingNames.empty();
 }
 
-void App::TweakChangeset::Commit(Core::SharedPtr<Red::TweakDBManager>& aManager,
-                                 Core::SharedPtr<App::TweakChangelog>& aChangelog)
+void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aManager,
+                                 const Core::SharedPtr<App::TweakChangelog>& aChangelog)
 {
     if (!aManager)
     {

@@ -59,7 +59,7 @@ void App::TweakChangelog::RegisterName(Red::TweakDBID aId, const std::string& aN
     m_knownNames[aId] = aName;
 }
 
-void App::TweakChangelog::CheckForIssues(Core::SharedPtr<Red::TweakDBManager>& aManager)
+void App::TweakChangelog::CheckForIssues(const Core::SharedPtr<Red::TweakDBManager>& aManager)
 {
     for (const auto& foreignKey : m_foreignKeys)
     {
@@ -70,7 +70,7 @@ void App::TweakChangelog::CheckForIssues(Core::SharedPtr<Red::TweakDBManager>& a
     }
 }
 
-void App::TweakChangelog::RevertChanges(Core::SharedPtr<Red::TweakDBManager>& aManager)
+void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManager>& aManager)
 {
     for (const auto& [flatId, altering] : m_alterings)
     {

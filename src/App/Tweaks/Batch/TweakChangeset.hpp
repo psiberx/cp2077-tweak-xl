@@ -1,6 +1,6 @@
 #pragma once
 
-#include "App/Tweaks/Declarative/TweakChangelog.hpp"
+#include "App/Tweaks/Batch/TweakChangelog.hpp"
 #include "Core/Logging/LoggingAgent.hpp"
 #include "Red/TweakDB/Manager.hpp"
 
@@ -74,7 +74,7 @@ public:
 
     bool IsEmpty();
 
-    void Commit(Core::SharedPtr<Red::TweakDBManager>& aManager, Core::SharedPtr<TweakChangelog>& aChangelog);
+    void Commit(const Core::SharedPtr<Red::TweakDBManager>& aManager, const Core::SharedPtr<TweakChangelog>& aChangelog);
 
 private:
     using ElementChange = std::pair<int32_t, Core::SharedPtr<void>>;

@@ -19,8 +19,8 @@ public:
 
     void RegisterName(Red::TweakDBID aId, const std::string& aName);
 
-    void CheckForIssues(Core::SharedPtr<Red::TweakDBManager>& aManager);
-    void RevertChanges(Core::SharedPtr<Red::TweakDBManager>& aManager);
+    void CheckForIssues(const Core::SharedPtr<Red::TweakDBManager>& aManager);
+    void RevertChanges(const Core::SharedPtr<Red::TweakDBManager>& aManager);
 
 private:
     struct AlteringEntry

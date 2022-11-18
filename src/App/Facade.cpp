@@ -15,12 +15,12 @@ void App::Facade::ImportAll()
     Core::Resolve<TweakService>()->ImportTweaks();
 }
 
-void App::Facade::ImportDir(RED4ext::CString& aPath)
+void App::Facade::ImportDir(Red::CString& aPath)
 {
     Red::Log::Debug("[TweakXL] The method TweakXL.ImportDir() is no longer supported. Use TweakXL.Reload() instead.");
 }
 
-void App::Facade::ImportTweak(RED4ext::CString& aPath)
+void App::Facade::ImportTweak(Red::CString& aPath)
 {
     Red::Log::Debug("[TweakXL] The method TweakXL.ImportDir() is no longer supported. Use TweakXL.Reload() instead.");
 }
@@ -30,12 +30,12 @@ void App::Facade::ExecuteAll()
     Core::Resolve<TweakService>()->ExecuteTweaks();
 }
 
-void App::Facade::ExecuteTweak(RED4ext::CName aName)
+void App::Facade::ExecuteTweak(Red::CName aName)
 {
     Core::Resolve<TweakService>()->ExecuteTweak(aName);
 }
 
-RED4ext::CString App::Facade::GetVersion()
+Red::CString App::Facade::GetVersion()
 {
     return Project::Version.to_string().c_str();
 }

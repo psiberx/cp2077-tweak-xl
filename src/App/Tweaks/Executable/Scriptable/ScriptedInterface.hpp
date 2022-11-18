@@ -13,7 +13,7 @@ public:
 private:
     using ScriptableHandle = Red::Handle<Red::IScriptable>;
     using ScriptableArray = Red::DynArray<ScriptableHandle>;
-    using RecordHandle = Red::Handle<Red::gamedataTweakDBRecord>;
+    using RecordHandle = Red::Handle<Red::TweakDBRecord>;
     using RecordArray = Red::DynArray<RecordHandle>;
 
     static void GetFlat(Red::IScriptable*, Red::CStackFrame* aFrame, Red::Variant* aRet,

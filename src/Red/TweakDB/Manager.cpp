@@ -179,7 +179,7 @@ bool Red::TweakDBManager::CreateRecord(Red::TweakDBID aRecordId, const Red::CCla
         std::shared_lock flatLockR(m_tweakDb->mutex00);
         for (const auto& [_, propInfo] : recordInfo->props)
         {
-            if (!propInfo->offset)
+            if (!propInfo->dataOffset)
                 continue;
 
             auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);

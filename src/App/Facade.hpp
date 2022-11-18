@@ -9,11 +9,11 @@ class Facade : public Red::Rtti::Class<Facade>
 public:
     static void Reload();
     static void ImportAll();
-    static void ImportDir(RED4ext::CString& aPath);
-    static void ImportTweak(RED4ext::CString& aPath);
+    static void ImportDir(Red::CString& aPath);
+    static void ImportTweak(Red::CString& aPath);
     static void ExecuteAll();
-    static void ExecuteTweak(RED4ext::CName aName);
-    static RED4ext::CString GetVersion();
+    static void ExecuteTweak(Red::CName aName);
+    static Red::CString GetVersion();
 
 private:
     friend Descriptor;

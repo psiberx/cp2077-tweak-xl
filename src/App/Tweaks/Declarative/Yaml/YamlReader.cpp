@@ -335,7 +335,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
                     }
                 }
 
-                if (!propInfo->offset)
+                if (!propInfo->dataOffset)
                 {
                     const auto propId = Red::TweakDBID(recordId, propInfo->appendix);
                     const auto propName = aName + propInfo->appendix;

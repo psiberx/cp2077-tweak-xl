@@ -1,6 +1,6 @@
 #pragma once
 
-#include "App/Tweaks/Declarative/TweakChangeset.hpp"
+#include "App/Tweaks/Batch/TweakChangeset.hpp"
 
 namespace App
 {

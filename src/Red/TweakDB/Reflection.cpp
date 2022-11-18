@@ -2,16 +2,19 @@
 
 namespace
 {
-constexpr size_t DataOffsetSize = 3;
-constexpr Red::CName BaseRecordTypeName = "gamedataTweakDBRecord";
-constexpr Red::CName ResRefTokenTypeName = "redResourceReferenceScriptToken";
-constexpr Red::CName ResRefTokenArrayTypeName = "array:redResourceReferenceScriptToken";
-constexpr const char* RecordTypePrefix = "gamedata";
-constexpr const char* RecordTypeSuffix = "_Record";
-constexpr size_t RecordTypePrefixLength = std::char_traits<char>::length(RecordTypePrefix);
-constexpr size_t RecordTypeSuffixLength = std::char_traits<char>::length(RecordTypeSuffix);
-constexpr const char* DefaultsGroup = "RTDB.";
-constexpr const char* PropSeparator = ".";
+constexpr auto RecordTypePrefix = "gamedata";
+constexpr auto RecordTypePrefixLength = std::char_traits<char>::length(RecordTypePrefix);
+constexpr auto RecordTypeSuffix = "_Record";
+constexpr auto RecordTypeSuffixLength = std::char_traits<char>::length(RecordTypeSuffix);
+
+constexpr auto BaseRecordTypeName = Red::CName("gamedataTweakDBRecord");
+constexpr auto ResRefTokenTypeName = Red::CName("redResourceReferenceScriptToken");
+constexpr auto ResRefTokenArrayTypeName = Red::CName("array:redResourceReferenceScriptToken");
+
+constexpr auto SchemaGroup = "RTDB.";
+constexpr auto PropSeparator = ".";
+
+constexpr auto DataOffsetSize = 3;
 }
 
 Red::TweakDBReflection::TweakDBReflection()
@@ -87,7 +90,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
 
         auto propInfo = Core::MakeShared<Red::TweakDBPropertyInfo>();
         propInfo->name = Red::CName(propName.c_str());
-        propInfo->offset = baseOffset + DataOffsetSize * recordInfo->props.size();
+        propInfo->dataOffset = baseOffset + DataOffsetSize * recordInfo->props.size();
 
         // Case: Foreign Key Array => TweakDBID[]
         if (!func->returnType)
@@ -225,7 +228,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
                     propInfo->foreignType = m_rtti->GetClass(extraFlat.foreignTypeName);
                 }
 
-                propInfo->offset = 0;
+                propInfo->dataOffset = 0;
                 propInfo->defaultValue = -1;
 
                 recordInfo->props.insert({propInfo->name, propInfo});
@@ -235,7 +238,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
 
     for (auto& [_, propInfo] : recordInfo->props)
     {
-        if (propInfo->offset)
+        if (propInfo->dataOffset)
         {
             propInfo->defaultValue = ResolveDefaultValue(aType, propInfo->appendix);
         }
@@ -288,7 +291,7 @@ std::string Red::TweakDBReflection::ResolvePropertyName(Red::TweakDBID aSampleId
 
 int32_t Red::TweakDBReflection::ResolveDefaultValue(const Red::CClass* aType, const std::string& aPropName)
 {
-    std::string defaultFlatName = DefaultsGroup;
+    std::string defaultFlatName = SchemaGroup;
 
     defaultFlatName.append(GetRecordShortName(aType->GetName()));
 
