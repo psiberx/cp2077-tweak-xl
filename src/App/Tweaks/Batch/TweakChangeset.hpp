@@ -75,13 +75,16 @@ public:
 
     bool IsEmpty();
 
-    void Commit(const Core::SharedPtr<Red::TweakDBManager>& aManager, const Core::SharedPtr<TweakChangelog>& aChangelog);
+    void Commit(const Core::SharedPtr<Red::TweakDBManager>& aManager,
+                const Core::SharedPtr<App::TweakChangelog>& aChangelog);
 
 private:
     using ElementChange = std::pair<int32_t, Core::SharedPtr<void>>;
 
     static int32_t FindElement(Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue);
     static bool InArray(Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue);
+    static bool IsSkip(Red::CRTTIArrayType* aArrayType, void* aValue, int32_t aLevel,
+                       const Core::Vector<ElementChange>& aChanges);
 
     static std::string AsString(const Red::CBaseRTTIType* aType);
     std::string AsString(Red::TweakDBID aId);

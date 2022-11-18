@@ -283,6 +283,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         auto targetArray = aManager->GetReflection()->Construct(targetType);
         targetType->Assign(targetArray.get(), flatData.value);
 
+        Core::Vector<ElementChange> skips;
         Core::Vector<ElementChange> deletions;
         Core::Vector<ElementChange> insertions;
         Core::Vector<decltype(&altering)> chain;
@@ -303,6 +304,8 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         }
 
         {
+            auto chainLevel = 0;
+
             for (const auto& entry : chain)
             {
                 for (const auto& deletion : entry->deletions)
@@ -314,7 +317,11 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                     {
                         deletions.emplace_back(deletionIndex, deletionValue);
                     }
+
+                    skips.emplace_back(chainLevel, deletionValue);
                 }
+
+                ++chainLevel;
             }
 
             if (!deletions.empty())
@@ -330,16 +337,20 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         }
 
         {
-            int32_t insertionIndex = 0;
+            auto chainLevel = 0;
+            auto insertionIndex = 0;
 
             auto performInsertions = [&, flatId = flatId](const Core::Vector<InsertionEntry>& aInsertions,
                                                           const Core::Vector<MergingEntry>& aMerges)
             {
                 for (const auto& insertion : aInsertions)
                 {
-                    const auto insertionValue = insertion.value;
+                    const auto& insertionValue = insertion.value;
 
                     if (insertion.unique && InArray(targetType, targetArray.get(), insertionValue.get()))
+                        continue;
+
+                    if (IsSkip(targetType, insertionValue.get(), chainLevel, skips))
                         continue;
 
                     targetType->InsertAt(targetArray.get(), insertionIndex);
@@ -366,9 +377,12 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
                     for (uint32_t sourceIndex = 0; sourceIndex < sourceLength; ++sourceIndex)
                     {
-                        auto insertionValuePtr = targetType->GetElement(sourceArray, sourceIndex);
+                        const auto insertionValuePtr = targetType->GetElement(sourceArray, sourceIndex);
 
                         if (InArray(targetType, targetArray.get(), insertionValuePtr))
+                            continue;
+
+                        if (IsSkip(targetType, insertionValuePtr, chainLevel, skips))
                             continue;
 
                         targetType->InsertAt(targetArray.get(), insertionIndex);
@@ -384,16 +398,21 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 }
             };
 
+            chainLevel = 0;
+
             for (const auto& entry : chain)
             {
                 performInsertions(entry->prependings, entry->prependingMerges);
+                ++chainLevel;
             }
 
+            chainLevel = 0;
             insertionIndex = static_cast<int32_t>(targetType->GetLength(targetArray.get()));
 
             for (const auto& entry : chain)
             {
                 performInsertions(entry->appendings, entry->appendingMerges);
+                ++chainLevel;
             }
         }
 
@@ -477,6 +496,20 @@ int32_t App::TweakChangeset::FindElement(Red::CRTTIArrayType* aArrayType, void* 
 bool App::TweakChangeset::InArray(Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
 {
     return FindElement(aArrayType, aArray, aValue) > 0;
+}
+
+bool App::TweakChangeset::IsSkip(Red::CRTTIArrayType* aArrayType, void* aValue, int32_t aLevel,
+                                 const Core::Vector<ElementChange>& aChanges)
+{
+    for (const auto& [level, value] : aChanges)
+    {
+        if (level > aLevel && aArrayType->innerType->IsEqual(value.get(), aValue))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 std::string App::TweakChangeset::AsString(const Red::CBaseRTTIType* aType)
