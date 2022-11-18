@@ -41,6 +41,7 @@ public:
 
     struct AlteringEntry
     {
+        Red::TweakDBID baseId;
         Core::Vector<DeletionEntry> deletions;
         Core::Vector<InsertionEntry> appendings;
         Core::Vector<InsertionEntry> prependings;

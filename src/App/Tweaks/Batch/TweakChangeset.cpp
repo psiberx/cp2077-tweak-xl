@@ -123,10 +123,8 @@ bool App::TweakChangeset::InheritChanges(Red::TweakDBID aFlatId, Red::TweakDBID 
     if (!m_pendingAlterings.contains(aBaseId))
         return false;
 
-    auto& targetEntry = m_pendingAlterings[aFlatId];
-    auto& baseEntry = m_pendingAlterings[aBaseId];
-
-    targetEntry = baseEntry;
+    auto& entry = m_pendingAlterings[aFlatId];
+    entry.baseId = aBaseId;
 
     return true;
 }
@@ -261,9 +259,8 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
     Core::Set<Red::TweakDBID> postUpdates;
 
-    for (const auto& altering : m_pendingAlterings)
+    for (const auto& [flatId, altering] : m_pendingAlterings)
     {
-        const auto& flatId = altering.first;
         const auto& flatData = aManager->GetFlat(flatId);
 
         if (!flatData.value)
@@ -288,38 +285,56 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
         Core::Vector<ElementChange> deletions;
         Core::Vector<ElementChange> insertions;
+        Core::Vector<decltype(&altering)> chain;
 
-        for (const auto& deletion : altering.second.deletions)
         {
-            const auto deletionValue = deletion.value;
-            const auto deletionIndex = FindElement(targetType, targetArray.get(), deletionValue.get());
+            chain.push_back(&altering);
 
-            if (deletionIndex >= 0)
+            auto baseId = altering.baseId;
+            while (baseId.IsValid())
             {
-                deletions.emplace_back(deletionIndex, deletionValue);
-            }
-        }
+                auto& entry = m_pendingAlterings[baseId];
+                chain.push_back(&entry);
 
-        if (!deletions.empty())
-        {
-            std::sort(deletions.begin(), deletions.end(), [](ElementChange& a, ElementChange& b)
-                                                          {
-                                                              return a.first > b.first;
-                                                          });
-
-            for (const auto& [deletionIndex, deletionEntry] : deletions)
-            {
-                targetType->RemoveAt(targetArray.get(), deletionIndex);
+                baseId = entry.baseId;
             }
+
+            std::reverse(chain.begin(), chain.end());
         }
 
         {
-            auto insert = [&](const Core::Vector<App::TweakChangeset::InsertionEntry>& aInsertions,
-                              const Core::Vector<App::TweakChangeset::MergingEntry>& aMerges,
-                              int32_t aStartIndex)
+            for (const auto& entry : chain)
             {
-                auto insertionIndex = aStartIndex;
+                for (const auto& deletion : entry->deletions)
+                {
+                    const auto deletionValue = deletion.value;
+                    const auto deletionIndex = FindElement(targetType, targetArray.get(), deletionValue.get());
 
+                    if (deletionIndex >= 0)
+                    {
+                        deletions.emplace_back(deletionIndex, deletionValue);
+                    }
+                }
+            }
+
+            if (!deletions.empty())
+            {
+                auto descending = [](ElementChange& a, ElementChange& b) { return a.first > b.first; };
+                std::sort(deletions.begin(), deletions.end(), descending);
+
+                for (const auto& [deletionIndex, deletionEntry] : deletions)
+                {
+                    targetType->RemoveAt(targetArray.get(), deletionIndex);
+                }
+            }
+        }
+
+        {
+            int32_t insertionIndex = 0;
+
+            auto performInsertions = [&, flatId = flatId](const Core::Vector<InsertionEntry>& aInsertions,
+                                                          const Core::Vector<MergingEntry>& aMerges)
+            {
                 for (const auto& insertion : aInsertions)
                 {
                     const auto insertionValue = insertion.value;
@@ -369,9 +384,17 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 }
             };
 
-            insert(altering.second.prependings, altering.second.prependingMerges, 0);
-            insert(altering.second.appendings, altering.second.appendingMerges,
-                   static_cast<int32_t>(targetType->GetLength(targetArray.get())));
+            for (const auto& entry : chain)
+            {
+                performInsertions(entry->prependings, entry->prependingMerges);
+            }
+
+            insertionIndex = static_cast<int32_t>(targetType->GetLength(targetArray.get()));
+
+            for (const auto& entry : chain)
+            {
+                performInsertions(entry->appendings, entry->appendingMerges);
+            }
         }
 
         const auto success = aManager->SetFlat(flatId, targetType, targetArray.get());
