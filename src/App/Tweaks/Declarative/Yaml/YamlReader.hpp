@@ -36,11 +36,10 @@ private:
                           Red::TweakDBID aSourceId = 0);
     bool ResolveInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath, const YAML::Node& aNode,
                            const Red::CClass*& aForeignType, Red::TweakDBID& aSourceId);
-    bool HandleRelativeChanges(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
-                               const YAML::Node& aNode, const Red::CBaseRTTIType* aElementType);
-    static bool IsRelativeChange(const YAML::Node& aNode);
-    static PropertyMode ResolvePropertyMode(const YAML::Node& aNode, PropertyMode aDefault = PropertyMode::Strict);
+    bool HandleMutations(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
+                         const YAML::Node& aNode, const Red::CBaseRTTIType* aElementType);
 
+    static PropertyMode ResolvePropertyMode(const YAML::Node& aNode, PropertyMode aDefault = PropertyMode::Strict);
     const Red::CBaseRTTIType* ResolveFlatType(const YAML::Node& aNode);
     const Red::CBaseRTTIType* ResolveFlatType(Red::CName aName);
     const Red::CClass* ResolveRecordType(const YAML::Node& aNode);

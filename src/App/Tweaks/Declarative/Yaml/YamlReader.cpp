@@ -235,7 +235,7 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
         {
             const auto elementType = ResolveFlatType(m_reflection->GetElementTypeName(aType));
 
-            if (HandleRelativeChanges(aChangeset, aName, aName, aNode, elementType))
+            if (HandleMutations(aChangeset, aName, aName, aNode, elementType))
                 return;
         }
 
@@ -409,10 +409,10 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
 
         const auto& nodeData = !overrideData.IsNull() ? overrideData : originalData;
 
-        // Relative operations
+        // Array mutations
         if (propInfo->isArray)
         {
-            if (HandleRelativeChanges(aChangeset, propPath, propName, nodeData, propInfo->elementType))
+            if (HandleMutations(aChangeset, propPath, propName, nodeData, propInfo->elementType))
                 continue;
         }
 
@@ -503,7 +503,7 @@ bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const s
     return true;
 }
 
-bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const std::string& aPath,
+bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::string& aPath,
                                             const std::string& aName, const YAML::Node& aNode,
                                             const Red::CBaseRTTIType* aElementType)
 {
@@ -512,8 +512,8 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
 
     const auto flatId = Red::TweakDBID(aName);
 
-    bool isRelative = false;
-    bool isAbsolute = false;
+    bool isMutation = false;
+    bool isAssignment = false;
 
     for (std::size_t itemIndex = 0; itemIndex < aNode.size(); ++itemIndex)
     {
@@ -521,7 +521,7 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
 
         if (itemData.Tag().length() <= 1)
         {
-            isAbsolute = true;
+            isAssignment = true;
             continue;
         }
 
@@ -542,7 +542,7 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
             }
 
             aChangeset.AppendElement(flatId, aElementType, itemValue, tag == AppendOnceOp);
-            isRelative = true;
+            isMutation = true;
             break;
         }
         case PrependOp:
@@ -558,7 +558,7 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
             }
 
             aChangeset.PrependElement(flatId, aElementType, itemValue, tag == PrependOnceOp);
-            isRelative = true;
+            isMutation = true;
             break;
         }
         case MergeOp:
@@ -573,7 +573,7 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
             }
 
             aChangeset.AppendFrom(flatId, sourceId);
-            isRelative = true;
+            isMutation = true;
             break;
         }
         case PrependFromOp:
@@ -587,7 +587,7 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
             }
 
             aChangeset.PrependFrom(flatId, sourceId);
-            isRelative = true;
+            isMutation = true;
             break;
         }
         case RemoveOp:
@@ -602,7 +602,7 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
             }
 
             aChangeset.RemoveElement(flatId, aElementType, itemValue);
-            isRelative = true;
+            isMutation = true;
             break;
         }
         default:
@@ -612,36 +612,13 @@ bool App::YamlReader::HandleRelativeChanges(TweakChangeset& aChangeset, const st
         }
     }
 
-    if (isRelative && isAbsolute)
+    if (isMutation && isAssignment)
     {
-        LogWarning("{}: Mixed definition with array replacement and relative changes. "
-                   "Only relative changes will take effect.", aPath);
+        LogWarning("{}: Mixed definition of array replacement and mutations. "
+                   "Only mutations will take effect.", aPath);
     }
 
-    return isRelative;
-}
-
-bool App::YamlReader::IsRelativeChange(const YAML::Node& aNode)
-{
-    if (aNode.Tag().length() <= 1)
-        return false;
-
-    const auto tag = Red::FNV1a64(aNode.Tag().c_str());
-
-    switch (tag)
-    {
-    case AppendOp:
-    case AppendOnceOp:
-    case AppendFromOp:
-    case PrependOp:
-    case PrependOnceOp:
-    case PrependFromOp:
-    case MergeOp:
-    case RemoveOp:
-        return true;
-    default:
-        return false;
-    }
+    return isMutation;
 }
 
 const Red::CBaseRTTIType* App::YamlReader::ResolveFlatType(const YAML::Node& aNode)
