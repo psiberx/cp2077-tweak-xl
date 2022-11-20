@@ -23,7 +23,7 @@ public:
     void RevertChanges(const Core::SharedPtr<Red::TweakDBManager>& aManager);
 
 private:
-    struct AlteringEntry
+    struct MutationEntry
     {
         Red::TweakDBID recordId;
         Core::SortedMap<int32_t, Core::SharedPtr<void>> insertions;
@@ -32,7 +32,7 @@ private:
 
     std::string AsString(Red::TweakDBID aId);
 
-    Core::Map<Red::TweakDBID, AlteringEntry> m_alterings;
+    Core::Map<Red::TweakDBID, MutationEntry> m_mutations;
     Core::Map<Red::TweakDBID, std::string> m_knownNames;
     Core::Set<Red::TweakDBID> m_foreignKeys;
 };

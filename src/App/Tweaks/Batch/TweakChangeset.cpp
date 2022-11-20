@@ -50,7 +50,7 @@ bool App::TweakChangeset::AppendElement(Red::TweakDBID aFlatId, const Red::CBase
     if (!aFlatId.IsValid() || !aType || !aValue)
         return false;
 
-    auto& entry = m_pendingAlterings[aFlatId];
+    auto& entry = m_pendingMutations[aFlatId];
     entry.appendings.emplace_back(aType, aValue, aUnique);
 
     return true;
@@ -62,7 +62,7 @@ bool App::TweakChangeset::PrependElement(Red::TweakDBID aFlatId, const Red::CBas
     if (!aFlatId.IsValid() || !aType || !aValue)
         return false;
 
-    auto& entry = m_pendingAlterings[aFlatId];
+    auto& entry = m_pendingMutations[aFlatId];
     entry.prependings.emplace_back(aType, aValue, aUnique);
 
     return true;
@@ -74,7 +74,7 @@ bool App::TweakChangeset::RemoveElement(Red::TweakDBID aFlatId, const Red::CBase
     if (!aFlatId.IsValid() || !aType || !aValue)
         return false;
 
-    auto& entry = m_pendingAlterings[aFlatId];
+    auto& entry = m_pendingMutations[aFlatId];
     entry.deletions.emplace_back(aType, aValue);
 
     return true;
@@ -85,7 +85,7 @@ bool App::TweakChangeset::AppendFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSou
     if (!aFlatId.IsValid() || !aSourceId.IsValid())
         return false;
 
-    auto& entry = m_pendingAlterings[aFlatId];
+    auto& entry = m_pendingMutations[aFlatId];
     entry.appendingMerges.emplace_back(aSourceId);
 
     return true;
@@ -96,7 +96,7 @@ bool App::TweakChangeset::PrependFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSo
     if (!aFlatId.IsValid() || !aSourceId.IsValid())
         return false;
 
-    auto& entry = m_pendingAlterings[aFlatId];
+    auto& entry = m_pendingMutations[aFlatId];
     entry.prependingMerges.emplace_back(aSourceId);
 
     return true;
@@ -110,10 +110,10 @@ bool App::TweakChangeset::InheritChanges(Red::TweakDBID aFlatId, Red::TweakDBID 
     if (m_pendingFlats.contains(aFlatId))
         return false;
 
-    if (!m_pendingAlterings.contains(aBaseId))
+    if (!m_pendingMutations.contains(aBaseId))
         return false;
 
-    auto& entry = m_pendingAlterings[aFlatId];
+    auto& entry = m_pendingMutations[aFlatId];
     entry.baseId = aBaseId;
 
     return true;
@@ -153,7 +153,7 @@ bool App::TweakChangeset::HasRecord(Red::TweakDBID aRecordId)
 
 bool App::TweakChangeset::IsEmpty()
 {
-    return m_pendingFlats.empty() && m_pendingRecords.empty() && m_pendingAlterings.empty() && m_pendingNames.empty();
+    return m_pendingFlats.empty() && m_pendingRecords.empty() && m_pendingMutations.empty() && m_pendingNames.empty();
 }
 
 void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aManager,
@@ -254,7 +254,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
     aManager->CommitBatch();
 
-    for (const auto& [flatId, altering] : m_pendingAlterings)
+    for (const auto& [flatId, mutation] : m_pendingMutations)
     {
         const auto& flatData = aManager->GetFlat(flatId);
 
@@ -281,15 +281,15 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         Core::Vector<ElementChange> skips;
         Core::Vector<ElementChange> deletions;
         Core::Vector<ElementChange> insertions;
-        Core::Vector<decltype(&altering)> chain;
+        Core::Vector<decltype(&mutation)> chain;
 
         {
-            chain.push_back(&altering);
+            chain.push_back(&mutation);
 
-            auto baseId = altering.baseId;
+            auto baseId = mutation.baseId;
             while (baseId.IsValid())
             {
-                auto& entry = m_pendingAlterings[baseId];
+                auto& entry = m_pendingMutations[baseId];
                 chain.push_back(&entry);
 
                 baseId = entry.baseId;
@@ -473,7 +473,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
     m_pendingRecords.clear();
     m_orderedRecords.clear();
     m_pendingNames.clear();
-    m_pendingAlterings.clear();
+    m_pendingMutations.clear();
 }
 
 int32_t App::TweakChangeset::FindElement(Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue)

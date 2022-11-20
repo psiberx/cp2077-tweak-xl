@@ -39,7 +39,7 @@ public:
         Red::TweakDBID sourceId;
     };
 
-    struct AlteringEntry
+    struct MutationEntry
     {
         Red::TweakDBID baseId;
         Core::Vector<DeletionEntry> deletions;
@@ -91,7 +91,7 @@ private:
     Core::Map<Red::TweakDBID, FlatEntry> m_pendingFlats;
     Core::Map<Red::TweakDBID, RecordEntry> m_pendingRecords;
     Core::Vector<Red::TweakDBID> m_orderedRecords;
-    Core::Map<Red::TweakDBID, AlteringEntry> m_pendingAlterings;
+    Core::Map<Red::TweakDBID, MutationEntry> m_pendingMutations;
     Core::Map<Red::TweakDBID, std::string> m_pendingNames;
 };
 }

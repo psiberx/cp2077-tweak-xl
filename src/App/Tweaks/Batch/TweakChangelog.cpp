@@ -5,7 +5,7 @@ bool App::TweakChangelog::AssociateFlat(Red::TweakDBID aFlatId, Red::TweakDBID a
     if (!aRecordId.IsValid() || !aFlatId.IsValid())
         return false;
 
-    m_alterings[aFlatId].recordId = aRecordId;
+    m_mutations[aFlatId].recordId = aRecordId;
 
     return true;
 }
@@ -16,7 +16,7 @@ bool App::TweakChangelog::RegisterInsertion(Red::TweakDBID aFlatId, int32_t aInd
     if (!aFlatId.IsValid() || !aValue)
         return false;
 
-    auto& entry = m_alterings[aFlatId];
+    auto& entry = m_mutations[aFlatId];
     entry.insertions[aIndex] = aValue;
 
     return true;
@@ -28,7 +28,7 @@ bool App::TweakChangelog::RegisterDeletion(Red::TweakDBID aFlatId, int32_t aInde
     if (!aFlatId.IsValid() || !aValue)
         return false;
 
-    auto& entry = m_alterings[aFlatId];
+    auto& entry = m_mutations[aFlatId];
     entry.deletions[aIndex] = aValue;
 
     return true;
@@ -38,7 +38,7 @@ void App::TweakChangelog::ForgetChanges(Red::TweakDBID aFlatId)
 {
     if (aFlatId.IsValid())
     {
-        m_alterings.erase(aFlatId);
+        m_mutations.erase(aFlatId);
     }
 }
 
@@ -81,7 +81,7 @@ void App::TweakChangelog::CheckForIssues(const Core::SharedPtr<Red::TweakDBManag
 
 void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManager>& aManager)
 {
-    for (const auto& [flatId, altering] : m_alterings)
+    for (const auto& [flatId, mutation] : m_mutations)
     {
         const auto& flatData = aManager->GetFlat(flatId);
 
@@ -105,7 +105,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
             auto currentArray = flatData.value;
             auto currentSize = arrayType->GetLength(currentArray);
 
-            for (const auto& [insertionIndex, insertionValue] : altering.insertions)
+            for (const auto& [insertionIndex, insertionValue] : mutation.insertions)
             {
                 if (insertionIndex >= currentSize)
                 {
@@ -122,10 +122,10 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
                 }
             }
 
-            currentSize -= altering.insertions.size();
-            currentSize += altering.deletions.size();
+            currentSize -= mutation.insertions.size();
+            currentSize += mutation.deletions.size();
 
-            for (const auto& [deletionIndex, deletionValue] : altering.deletions)
+            for (const auto& [deletionIndex, deletionValue] : mutation.deletions)
             {
                 if (deletionIndex >= currentSize)
                 {
@@ -144,12 +144,12 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
         auto restoredArray = aManager->GetReflection()->Construct(arrayType);
         arrayType->Assign(restoredArray.get(), flatData.value);
 
-        for (const auto& [insertionIndex, insertionValue] : altering.insertions | std::views::reverse)
+        for (const auto& [insertionIndex, insertionValue] : mutation.insertions | std::views::reverse)
         {
             arrayType->RemoveAt(restoredArray.get(), insertionIndex);
         }
 
-        for (const auto& [deletionIndex, deletionValue] : altering.deletions)
+        for (const auto& [deletionIndex, deletionValue] : mutation.deletions)
         {
             arrayType->InsertAt(restoredArray.get(), deletionIndex);
             elementType->Assign(arrayType->GetElement(restoredArray.get(), deletionIndex), deletionValue.get());
@@ -163,13 +163,13 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
             continue;
         }
 
-        if (altering.recordId.IsValid())
+        if (mutation.recordId.IsValid())
         {
-            aManager->UpdateRecord(altering.recordId);
+            aManager->UpdateRecord(mutation.recordId);
         }
     }
 
-    m_alterings.clear();
+    m_mutations.clear();
 }
 
 std::string App::TweakChangelog::AsString(Red::TweakDBID aId)
