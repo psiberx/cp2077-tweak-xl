@@ -43,6 +43,7 @@
 #include <RED4ext/Scripting/Natives/Generated/Quaternion.hpp>
 #include <RED4ext/Scripting/Natives/Generated/game/data/TweakDBInterface.hpp>
 
+#include <tao/pegtl.hpp>
 #include <yaml-cpp/yaml.h>
 
 #include "Core/Raw.hpp"
