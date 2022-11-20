@@ -198,7 +198,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
         propInfo->appendix = ".";
         propInfo->appendix.append(propName);
 
-        recordInfo->props.insert({ propInfo->name, propInfo });
+        recordInfo->props[propInfo->name] = propInfo;
     }
 
     {
@@ -231,7 +231,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
                 propInfo->dataOffset = 0;
                 propInfo->defaultValue = -1;
 
-                recordInfo->props.insert({propInfo->name, propInfo});
+                recordInfo->props[propInfo->name] = propInfo;
             }
         }
     }
