@@ -8,7 +8,8 @@ App::TweakImporter::TweakImporter(Core::SharedPtr<Red::TweakDBManager> aManager)
 }
 
 void App::TweakImporter::ImportTweaks(const std::filesystem::path& aDir,
-                                      const Core::SharedPtr<App::TweakChangelog>& aChangelog)
+                                      const Core::SharedPtr<App::TweakChangelog>& aChangelog,
+                                      bool aDryRun)
 {
     std::error_code error;
     if (!std::filesystem::is_directory(aDir, error))
@@ -34,7 +35,10 @@ void App::TweakImporter::ImportTweaks(const std::filesystem::path& aDir,
             }
         }
 
-        Apply(changeset, aChangelog);
+        if (!aDryRun)
+        {
+            Apply(changeset, aChangelog);
+        }
     }
     catch (const std::exception& ex)
     {
@@ -47,7 +51,8 @@ void App::TweakImporter::ImportTweaks(const std::filesystem::path& aDir,
 }
 
 void App::TweakImporter::ImportTweak(const std::filesystem::path& aPath,
-                                      const Core::SharedPtr<App::TweakChangelog>& aChangelog)
+                                     const Core::SharedPtr<App::TweakChangelog>& aChangelog,
+                                     bool aDryRun)
 {
     std::error_code error;
     if (!std::filesystem::is_regular_file(aPath, error))
@@ -59,7 +64,12 @@ void App::TweakImporter::ImportTweak(const std::filesystem::path& aPath,
     TweakChangeset changeset;
 
     if (Read(changeset, aPath, aPath.parent_path()))
-        Apply(changeset, aChangelog);
+    {
+        if (!aDryRun)
+        {
+            Apply(changeset, aChangelog);
+        }
+    }
 }
 
 bool App::TweakImporter::Read(App::TweakChangeset& aChangeset, const std::filesystem::path& aPath,
