@@ -8,7 +8,7 @@ namespace App
 class TweakChangelog : public Core::LoggingAgent
 {
 public:
-    bool AssociateRecord(Red::TweakDBID aRecordId, Red::TweakDBID aFlatId);
+    bool AssociateFlat(Red::TweakDBID aFlatId, Red::TweakDBID aRecordId);
     bool RegisterInsertion(Red::TweakDBID aFlatId, int32_t aIndex, const Core::SharedPtr<void>& aValue);
     bool RegisterDeletion(Red::TweakDBID aFlatId, int32_t aIndex, const Core::SharedPtr<void>& aValue);
     void ForgetChanges(Red::TweakDBID aFlatId);

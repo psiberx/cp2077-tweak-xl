@@ -1,6 +1,6 @@
 #include "TweakChangelog.hpp"
 
-bool App::TweakChangelog::AssociateRecord(Red::TweakDBID aRecordId, Red::TweakDBID aFlatId)
+bool App::TweakChangelog::AssociateFlat(Red::TweakDBID aFlatId, Red::TweakDBID aRecordId)
 {
     if (!aRecordId.IsValid() || !aFlatId.IsValid())
         return false;
@@ -36,17 +36,26 @@ bool App::TweakChangelog::RegisterDeletion(Red::TweakDBID aFlatId, int32_t aInde
 
 void App::TweakChangelog::ForgetChanges(Red::TweakDBID aFlatId)
 {
-    m_alterings.erase(aFlatId);
+    if (aFlatId.IsValid())
+    {
+        m_alterings.erase(aFlatId);
+    }
 }
 
 void App::TweakChangelog::RegisterForeignKey(Red::TweakDBID aForeignKey)
 {
-    m_foreignKeys.insert(aForeignKey);
+    if (aForeignKey.IsValid())
+    {
+        m_foreignKeys.insert(aForeignKey);
+    }
 }
 
 void App::TweakChangelog::ForgetForeignKey(Red::TweakDBID aForeignKey)
 {
-    m_foreignKeys.erase(aForeignKey);
+    if (aForeignKey.IsValid())
+    {
+        m_foreignKeys.erase(aForeignKey);
+    }
 }
 
 void App::TweakChangelog::ForgetForeignKeys()

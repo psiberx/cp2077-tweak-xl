@@ -3,6 +3,11 @@
 #include "Red/Rtti/Utils.hpp"
 #include "Red/TweakDB/Reflection.hpp"
 
+namespace
+{
+constexpr auto LocKeyPrefix = "LocKey#";
+}
+
 template<typename T>
 Core::SharedPtr<T> App::YamlConverter::Convert(const YAML::Node& aNode, bool)
 {
@@ -139,7 +144,7 @@ Core::SharedPtr<Red::LocKeyWrapper> App::YamlConverter::Convert(const YAML::Node
     constexpr size_t WrappedDiff = WrappedSkip + sizeof(WrappedSuffix);
 
     // String format: LocKey#Secondary-Loc-Key | LocKey#12345
-    constexpr const char* StringPrefix = "LocKey#";
+    constexpr const char* StringPrefix = LocKeyPrefix;
     constexpr size_t StringSkip = std::char_traits<char>::length(StringPrefix);
     constexpr size_t StringDiff = StringSkip;
 
@@ -270,7 +275,7 @@ Core::SharedPtr<Red::CString> App::YamlConverter::Convert(const YAML::Node& aNod
         const auto locKey = Convert<Red::LocKeyWrapper>(aNode, true);
         if (locKey)
         {
-            const auto locKeyStr = std::string("LocKey#").append(std::to_string(locKey->primaryKey));
+            const auto locKeyStr = std::string(LocKeyPrefix).append(std::to_string(locKey->primaryKey));
 
             return Core::MakeShared<Red::CString>(locKeyStr.c_str());
         }
@@ -427,69 +432,69 @@ Core::SharedPtr<void> App::YamlConverter::Convert(Red::CName aTypeName, const YA
 {
     switch (aTypeName)
     {
-    case Red::ETweakDBFlatType::Int:
+    case Red::ERTDBFlatType::Int:
         return Convert<int>(aNode);
-    case Red::ETweakDBFlatType::IntArray:
+    case Red::ERTDBFlatType::IntArray:
         return ConvertArray<int>(aNode);
 
-    case Red::ETweakDBFlatType::Float:
+    case Red::ERTDBFlatType::Float:
         return Convert<float>(aNode);
-    case Red::ETweakDBFlatType::FloatArray:
+    case Red::ERTDBFlatType::FloatArray:
         return ConvertArray<float>(aNode);
 
-    case Red::ETweakDBFlatType::Bool:
+    case Red::ERTDBFlatType::Bool:
         return Convert<bool>(aNode);
-    case Red::ETweakDBFlatType::BoolArray:
+    case Red::ERTDBFlatType::BoolArray:
         return ConvertArray<bool>(aNode);
 
-    case Red::ETweakDBFlatType::String:
+    case Red::ERTDBFlatType::String:
         return Convert<Red::CString>(aNode);
-    case Red::ETweakDBFlatType::StringArray:
+    case Red::ERTDBFlatType::StringArray:
         return ConvertArray<Red::CString>(aNode);
 
-    case Red::ETweakDBFlatType::CName:
+    case Red::ERTDBFlatType::CName:
         return Convert<Red::CName>(aNode);
-    case Red::ETweakDBFlatType::CNameArray:
+    case Red::ERTDBFlatType::CNameArray:
         return ConvertArray<Red::CName>(aNode);
 
-    case Red::ETweakDBFlatType::TweakDBID:
+    case Red::ERTDBFlatType::TweakDBID:
         return Convert<Red::TweakDBID>(aNode);
-    case Red::ETweakDBFlatType::TweakDBIDArray:
+    case Red::ERTDBFlatType::TweakDBIDArray:
         return ConvertArray<Red::TweakDBID>(aNode);
 
-    case Red::ETweakDBFlatType::LocKey:
+    case Red::ERTDBFlatType::LocKey:
         return Convert<Red::LocKeyWrapper>(aNode);
-    case Red::ETweakDBFlatType::LocKeyArray:
+    case Red::ERTDBFlatType::LocKeyArray:
         return ConvertArray<Red::LocKeyWrapper>(aNode);
 
-    case Red::ETweakDBFlatType::Resource:
+    case Red::ERTDBFlatType::ResRef:
         return Convert<Red::ResourceAsyncReference<>>(aNode);
-    case Red::ETweakDBFlatType::ResourceArray:
+    case Red::ERTDBFlatType::ResRefArray:
         return ConvertArray<Red::ResourceAsyncReference<>>(aNode);
 
-    case Red::ETweakDBFlatType::Quaternion:
+    case Red::ERTDBFlatType::Quaternion:
         return Convert<Red::Quaternion>(aNode);
-    case Red::ETweakDBFlatType::QuaternionArray:
+    case Red::ERTDBFlatType::QuaternionArray:
         return ConvertArray<Red::Quaternion>(aNode);
 
-    case Red::ETweakDBFlatType::EulerAngles:
+    case Red::ERTDBFlatType::EulerAngles:
         return Convert<Red::EulerAngles>(aNode);
-    case Red::ETweakDBFlatType::EulerAnglesArray:
+    case Red::ERTDBFlatType::EulerAnglesArray:
         return ConvertArray<Red::EulerAngles>(aNode);
 
-    case Red::ETweakDBFlatType::Vector3:
+    case Red::ERTDBFlatType::Vector3:
         return Convert<Red::Vector3>(aNode);
-    case Red::ETweakDBFlatType::Vector3Array:
+    case Red::ERTDBFlatType::Vector3Array:
         return ConvertArray<Red::Vector3>(aNode);
 
-    case Red::ETweakDBFlatType::Vector2:
+    case Red::ERTDBFlatType::Vector2:
         return Convert<Red::Vector2>(aNode);
-    case Red::ETweakDBFlatType::Vector2Array:
+    case Red::ERTDBFlatType::Vector2Array:
         return ConvertArray<Red::Vector2>(aNode);
 
-    case Red::ETweakDBFlatType::Color:
+    case Red::ERTDBFlatType::Color:
         return Convert<Red::Color>(aNode);
-    case Red::ETweakDBFlatType::ColorArray:
+    case Red::ERTDBFlatType::ColorArray:
         return ConvertArray<Red::Color>(aNode);
     }
 
@@ -505,47 +510,47 @@ std::pair<Red::CName, Core::SharedPtr<void>> App::YamlConverter::Convert(const Y
     case YAML::NodeType::Scalar:
     {
         if (Convert<Red::CString>(aNode, value, true))
-            return { Red::ETweakDBFlatType::String, value };
+            return { Red::ERTDBFlatType::String, value };
 
         if (Convert<int>(aNode, value, true))
-            return { Red::ETweakDBFlatType::Int, value };
+            return { Red::ERTDBFlatType::Int, value };
 
         if (Convert<float>(aNode, value, true))
-            return { Red::ETweakDBFlatType::Float, value };
+            return { Red::ERTDBFlatType::Float, value };
 
         if (Convert<bool>(aNode, value, true))
-            return { Red::ETweakDBFlatType::Bool, value };
+            return { Red::ERTDBFlatType::Bool, value };
 
         if (Convert<Red::CName>(aNode, value, true))
-            return { Red::ETweakDBFlatType::CName, value };
+            return { Red::ERTDBFlatType::CName, value };
 
         if (Convert<Red::TweakDBID>(aNode, value, true))
-            return { Red::ETweakDBFlatType::TweakDBID, value };
+            return { Red::ERTDBFlatType::TweakDBID, value };
 
         if (Convert<Red::LocKeyWrapper>(aNode, value, true))
-            return { Red::ETweakDBFlatType::LocKey, value };
+            return { Red::ERTDBFlatType::LocKey, value };
 
         if (Convert<Red::ResourceAsyncReference<>>(aNode, value, true))
-            return { Red::ETweakDBFlatType::Resource, value };
+            return { Red::ERTDBFlatType::ResRef, value };
 
         break;
     }
     case YAML::NodeType::Map:
     {
         if (Convert<Red::Quaternion>(aNode, value, true))
-            return { Red::ETweakDBFlatType::Quaternion, value };
+            return { Red::ERTDBFlatType::Quaternion, value };
 
         if (Convert<Red::EulerAngles>(aNode, value, true))
-            return { Red::ETweakDBFlatType::EulerAngles, value };
+            return { Red::ERTDBFlatType::EulerAngles, value };
 
         if (Convert<Red::Vector3>(aNode, value, true))
-            return { Red::ETweakDBFlatType::Vector3, value };
+            return { Red::ERTDBFlatType::Vector3, value };
 
         if (Convert<Red::Vector2>(aNode, value, true))
-            return { Red::ETweakDBFlatType::Vector2, value };
+            return { Red::ERTDBFlatType::Vector2, value };
 
         if (Convert<Red::Color>(aNode, value, true))
-            return { Red::ETweakDBFlatType::Color, value };
+            return { Red::ERTDBFlatType::Color, value };
 
         break;
     }

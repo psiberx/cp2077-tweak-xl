@@ -55,7 +55,6 @@ public:
     bool MakeRecord(Red::TweakDBID aRecordId, const Red::CClass* aType,
                     Red::TweakDBID aSourceId = 0);
     bool UpdateRecord(Red::TweakDBID aRecordId);
-    bool AssociateRecord(Red::TweakDBID aRecordId, Red::TweakDBID aFlatId);
 
     bool AppendElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
                        const Core::SharedPtr<void>& aValue, bool aUnique = false);
@@ -86,14 +85,13 @@ private:
     static bool IsSkip(Red::CRTTIArrayType* aArrayType, void* aValue, int32_t aLevel,
                        const Core::Vector<ElementChange>& aChanges);
 
-    static std::string AsString(const Red::CBaseRTTIType* aType);
-    std::string AsString(Red::TweakDBID aId);
+    static std::string ToName(const Red::CBaseRTTIType* aType);
+    std::string ToName(Red::TweakDBID aId);
 
     Core::Map<Red::TweakDBID, FlatEntry> m_pendingFlats;
     Core::Map<Red::TweakDBID, RecordEntry> m_pendingRecords;
     Core::Vector<Red::TweakDBID> m_orderedRecords;
     Core::Map<Red::TweakDBID, AlteringEntry> m_pendingAlterings;
     Core::Map<Red::TweakDBID, std::string> m_pendingNames;
-    Core::Map<Red::TweakDBID, Red::TweakDBID> m_flatToRecordMap;
 };
 }

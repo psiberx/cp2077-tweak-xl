@@ -8,10 +8,6 @@ namespace App
 class ScriptedManager : public Red::Rtti::Class<ScriptedManager>
 {
 public:
-    // ScriptedManager() = default;
-    // explicit ScriptedManager(Core::SharedPtr<Red::TweakDBManager> aManager);
-    // ~ScriptedManager() override;
-
     static void SetManager(Core::SharedPtr<Red::TweakDBManager> aManager);
 
 private:

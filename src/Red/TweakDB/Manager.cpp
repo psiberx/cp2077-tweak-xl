@@ -74,8 +74,7 @@ bool Red::TweakDBManager::IsRecordExists(Red::TweakDBID aRecordId)
     return m_tweakDb->recordsByID.Get(aRecordId) != nullptr;
 }
 
-bool Red::TweakDBManager::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
-                               Red::ScriptInstance aValue)
+bool Red::TweakDBManager::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue)
 {
     if (!aValue)
         return false;
@@ -336,8 +335,47 @@ bool Red::TweakDBManager::UpdateRecord(Red::TweakDBID aRecordId)
 
 void Red::TweakDBManager::RegisterName(Red::TweakDBID aId, const std::string& aName)
 {
+    if (m_batchMode)
+    {
+        m_batchNames.emplace(aId, aName);
+        return;
+    }
+
+    CreateBaseName(aId, aName);
+    CreateExtraNames(aId, aName);
+}
+
+void Red::TweakDBManager::CreateBaseName(Red::TweakDBID aId, const std::string& aName)
+{
     Red::TweakDBID base;
     Raw::CreateTweakDBID(&base, &aId, aName.c_str());
+}
+
+void Red::TweakDBManager::CreateExtraNames(Red::TweakDBID aId, const std::string& aName)
+{
+    Red::Handle<Red::IScriptable>* record;
+
+    {
+        std::shared_lock recordLockR(m_tweakDb->mutex01);
+        record = m_tweakDb->recordsByID.Get(aId);
+    }
+
+    if (!record)
+        return;
+
+    Red::TweakDBID base;
+    const auto recordInfo = m_reflection->GetRecordInfo(record->GetPtr()->GetType());
+
+    for (const auto& [_, propInfo] : recordInfo->props)
+    {
+        if (!propInfo->dataOffset)
+        {
+            const auto propId = aId + propInfo->appendix;
+            const auto propName = aName + propInfo->appendix;
+
+            Raw::CreateTweakDBID(&base, &propId, propName.c_str());
+        }
+    }
 }
 
 void Red::TweakDBManager::StartBatch()
@@ -349,6 +387,11 @@ void Red::TweakDBManager::CommitBatch()
 {
     if (!m_batchMode)
         return;
+
+    for (const auto& [id, name] : m_batchNames)
+    {
+        CreateBaseName(id, name);
+    }
 
     {
         std::unique_lock flatLockRW(m_tweakDb->mutex00);
@@ -375,8 +418,14 @@ void Red::TweakDBManager::CommitBatch()
         }
     }
 
+    for (const auto& [id, name] : m_batchNames)
+    {
+        CreateExtraNames(id, name);
+    }
+
     m_batchFlats.Clear();
     m_batchRecords.clear();
+    m_batchNames.clear();
     m_batchMode = false;
 }
 

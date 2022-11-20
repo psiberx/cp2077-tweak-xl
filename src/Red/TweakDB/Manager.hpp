@@ -40,13 +40,16 @@ public:
     Core::SharedPtr<Red::TweakDBReflection>& GetReflection();
 
 private:
-    Red::TweakDB* m_tweakDb;
+    void CreateBaseName(Red::TweakDBID aId, const std::string& aName);
+    void CreateExtraNames(Red::TweakDBID aId, const std::string& aName);
 
+    Red::TweakDB* m_tweakDb;
     Core::SharedPtr<Red::TweakDBBuffer> m_buffer;
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;
 
     bool m_batchMode;
     Red::SortedUniqueArray<Red::TweakDBID> m_batchFlats;
     Core::Map<Red::TweakDBID, const Red::TweakDBRecordInfo*> m_batchRecords;
+    Core::Map<Red::TweakDBID, const std::string> m_batchNames;
 };
 }

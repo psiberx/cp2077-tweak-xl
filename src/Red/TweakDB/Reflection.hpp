@@ -4,7 +4,7 @@
 
 namespace Red
 {
-namespace ETweakDBFlatType
+namespace ERTDBFlatType
 {
 enum : uint64_t
 {
@@ -13,9 +13,9 @@ enum : uint64_t
     Bool = Red::FNV1a64("Bool"),
     String = Red::FNV1a64("String"),
     CName = Red::FNV1a64("CName"),
-    TweakDBID = Red::FNV1a64("TweakDBID"),
     LocKey = Red::FNV1a64("gamedataLocKeyWrapper"),
-    Resource = Red::FNV1a64("raRef:CResource"),
+    ResRef = Red::FNV1a64("raRef:CResource"),
+    TweakDBID = Red::FNV1a64("TweakDBID"),
     Quaternion = Red::FNV1a64("Quaternion"),
     EulerAngles = Red::FNV1a64("EulerAngles"),
     Vector3 = Red::FNV1a64("Vector3"),
@@ -26,9 +26,9 @@ enum : uint64_t
     BoolArray = Red::FNV1a64("array:Bool"),
     StringArray = Red::FNV1a64("array:String"),
     CNameArray = Red::FNV1a64("array:CName"),
-    TweakDBIDArray = Red::FNV1a64("array:TweakDBID"),
     LocKeyArray = Red::FNV1a64("array:gamedataLocKeyWrapper"),
-    ResourceArray = Red::FNV1a64("array:raRef:CResource"),
+    ResRefArray = Red::FNV1a64("array:raRef:CResource"),
+    TweakDBIDArray = Red::FNV1a64("array:TweakDBID"),
     QuaternionArray = Red::FNV1a64("array:Quaternion"),
     EulerAnglesArray = Red::FNV1a64("array:EulerAngles"),
     Vector3Array = Red::FNV1a64("array:Vector3"),
@@ -80,6 +80,9 @@ public:
     const Red::CClass* GetRecordType(Red::CName aTypeName);
     const Red::CClass* GetRecordType(const char* aTypeName);
 
+    const Red::CBaseRTTIType* GetElementType(Red::CName aTypeName);
+    const Red::CBaseRTTIType* GetElementType(const Red::CBaseRTTIType* aType);
+
     bool IsFlatType(Red::CName aTypeName);
     bool IsFlatType(const Red::CBaseRTTIType* aType);
 
@@ -101,11 +104,11 @@ public:
     bool IsResRefTokenArray(Red::CName aTypeName);
     bool IsResRefTokenArray(const Red::CBaseRTTIType* aType);
 
-    Red::CName GetArrayType(Red::CName aTypeName);
-    Red::CName GetArrayType(const Red::CBaseRTTIType* aType);
+    Red::CName GetArrayTypeName(Red::CName aTypeName);
+    Red::CName GetArrayTypeName(const Red::CBaseRTTIType* aType);
 
-    Red::CName GetElementType(Red::CName aTypeName);
-    Red::CName GetElementType(const Red::CBaseRTTIType* aType);
+    Red::CName GetElementTypeName(Red::CName aTypeName);
+    Red::CName GetElementTypeName(const Red::CBaseRTTIType* aType);
 
     Red::CName GetRecordFullName(Red::CName aName);
     Red::CName GetRecordFullName(const char* aName);

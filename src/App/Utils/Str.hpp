@@ -39,6 +39,27 @@ T ParseInt(const std::string& aIn, const int aRadix = 10)
     return static_cast<T>(out);
 }
 
+template<typename T>
+requires std::is_floating_point_v<T>
+bool ParseFloat(const std::string& aIn, T& aOut, const char* aSuffix = nullptr)
+{
+    char* end;
+
+    if constexpr (std::is_same_v<T, float>)
+        aOut = std::strtof(aIn.c_str(), &end);
+    else if constexpr (std::is_same_v<T, double>)
+        aOut = std::strtod(aIn.c_str(), &end);
+    else if constexpr (std::is_same_v<T, long double>)
+        aOut = std::strtold(aIn.c_str(), &end);
+
+    if (end != aIn.c_str() + aIn.size())
+    {
+        return aSuffix && strcmp(end, aSuffix) == 0;
+    }
+
+    return true;
+}
+
 inline bool IsNumeric(const std::string& aIn, size_t aStart = 0)
 {
     return aIn.find_first_not_of("0123456789", aStart) == std::string::npos;

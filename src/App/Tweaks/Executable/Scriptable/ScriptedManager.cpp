@@ -6,16 +6,6 @@ void App::ScriptedManager::SetManager(Core::SharedPtr<Red::TweakDBManager> aMana
     s_reflection = s_manager->GetReflection();
 }
 
-// App::ScriptedManager::ScriptedManager(Core::SharedPtr<Red::TweakDBManager> aManager)
-// {
-//     s_manager = aManager;
-// }
-//
-// App::ScriptedManager::~ScriptedManager()
-// {
-//     s_manager.reset();
-// }
-
 void App::ScriptedManager::SetFlat(Red::IScriptable*, Red::CStackFrame* aFrame, bool* aRet, void*)
 {
     Red::TweakDBID flatID;
@@ -31,13 +21,13 @@ void App::ScriptedManager::SetFlat(Red::IScriptable*, Red::CStackFrame* aFrame, 
     if (s_reflection->IsResRefToken(variant.GetType()))
     {
         const auto rtti = Red::CRTTISystem::Get();
-        const auto type = rtti->GetType(Red::ETweakDBFlatType::Resource);
+        const auto type = rtti->GetType(Red::ERTDBFlatType::ResRef);
         variant = Red::Variant(type, variant.GetDataPtr());
     }
     else if (s_reflection->IsResRefTokenArray(variant.GetType()))
     {
         const auto rtti = Red::CRTTISystem::Get();
-        const auto type = rtti->GetType(Red::ETweakDBFlatType::ResourceArray);
+        const auto type = rtti->GetType(Red::ERTDBFlatType::ResRefArray);
         variant = Red::Variant(type, variant.GetDataPtr());
     }
 
