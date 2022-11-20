@@ -1,5 +1,4 @@
 #include "YamlReader.hpp"
-#include "App/Utils/Str.hpp"
 
 namespace
 {
@@ -7,13 +6,8 @@ constexpr auto AttrSymbol = '$';
 constexpr auto TypeAttrKey = "$type";
 constexpr auto ValueAttrKey = "$value";
 constexpr auto BaseAttrKey = "$base";
-
 constexpr auto PropModeKey = "$props";
 constexpr auto PropModeAuto = "AutoFlats";
-
-constexpr auto InlineSeparator = "$";
-constexpr auto PropSeparator = ".";
-constexpr auto HashSeparator = "|";
 
 constexpr auto AppendOp = Red::FNV1a64("!append");
 constexpr auto AppendOnceOp = Red::FNV1a64("!append-once");
@@ -26,6 +20,8 @@ constexpr auto RemoveOp = Red::FNV1a64("!remove");
 
 constexpr auto UIIconType = Red::CName("gamedataUIIcon_Record");
 constexpr auto StringType = Red::CName("String");
+
+constexpr auto PropSeparator = ".";
 
 constexpr auto LegacyGroupsNodeKey = "groups";
 constexpr auto LegacyMembersNodeKey = "members";
@@ -346,19 +342,15 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
             {
                 auto inlineFailed = false;
 
-                for (std::size_t itemIndex = 0; itemIndex < originalData.size(); ++itemIndex)
+                for (auto itemIndex = 0; itemIndex < originalData.size(); ++itemIndex)
                 {
                     auto itemData = originalData[itemIndex];
 
                     if (itemData.IsMap())
                     {
-                        auto inlinePath = aRecordPath;
-                        inlinePath.append(propInfo->appendix);
-                        inlinePath.append(PropSeparator);
-                        inlinePath.append(std::to_string(itemIndex));
-
                         auto sourceId = Red::TweakDBID();
                         auto foreignType = propInfo->foreignType;
+                        auto inlinePath = ComposePath(propPath, itemIndex);
 
                         if (!ResolveInlineNode(aChangeset, inlinePath, itemData, foreignType, sourceId))
                         {
@@ -366,19 +358,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
                             break;
                         }
 
-                        auto inlineHash = m_path.string();
-                        inlineHash.append(HashSeparator);
-                        inlineHash.append(aRecordName);
-                        inlineHash.append(HashSeparator);
-                        inlineHash.append(nodeKey);
-                        inlineHash.append(HashSeparator);
-                        inlineHash.append(std::to_string(itemIndex));
-                        inlineHash.append(HashSeparator);
-                        inlineHash.append(foreignType->name.ToString());
-
-                        auto inlineName = propName;
-                        inlineName.append(InlineSeparator);
-                        inlineName.append(ToHex(Red::FNV1a32(inlineHash.c_str(), inlineHash.size())));
+                        auto inlineName = ComposeInlineName(propName, foreignType, m_path, itemIndex);
 
                         HandleRecordNode(aChangeset, propMode, inlinePath, inlineName, itemData, foreignType, sourceId);
 
@@ -397,19 +377,13 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
             }
             else if (originalData.IsMap())
             {
-                auto inlinePath = aRecordPath;
-                inlinePath.append(propInfo->appendix);
-
                 auto sourceId = Red::TweakDBID();
                 auto foreignType = propInfo->foreignType;
 
-                if (!ResolveInlineNode(aChangeset, inlinePath, originalData, foreignType, sourceId))
+                if (!ResolveInlineNode(aChangeset, propPath, originalData, foreignType, sourceId))
                     continue;
 
-                // FIXME: Use foreignType and hash
-                auto inlineName = aRecordName;
-                inlineName.append(InlineSeparator);
-                inlineName.append(nodeKey);
+                auto inlineName = ComposeInlineName(propName, foreignType, m_path);
 
                 // Special handling for UIIcon
                 if (propInfo->foreignType->GetName() == UIIconType)
@@ -426,7 +400,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
                     inlineName.insert(0, "UIIcon.");
                 }
 
-                HandleRecordNode(aChangeset, propMode, inlinePath, inlineName, originalData, foreignType, sourceId);
+                HandleRecordNode(aChangeset, propMode, propPath, inlineName, originalData, foreignType, sourceId);
 
                 // Overwrite inline data with foreign key
                 overrideData = inlineName;
