@@ -212,14 +212,16 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         if (aManager->IsRecordExists(recordId))
         {
             updates.insert(recordId);
+            continue;
         }
-        else if (recordEntry.sourceId.IsValid())
+
+        if (recordEntry.sourceId.IsValid())
         {
             const auto success = aManager->CloneRecord(recordId, recordEntry.sourceId);
 
             if (!success)
             {
-                LogError("Cannot clone record [{}] from [{}].", ToName(recordId), ToName(recordEntry.sourceId));
+                LogError("Cannot clone record {} from {}.", ToName(recordId), ToName(recordEntry.sourceId));
                 continue;
             }
         }
@@ -229,13 +231,19 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
             if (!success)
             {
-                LogError("Cannot create record [{}] of type [{}].", ToName(recordId), ToName(recordEntry.type));
+                LogError("Cannot create record {} of type {}.", ToName(recordId), ToName(recordEntry.type));
                 continue;
             }
         }
 
         {
             const auto recordInfo = aManager->GetReflection()->GetRecordInfo(recordEntry.type);
+
+            if (!recordInfo)
+            {
+                LogWarning("Missing metadata for record {}.", ToName(recordId));
+                continue;
+            }
 
             for (const auto& [_, propInfo] : recordInfo->props)
             {
