@@ -1,12 +1,8 @@
 #include "YamlConverter.hpp"
 #include "App/Utils/Str.hpp"
+#include "Red/Localization.hpp"
 #include "Red/Rtti/Utils.hpp"
 #include "Red/TweakDB/Reflection.hpp"
-
-namespace
-{
-constexpr auto LocKeyPrefix = "LocKey#";
-}
 
 template<typename T>
 Core::SharedPtr<T> App::YamlConverter::Convert(const YAML::Node& aNode, bool)
@@ -144,7 +140,7 @@ Core::SharedPtr<Red::LocKeyWrapper> App::YamlConverter::Convert(const YAML::Node
     constexpr size_t WrappedDiff = WrappedSkip + sizeof(WrappedSuffix);
 
     // String format: LocKey#Secondary-Loc-Key | LocKey#12345
-    constexpr const char* StringPrefix = LocKeyPrefix;
+    constexpr const char* StringPrefix = Red::LocKeyPrefix;
     constexpr size_t StringSkip = std::char_traits<char>::length(StringPrefix);
     constexpr size_t StringDiff = StringSkip;
 
@@ -275,7 +271,7 @@ Core::SharedPtr<Red::CString> App::YamlConverter::Convert(const YAML::Node& aNod
         const auto locKey = Convert<Red::LocKeyWrapper>(aNode, true);
         if (locKey)
         {
-            const auto locKeyStr = std::string(LocKeyPrefix).append(std::to_string(locKey->primaryKey));
+            const auto locKeyStr = std::string(Red::LocKeyPrefix).append(std::to_string(locKey->primaryKey));
 
             return Core::MakeShared<Red::CString>(locKeyStr.c_str());
         }

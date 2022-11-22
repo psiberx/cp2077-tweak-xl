@@ -1,12 +1,10 @@
 #include "RedReader.hpp"
 #include "App/Utils/Str.hpp"
+#include "Red/Localization.hpp"
 #include "Red/TweakDB/Source/Grammar.hpp"
 
 namespace
 {
-constexpr auto LocKeyPrefix = "LocKey#";
-constexpr auto LocKeyPrefixLength = std::char_traits<char>::length(LocKeyPrefix);
-
 template<typename T>
 requires std::is_integral_v<T>
 inline bool ParseInt(const std::string& aData, T& aResult)
@@ -81,9 +79,9 @@ Red::ValuePtr<Red::LocKeyWrapper> ConvertValue(const Red::TweakValuePtr& aValue)
             return Red::MakeValue<Red::LocKeyWrapper>();
         }
 
-        if (data.starts_with(LocKeyPrefix))
+        if (data.starts_with(Red::LocKeyPrefix))
         {
-            const auto key = data.substr(LocKeyPrefixLength);
+            const auto key = data.substr(Red::LocKeyPrefixLength);
 
             uint64_t hash;
             if (ParseInt(key, hash))
@@ -113,7 +111,7 @@ Red::ValuePtr<Red::CString> ConvertValue(const Red::TweakValuePtr& aValue)
         if (const auto locKey = ConvertValue<Red::LocKeyWrapper>(aValue))
         {
             return Red::MakeValue<Red::CString>(
-                std::string(LocKeyPrefix).append(std::to_string(locKey->primaryKey)).c_str());
+                std::string(Red::LocKeyPrefix).append(std::to_string(locKey->primaryKey)).c_str());
         }
 
         return Red::MakeValue<Red::CString>(data.c_str());

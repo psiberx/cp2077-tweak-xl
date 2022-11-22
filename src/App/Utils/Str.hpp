@@ -4,7 +4,7 @@ namespace App
 {
 template<typename T>
 requires std::is_integral_v<T>
-bool ParseInt(const std::string& aIn, T& aOut, const int aRadix = 10)
+bool ParseInt(const char* aIn, size_t aLength, T& aOut, const int aRadix = 10)
 {
     using Temp = std::conditional_t<std::is_signed_v<T>, int64_t, uint64_t>;
 
@@ -12,15 +12,22 @@ bool ParseInt(const std::string& aIn, T& aOut, const int aRadix = 10)
     char* end;
 
     if constexpr (std::is_signed_v<T>)
-        out = std::strtoll(aIn.c_str(), &end, aRadix);
+        out = std::strtoll(aIn, &end, aRadix);
     else
-        out = std::strtoull(aIn.c_str(), &end, aRadix);
+        out = std::strtoull(aIn, &end, aRadix);
 
-    if (end != aIn.c_str() + aIn.size())
+    if (end != aIn + aLength)
         return false;
 
     aOut = static_cast<T>(out);
     return true;
+}
+
+template<typename T>
+requires std::is_integral_v<T>
+bool ParseInt(const std::string& aIn, T& aOut, const int aRadix = 10)
+{
+    return ParseInt(aIn.c_str(), aIn.size(), aOut, aRadix);
 }
 
 template<typename T>
