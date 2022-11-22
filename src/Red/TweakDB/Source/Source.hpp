@@ -70,9 +70,9 @@ struct TweakGroup
 
 struct TweakInline
 {
+    Core::SharedPtr<TweakGroup> group;
     Core::SharedPtr<TweakGroup> owner;
     Core::SharedPtr<TweakGroup> parent;
-    Core::SharedPtr<TweakGroup> group;
 };
 
 struct TweakSource

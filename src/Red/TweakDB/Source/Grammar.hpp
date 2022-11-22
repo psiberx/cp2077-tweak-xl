@@ -155,7 +155,7 @@ namespace internal
     struct to_const;
 
     template<template<char...> class X, char... Cs>
-    struct to_const<X< Cs... >>
+    struct to_const<X<Cs...>>
     {
         static constexpr const char value[] = {Cs..., 0};
     };
