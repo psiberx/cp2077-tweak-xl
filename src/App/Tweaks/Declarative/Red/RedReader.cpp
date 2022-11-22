@@ -282,6 +282,12 @@ App::RedReader::FlatStatePtr App::RedReader::HandleFlat(App::TweakChangeset& aCh
             return flatState;
         }
 
+        if (!flatState->isRedefined)
+        {
+            const auto defaultValue = MakeValue(flatState);
+            aChangeset.SetFlat(flatState->flatId, flatState->resolvedType, defaultValue);
+        }
+
         auto index = 0;
 
         for (const auto& value : aFlat->values)
