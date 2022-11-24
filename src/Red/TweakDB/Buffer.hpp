@@ -22,12 +22,13 @@ public:
     TweakDBBuffer();
     explicit TweakDBBuffer(Red::TweakDB* aTweakDb);
 
-    int32_t AllocateValue(const Red::CStackType& aData);
-    int32_t AllocateValue(const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue);
+    int32_t AllocateValue(const Red::Value<>& aData);
+    int32_t AllocateValue(const Red::CBaseRTTIType* aType, Red::Instance aInstance);
     int32_t AllocateDefault(const Red::CBaseRTTIType* aType);
 
-    Red::CStackType GetValue(int32_t aOffset);
-    Red::ScriptInstance GetValuePtr(int32_t aOffset);
+    Red::Value<> GetValue(int32_t aOffset);
+    Red::Instance GetValuePtr(int32_t aOffset);
+    uint64_t GetValueHash(int32_t aOffset);
 
     [[nodiscard]] BufferStats GetStats() const;
 
@@ -45,8 +46,8 @@ private:
     using FlatDefaultMap = Core::Map<Red::CName, int32_t>; // TypeName -> BufferOffset
     using FlatTypeMap = Core::Map<uintptr_t, FlatTypeInfo>; // VFT -> FlatTypeInfo
 
-    inline static uint64_t ComputeHash(const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue);
-    inline Red::CStackType ResolveOffset(int32_t aOffset);
+    inline static uint64_t ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance);
+    inline Red::Value<> ResolveOffset(int32_t aOffset);
 
     void CreatePools();
     void FillDefaults();

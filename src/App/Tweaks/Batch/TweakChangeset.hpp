@@ -12,7 +12,7 @@ public:
     struct FlatEntry
     {
         const Red::CBaseRTTIType* type;
-        Core::SharedPtr<void> value;
+        Red::InstancePtr<> value;
     };
 
     struct RecordEntry
@@ -24,14 +24,14 @@ public:
     struct InsertionEntry
     {
         const Red::CBaseRTTIType* type;
-        Core::SharedPtr<void> value;
+        Red::InstancePtr<> value;
         bool unique;
     };
 
     struct DeletionEntry
     {
         const Red::CBaseRTTIType* type;
-        Core::SharedPtr<void> value;
+        Red::InstancePtr<> value;
     };
 
     struct MergingEntry
@@ -50,18 +50,18 @@ public:
     };
 
     bool SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
-                 const Core::SharedPtr<void>& aValue);
+                 const Red::InstancePtr<>& aValue);
 
     bool MakeRecord(Red::TweakDBID aRecordId, const Red::CClass* aType,
                     Red::TweakDBID aSourceId = 0);
     bool UpdateRecord(Red::TweakDBID aRecordId);
 
     bool AppendElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
-                       const Core::SharedPtr<void>& aValue, bool aUnique = false);
+                       const Red::InstancePtr<>& aValue, bool aUnique = false);
     bool PrependElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
-                        const Core::SharedPtr<void>& aValue, bool aUnique = false);
+                        const Red::InstancePtr<>& aValue, bool aUnique = false);
     bool RemoveElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
-                       const Core::SharedPtr<void>& aValue);
+                       const Red::InstancePtr<>& aValue);
     bool AppendFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId);
     bool PrependFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId);
     bool InheritChanges(Red::TweakDBID aFlatId, Red::TweakDBID aBaseId);

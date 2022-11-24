@@ -18,6 +18,8 @@ public:
         friend TweakDBManager;
     };
 
+    using BatchPtr = Core::SharedPtr<Batch>;
+
     TweakDBManager();
     explicit TweakDBManager(Red::TweakDB* aTweakDb);
     explicit TweakDBManager(Core::SharedPtr<Red::TweakDBReflection> aReflection);
@@ -25,29 +27,31 @@ public:
     TweakDBManager(const TweakDBManager&) = delete;
     TweakDBManager& operator=(const TweakDBManager&) = delete;
 
-    Red::CStackType GetFlat(Red::TweakDBID aFlatId);
+    Red::Value<> GetFlat(Red::TweakDBID aFlatId);
+    Red::Value<> GetDefault(const Red::CBaseRTTIType* aType);
     Red::Handle<Red::TweakDBRecord> GetRecord(Red::TweakDBID aRecordId);
     Red::CClass* GetRecordType(Red::TweakDBID aRecordId);
     bool IsFlatExists(Red::TweakDBID aFlatId);
     bool IsRecordExists(Red::TweakDBID aRecordId);
-    bool SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue);
-    bool SetFlat(Red::TweakDBID aFlatId, Red::CStackType aData);
+    bool SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, Red::Instance aInstance);
+    bool SetFlat(Red::TweakDBID aFlatId, const Red::Value<>& aData);
     bool CreateRecord(Red::TweakDBID aRecordId, const Red::CClass* aType);
     bool CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool UpdateRecord(Red::TweakDBID aRecordId);
     void RegisterName(Red::TweakDBID aId, const std::string& aName);
 
-    Core::SharedPtr<Batch> StartBatch();
-    bool HasFlat(const Core::SharedPtr<Batch>& aBatch, Red::TweakDBID aFlatId);
-    bool HasRecord(const Core::SharedPtr<Batch>& aBatch, Red::TweakDBID aRecordId);
-    bool SetFlat(const Core::SharedPtr<Batch>& aBatch, Red::TweakDBID aFlatId,
-                 const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue);
-    bool SetFlat(const Core::SharedPtr<Batch>& aBatch, Red::TweakDBID aFlatId, Red::CStackType aData);
-    bool CreateRecord(const Core::SharedPtr<Batch>& aBatch, Red::TweakDBID aRecordId, const Red::CClass* aType);
-    bool CloneRecord(const Core::SharedPtr<Batch>& aBatch, Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
-    bool UpdateRecord(const Core::SharedPtr<Batch>& aBatch, Red::TweakDBID aRecordId);
-    void RegisterName(const Core::SharedPtr<Batch>& aBatch, Red::TweakDBID aId, const std::string& aName);
-    void CommitBatch(const Core::SharedPtr<Batch>& aBatch);
+    BatchPtr StartBatch();
+    const Red::SortedUniqueArray<Red::TweakDBID>& GetFlats(const BatchPtr& aBatch);
+    Red::Value<> GetFlat(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aFlatId);
+    bool HasFlat(const BatchPtr& aBatch, Red::TweakDBID aFlatId);
+    bool HasRecord(const BatchPtr& aBatch, Red::TweakDBID aRecordId);
+    bool SetFlat(const BatchPtr& aBatch, Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, Red::Instance aValue);
+    bool SetFlat(const BatchPtr& aBatch, Red::TweakDBID aFlatId, const Red::Value<>& aData);
+    bool CreateRecord(const BatchPtr& aBatch, Red::TweakDBID aRecordId, const Red::CClass* aType);
+    bool CloneRecord(const BatchPtr& aBatch, Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
+    bool UpdateRecord(const BatchPtr& aBatch, Red::TweakDBID aRecordId);
+    void RegisterName(const BatchPtr& aBatch, Red::TweakDBID aId, const std::string& aName);
+    void CommitBatch(const BatchPtr& aBatch);
 
     void Invalidate();
 
@@ -57,7 +61,7 @@ public:
 private:
     template<class SharedLockable>
     inline bool AssignFlat(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aFlatId,
-                           const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue,
+                           const Red::CBaseRTTIType* aType, Red::Instance aInstance,
                            SharedLockable& aMutex);
     inline void InheritFlats(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aRecordId,
                              const Red::TweakDBRecordInfo* aRecordInfo);

@@ -70,7 +70,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
             return nullptr;
     }
 
-    auto recordInfo = Core::MakeShared<Red::TweakDBRecordInfo>();
+    auto recordInfo = Red::MakeInstance<Red::TweakDBRecordInfo>();
     recordInfo->name = aType->name;
     recordInfo->type = aType;
     recordInfo->typeHash = GetRecordTypeHash(aType);
@@ -92,7 +92,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
 
         auto propName = ResolvePropertyName(sampleId, func->shortName);
 
-        auto propInfo = Core::MakeShared<Red::TweakDBPropertyInfo>();
+        auto propInfo = Red::MakeInstance<Red::TweakDBPropertyInfo>();
         propInfo->name = Red::CName(propName.c_str());
         propInfo->dataOffset = baseOffset + DataOffsetSize * recordInfo->props.size();
 
@@ -213,7 +213,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
 
             for (const auto& extraFlat : extraFlatsIt.value())
             {
-                auto propInfo = Core::MakeShared<Red::TweakDBPropertyInfo>();
+                auto propInfo = Red::MakeInstance<Red::TweakDBPropertyInfo>();
                 propInfo->name = Red::CName(extraFlat.appendix.c_str() + 1);
                 propInfo->appendix = extraFlat.appendix;
 
@@ -578,77 +578,47 @@ std::string Red::TweakDBReflection::GetRecordShortName(const char* aName)
     return finalName;
 }
 
-Core::SharedPtr<void> Red::TweakDBReflection::Construct(Red::CName aTypeName)
+Red::InstancePtr<> Red::TweakDBReflection::Construct(Red::CName aTypeName)
 {
     switch (aTypeName)
     {
-    case Red::ERTDBFlatType::Int: return Core::MakeShared<int>();
-    case Red::ERTDBFlatType::Float: return Core::MakeShared<float>();
-    case Red::ERTDBFlatType::Bool: return Core::MakeShared<bool>();
-    case Red::ERTDBFlatType::String: return Core::MakeShared<Red::CString>();
-    case Red::ERTDBFlatType::CName: return Core::MakeShared<Red::CName>();
-    case Red::ERTDBFlatType::LocKey: return Core::MakeShared<Red::LocKeyWrapper>();
-    case Red::ERTDBFlatType::ResRef: return Core::MakeShared<Red::ResourceAsyncReference<>>();
-    case Red::ERTDBFlatType::TweakDBID: return Core::MakeShared<Red::TweakDBID>();
-    case Red::ERTDBFlatType::Quaternion: return Core::MakeShared<Red::Quaternion>();
-    case Red::ERTDBFlatType::EulerAngles: return Core::MakeShared<Red::EulerAngles>();
-    case Red::ERTDBFlatType::Vector3: return Core::MakeShared<Red::Vector3>();
-    case Red::ERTDBFlatType::Vector2: return Core::MakeShared<Red::Vector2>();
-    case Red::ERTDBFlatType::Color: return Core::MakeShared<Red::Color>();
-    case Red::ERTDBFlatType::IntArray: return Core::MakeShared<Red::DynArray<int>>();
-    case Red::ERTDBFlatType::FloatArray: return Core::MakeShared<Red::DynArray<float>>();
-    case Red::ERTDBFlatType::BoolArray: return Core::MakeShared<Red::DynArray<bool>>();
-    case Red::ERTDBFlatType::StringArray: return Core::MakeShared<Red::DynArray<Red::CString>>();
-    case Red::ERTDBFlatType::CNameArray: return Core::MakeShared<Red::DynArray<Red::CName>>();
-    case Red::ERTDBFlatType::LocKeyArray: return Core::MakeShared<Red::DynArray<Red::LocKeyWrapper>>();
-    case Red::ERTDBFlatType::ResRefArray: return Core::MakeShared<Red::DynArray<Red::ResourceAsyncReference<>>>();
-    case Red::ERTDBFlatType::TweakDBIDArray: return Core::MakeShared<Red::DynArray<Red::TweakDBID>>();
-    case Red::ERTDBFlatType::QuaternionArray: return Core::MakeShared<Red::DynArray<Red::Quaternion>>();
-    case Red::ERTDBFlatType::EulerAnglesArray: return Core::MakeShared<Red::DynArray<Red::EulerAngles>>();
-    case Red::ERTDBFlatType::Vector3Array: return Core::MakeShared<Red::DynArray<Red::Vector3>>();
-    case Red::ERTDBFlatType::Vector2Array: return Core::MakeShared<Red::DynArray<Red::Vector2>>();
-    case Red::ERTDBFlatType::ColorArray: return Core::MakeShared<Red::DynArray<Red::Color>>();
+    case Red::ERTDBFlatType::Int: return Red::MakeInstance<int>();
+    case Red::ERTDBFlatType::Float: return Red::MakeInstance<float>();
+    case Red::ERTDBFlatType::Bool: return Red::MakeInstance<bool>();
+    case Red::ERTDBFlatType::String: return Red::MakeInstance<Red::CString>();
+    case Red::ERTDBFlatType::CName: return Red::MakeInstance<Red::CName>();
+    case Red::ERTDBFlatType::LocKey: return Red::MakeInstance<Red::LocKeyWrapper>();
+    case Red::ERTDBFlatType::ResRef: return Red::MakeInstance<Red::ResourceAsyncReference<>>();
+    case Red::ERTDBFlatType::TweakDBID: return Red::MakeInstance<Red::TweakDBID>();
+    case Red::ERTDBFlatType::Quaternion: return Red::MakeInstance<Red::Quaternion>();
+    case Red::ERTDBFlatType::EulerAngles: return Red::MakeInstance<Red::EulerAngles>();
+    case Red::ERTDBFlatType::Vector3: return Red::MakeInstance<Red::Vector3>();
+    case Red::ERTDBFlatType::Vector2: return Red::MakeInstance<Red::Vector2>();
+    case Red::ERTDBFlatType::Color: return Red::MakeInstance<Red::Color>();
+    case Red::ERTDBFlatType::IntArray: return Red::MakeInstance<Red::DynArray<int>>();
+    case Red::ERTDBFlatType::FloatArray: return Red::MakeInstance<Red::DynArray<float>>();
+    case Red::ERTDBFlatType::BoolArray: return Red::MakeInstance<Red::DynArray<bool>>();
+    case Red::ERTDBFlatType::StringArray: return Red::MakeInstance<Red::DynArray<Red::CString>>();
+    case Red::ERTDBFlatType::CNameArray: return Red::MakeInstance<Red::DynArray<Red::CName>>();
+    case Red::ERTDBFlatType::LocKeyArray: return Red::MakeInstance<Red::DynArray<Red::LocKeyWrapper>>();
+    case Red::ERTDBFlatType::ResRefArray: return Red::MakeInstance<Red::DynArray<Red::ResourceAsyncReference<>>>();
+    case Red::ERTDBFlatType::TweakDBIDArray: return Red::MakeInstance<Red::DynArray<Red::TweakDBID>>();
+    case Red::ERTDBFlatType::QuaternionArray: return Red::MakeInstance<Red::DynArray<Red::Quaternion>>();
+    case Red::ERTDBFlatType::EulerAnglesArray: return Red::MakeInstance<Red::DynArray<Red::EulerAngles>>();
+    case Red::ERTDBFlatType::Vector3Array: return Red::MakeInstance<Red::DynArray<Red::Vector3>>();
+    case Red::ERTDBFlatType::Vector2Array: return Red::MakeInstance<Red::DynArray<Red::Vector2>>();
+    case Red::ERTDBFlatType::ColorArray: return Red::MakeInstance<Red::DynArray<Red::Color>>();
     }
 
     return {};
 }
 
-Core::SharedPtr<void> Red::TweakDBReflection::Construct(const Red::CBaseRTTIType* aType)
+Red::InstancePtr<> Red::TweakDBReflection::Construct(const Red::CBaseRTTIType* aType)
 {
     if (!aType)
         return {};
 
     return Construct(aType->GetName());
-}
-
-Core::SharedPtr<void> Red::TweakDBReflection::Clone(Red::CName aTypeName, void* aValue)
-{
-    switch (aTypeName)
-    {
-    case Red::ERTDBFlatType::Int: return Core::MakeShared<int>(*reinterpret_cast<int*>(aValue));
-    case Red::ERTDBFlatType::Float: return Core::MakeShared<float>(*reinterpret_cast<float*>(aValue));
-    case Red::ERTDBFlatType::Bool: return Core::MakeShared<bool>(*reinterpret_cast<bool*>(aValue));
-    case Red::ERTDBFlatType::String: return Core::MakeShared<Red::CString>(*reinterpret_cast<Red::CString*>(aValue));
-    case Red::ERTDBFlatType::CName: return Core::MakeShared<Red::CName>(*reinterpret_cast<Red::CName*>(aValue));
-    case Red::ERTDBFlatType::LocKey: return Core::MakeShared<Red::gamedataLocKeyWrapper>(*reinterpret_cast<Red::gamedataLocKeyWrapper*>(aValue));
-    case Red::ERTDBFlatType::ResRef: return Core::MakeShared<Red::ResourceAsyncReference<>>(*reinterpret_cast<Red::ResourceAsyncReference<>*>(aValue));
-    case Red::ERTDBFlatType::TweakDBID: return Core::MakeShared<Red::TweakDBID>(*reinterpret_cast<Red::TweakDBID*>(aValue));
-    case Red::ERTDBFlatType::Quaternion: return Core::MakeShared<Red::Quaternion>(*reinterpret_cast<Red::Quaternion*>(aValue));
-    case Red::ERTDBFlatType::EulerAngles: return Core::MakeShared<Red::EulerAngles>(*reinterpret_cast<Red::EulerAngles*>(aValue));
-    case Red::ERTDBFlatType::Vector3: return Core::MakeShared<Red::Vector3>(*reinterpret_cast<Red::Vector3*>(aValue));
-    case Red::ERTDBFlatType::Vector2: return Core::MakeShared<Red::Vector2>(*reinterpret_cast<Red::Vector2*>(aValue));
-    case Red::ERTDBFlatType::Color: return Core::MakeShared<Red::Color>(*reinterpret_cast<Red::Color*>(aValue));
-    }
-
-    return {};
-}
-
-Core::SharedPtr<void> Red::TweakDBReflection::Clone(const Red::CBaseRTTIType* aType, void* aValue)
-{
-    if (!aType)
-        return {};
-
-    return Clone(aType->GetName(), aValue);
 }
 
 Red::TweakDB* Red::TweakDBReflection::GetTweakDB()

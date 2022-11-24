@@ -116,11 +116,8 @@ public:
     std::string GetRecordShortName(Red::CName aName);
     std::string GetRecordShortName(const char* aName);
 
-    Core::SharedPtr<void> Construct(Red::CName aTypeName);
-    Core::SharedPtr<void> Construct(const Red::CBaseRTTIType* aType);
-
-    Core::SharedPtr<void> Clone(Red::CName aTypeName, void* aValue);
-    Core::SharedPtr<void> Clone(const Red::CBaseRTTIType* aType, void* aValue);
+    Red::InstancePtr<> Construct(Red::CName aTypeName);
+    Red::InstancePtr<> Construct(const Red::CBaseRTTIType* aType);
 
     Red::TweakDB* GetTweakDB();
 

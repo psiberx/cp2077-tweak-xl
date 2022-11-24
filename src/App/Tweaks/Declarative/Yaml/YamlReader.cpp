@@ -227,7 +227,7 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
                                      const Red::CBaseRTTIType* aType)
 {
     const Red::CBaseRTTIType* flatType;
-    Core::SharedPtr<void> flatValue;
+    Red::InstancePtr<> flatValue;
 
     if (aType != nullptr)
     {
@@ -393,7 +393,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
                     if (recordInfo->props.contains("iconPath") && !aNode["iconPath"])
                     {
                         aChangeset.SetFlat(Red::TweakDBID(recordId, ".iconPath"), ResolveFlatType("String"),
-                                       Core::MakeShared<Red::CString>(inlineName.c_str()));
+                                           Red::MakeInstance<Red::CString>(inlineName.c_str()));
                     }
 
                     // Then force type prefix to make it accessible by short name that we just set in .iconPath.

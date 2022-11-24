@@ -2,31 +2,47 @@
 
 namespace Red
 {
+// TODO: Use RED4ext::SharedPtrBase for smart pointers
+
+using Instance = void*;
+
 template<typename T = void>
-struct ValueInstance
+using InstancePtr = Core::SharedPtr<T>;
+
+template<typename T, typename... Args>
+InstancePtr<T> MakeInstance(Args&&... args)
 {
-    ValueInstance(CBaseRTTIType* aType)
+    return Core::MakeShared<T>(std::forward<Args>(args)...);
+}
+
+template<typename T = void>
+struct Value
+{
+    Value(CBaseRTTIType* aType = nullptr, T* aInstance = nullptr)
+        : type(aType)
+        , instance(aInstance)
     {
-        type = aType;
-        value = type->GetAllocator()->AllocAligned(type->GetSize(), type->GetAlignment()).memory;
-        std::memset(value, 0, type->GetSize());
-        type->Construct(value);
     }
 
-    ~ValueInstance()
+    Value(const CStackType& aData)
+        : type(aData.type)
+        , instance(aData.value)
     {
-        type->Destruct(value);
-        type->GetAllocator()->Free(value);
     }
 
     [[nodiscard]] inline T* operator->() const
     {
-        return value;
+        return instance;
     }
 
     [[nodiscard]] inline operator T*() const
     {
-        return value;
+        return instance;
+    }
+
+    [[nodiscard]] inline operator CStackType*() const
+    {
+        return reinterpret_cast<CStackType*>(this);
     }
 
     [[nodiscard]] inline operator const CStackType&() const
@@ -36,25 +52,83 @@ struct ValueInstance
 
     explicit operator bool() const noexcept
     {
-        return value != nullptr;
+        return instance != nullptr;
     }
 
     CBaseRTTIType* type;
-    T* value;
+    T* instance;
 };
 
 template<typename T = void>
-using ValuePtr = std::shared_ptr<const ValueInstance<T>>;
+struct ManagedValue : Value<T>
+{
+    using Data = Value<T>;
+
+    ManagedValue(CBaseRTTIType* aType, void* aInstance = nullptr)
+        : Data(aType)
+    {
+        Data::instance = Data::type->GetAllocator()->AllocAligned(Data::type->GetSize(), Data::type->GetAlignment()).memory;
+        if (aInstance)
+        {
+            Data::type->Assign(Data::instance, aInstance);
+        }
+        else
+        {
+            std::memset(Data::instance, 0, Data::type->GetSize());
+            Data::type->Construct(Data::instance);
+        }
+    }
+
+    template<typename... Args>
+    requires (!std::is_void_v<T>)
+    ManagedValue(CBaseRTTIType* aType, Args&&... aArgs)
+        : Data(aType)
+    {
+        Data::instance = Data::type->GetAllocator()->AllocAligned(Data::type->GetSize(), Data::type->GetAlignment()).memory;
+        new (Data::instance) T(std::forward<Args>(aArgs)...);
+    }
+
+    ~ManagedValue()
+    {
+        if (Data::type && Data::instance)
+        {
+            Data::type->Destruct(Data::instance);
+            Data::type->GetAllocator()->Free(Data::instance);
+        }
+    }
+
+    ManagedValue& operator=(void* aInstance)
+    {
+        Data::type->Assign(Data::instance, aInstance);
+    }
+};
 
 template<typename T = void>
-ValuePtr<T> MakeValue(CBaseRTTIType* aType)
+using ValuePtr = Core::SharedPtr<const ManagedValue<T>>;
+
+template<typename T, typename... Args>
+requires (!std::is_void_v<T>)
+ValuePtr<T> MakeValue(CBaseRTTIType* aType, Args&&... aArgs)
 {
-    return std::make_shared<const ValueInstance<T>>(aType);
+    return Core::MakeShared<ManagedValue<T>>(aType, std::forward<Args>(aArgs)...);
 }
 
 template<typename T = void>
-ValuePtr<T> MakeValue(CName aTypeName)
+ValuePtr<T> MakeValue(CBaseRTTIType* aType, void* aInstance = nullptr)
 {
-    return MakeValue<T>(CRTTISystem::Get()->GetType(aTypeName));
+    return Core::MakeShared<ManagedValue<T>>(aType, aInstance);
+}
+
+template<typename T, typename... Args>
+requires (!std::is_void_v<T>)
+ValuePtr<T> MakeValue(CName aTypeName, Args&&... aArgs)
+{
+    return Core::MakeShared<ManagedValue<T>>(CRTTISystem::Get()->GetType(aTypeName), std::forward<Args>(aArgs)...);
+}
+
+template<typename T = void>
+ValuePtr<T> MakeValue(CName aTypeName, void* aInstance = nullptr)
+{
+    return Core::MakeShared<ManagedValue<T>>(CRTTISystem::Get()->GetType(aTypeName), aInstance);
 }
 }

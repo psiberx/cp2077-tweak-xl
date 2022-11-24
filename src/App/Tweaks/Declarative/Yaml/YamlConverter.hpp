@@ -9,16 +9,16 @@ public:
     Core::SharedPtr<T> Convert(const YAML::Node& aNode, bool aStrict = false);
 
     template<typename T>
-    bool Convert(const YAML::Node& aNode, Core::SharedPtr<void>& aValue, bool aStrict = false);
+    bool Convert(const YAML::Node& aNode, Red::InstancePtr<>& aValue, bool aStrict = false);
 
     template<typename E>
     Core::SharedPtr<Red::DynArray<E>> ConvertArray(const YAML::Node& aNode, bool aStrict = false);
 
     template<typename E>
-    bool ConvertArray(const YAML::Node& aNode, Core::SharedPtr<void>& aValue, bool aStrict = false);
+    bool ConvertArray(const YAML::Node& aNode, Red::InstancePtr<>& aValue, bool aStrict = false);
 
-    Core::SharedPtr<void> Convert(Red::CName aTypeName, const YAML::Node& aNode);
-    Core::SharedPtr<void> Convert(const Red::CBaseRTTIType* aType, const YAML::Node& aNode);
-    std::pair<Red::CName, Core::SharedPtr<void>> Convert(const YAML::Node& aNode);
+    Red::InstancePtr<> Convert(Red::CName aTypeName, const YAML::Node& aNode);
+    Red::InstancePtr<> Convert(const Red::CBaseRTTIType* aType, const YAML::Node& aNode);
+    std::pair<Red::CName, Red::InstancePtr<>> Convert(const YAML::Node& aNode);
 };
 }

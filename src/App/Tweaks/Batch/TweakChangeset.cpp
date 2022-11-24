@@ -1,7 +1,7 @@
 #include "TweakChangeset.hpp"
 
 bool App::TweakChangeset::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
-                                  const Core::SharedPtr<void>& aValue)
+                                  const Red::InstancePtr<>& aValue)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
         return false;
@@ -45,7 +45,7 @@ bool App::TweakChangeset::UpdateRecord(Red::TweakDBID aRecordId)
 }
 
 bool App::TweakChangeset::AppendElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
-                                        const Core::SharedPtr<void>& aValue, bool aUnique)
+                                        const Red::InstancePtr<>& aValue, bool aUnique)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
         return false;
@@ -57,7 +57,7 @@ bool App::TweakChangeset::AppendElement(Red::TweakDBID aFlatId, const Red::CBase
 }
 
 bool App::TweakChangeset::PrependElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
-                                         const Core::SharedPtr<void>& aValue, bool aUnique)
+                                         const Red::InstancePtr<>& aValue, bool aUnique)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
         return false;
@@ -69,7 +69,7 @@ bool App::TweakChangeset::PrependElement(Red::TweakDBID aFlatId, const Red::CBas
 }
 
 bool App::TweakChangeset::RemoveElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
-                                        const Core::SharedPtr<void>& aValue)
+                                        const Red::InstancePtr<>& aValue)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
         return false;
@@ -268,7 +268,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
     {
         const auto& flatData = aManager->GetFlat(flatId);
 
-        if (!flatData.value)
+        if (!flatData.instance)
         {
             LogError("Cannot apply changes to [{}], the flat doesn't exist.", ToName(flatId));
             continue;
@@ -286,7 +286,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         // The data returned by manager is a pointer to the TweakDB flat buffer,
         // we must make a copy of the original array for modifications.
         auto targetArray = aManager->GetReflection()->Construct(targetType);
-        targetType->Assign(targetArray.get(), flatData.value);
+        targetType->Assign(targetArray.get(), flatData.instance);
 
         Core::Vector<ElementChange> skips;
         Core::Vector<ElementChange> deletions;
@@ -370,14 +370,14 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 {
                     const auto sourceData = aManager->GetFlat(merge.sourceId);
 
-                    if (!sourceData.value || sourceData.type != targetType)
+                    if (!sourceData.instance || sourceData.type != targetType)
                     {
                         LogError("Cannot merge [{}] with [{}] because it's not an array.",
                                  ToName(merge.sourceId), ToName(flatId));
                         continue;
                     }
 
-                    auto* sourceArray = reinterpret_cast<Red::DynArray<void>*>(sourceData.value);
+                    auto* sourceArray = reinterpret_cast<Red::DynArray<void>*>(sourceData.instance);
                     const auto sourceLength = targetType->GetLength(sourceArray);
 
                     for (uint32_t sourceIndex = 0; sourceIndex < sourceLength; ++sourceIndex)

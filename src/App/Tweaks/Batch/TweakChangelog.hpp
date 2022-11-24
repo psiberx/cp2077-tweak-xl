@@ -9,8 +9,9 @@ class TweakChangelog : public Core::LoggingAgent
 {
 public:
     bool AssociateFlat(Red::TweakDBID aFlatId, Red::TweakDBID aRecordId);
-    bool RegisterInsertion(Red::TweakDBID aFlatId, int32_t aIndex, const Core::SharedPtr<void>& aValue);
-    bool RegisterDeletion(Red::TweakDBID aFlatId, int32_t aIndex, const Core::SharedPtr<void>& aValue);
+    bool RegisterAssignment(Red::TweakDBID aFlatId, Red::Instance aOldValue, Red::Instance aNewValue);
+    bool RegisterInsertion(Red::TweakDBID aFlatId, int32_t aIndex, const Red::InstancePtr<>& aInstance);
+    bool RegisterDeletion(Red::TweakDBID aFlatId, int32_t aIndex, const Red::InstancePtr<>& aInstance);
     void ForgetChanges(Red::TweakDBID aFlatId);
 
     void RegisterForeignKey(Red::TweakDBID aForeignKey);
@@ -23,15 +24,22 @@ public:
     void RevertChanges(const Core::SharedPtr<Red::TweakDBManager>& aManager);
 
 private:
-    struct MutationEntry
+    struct AssignmentEntry
     {
-        Red::TweakDBID recordId;
-        Core::SortedMap<int32_t, Core::SharedPtr<void>> insertions;
-        Core::SortedMap<int32_t, Core::SharedPtr<void>> deletions;
+        Red::Instance previous;
+        Red::Instance current;
     };
 
-    std::string AsString(Red::TweakDBID aId);
+    struct MutationEntry
+    {
+        Core::SortedMap<int32_t, Red::InstancePtr<>> insertions;
+        Core::SortedMap<int32_t, Red::InstancePtr<>> deletions;
+    };
 
+    std::string ToName(Red::TweakDBID aId);
+
+    Core::Map<Red::TweakDBID, Red::TweakDBID> m_associations;
+    Core::Map<Red::TweakDBID, AssignmentEntry> m_assignments;
     Core::Map<Red::TweakDBID, MutationEntry> m_mutations;
     Core::Map<Red::TweakDBID, std::string> m_knownNames;
     Core::Set<Red::TweakDBID> m_foreignKeys;

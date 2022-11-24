@@ -48,18 +48,18 @@ Red::TweakDBBuffer::TweakDBBuffer(Red::TweakDB* aTweakDb)
 {
 }
 
-int32_t Red::TweakDBBuffer::AllocateValue(const Red::CStackType& aData)
+int32_t Red::TweakDBBuffer::AllocateValue(const Red::Value<>& aData)
 {
-    return AllocateValue(aData.type, aData.value);
+    return AllocateValue(aData.type, aData.instance);
 }
 
-int32_t Red::TweakDBBuffer::AllocateValue(const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue)
+int32_t Red::TweakDBBuffer::AllocateValue(const Red::CBaseRTTIType* aType, Red::Instance aInstance)
 {
     if (m_bufferEnd != m_tweakDb->flatDataBufferEnd)
         SyncBufferData();
 
     auto& pool = m_pools.at(aType->GetName());
-    const auto hash = ComputeHash(aType, aValue);
+    const auto hash = ComputeHash(aType, aInstance);
 
     {
         std::shared_lock poolLockR(m_poolMutex);
@@ -68,13 +68,12 @@ int32_t Red::TweakDBBuffer::AllocateValue(const Red::CBaseRTTIType* aType, Red::
             return offsetIt->second;
     }
 
-    const auto offset = m_tweakDb->CreateFlatValue({ const_cast<Red::CBaseRTTIType*>(aType), aValue });
+    const auto offset = m_tweakDb->CreateFlatValue({ const_cast<Red::CBaseRTTIType*>(aType), aInstance});
 
     if (offset > 0)
     {
         std::unique_lock poolLockRW(m_poolMutex);
         pool.emplace(hash, offset);
-        //SyncBufferBounds();
     }
 
     return offset;
@@ -88,7 +87,7 @@ int32_t Red::TweakDBBuffer::AllocateDefault(const Red::CBaseRTTIType* aType)
     return m_defaults.at(aType->GetName());
 }
 
-Red::CStackType Red::TweakDBBuffer::GetValue(int32_t aOffset)
+Red::Value<> Red::TweakDBBuffer::GetValue(int32_t aOffset)
 {
     if (aOffset < 0)
         return {};
@@ -99,7 +98,7 @@ Red::CStackType Red::TweakDBBuffer::GetValue(int32_t aOffset)
     return ResolveOffset(aOffset);
 }
 
-Red::ScriptInstance Red::TweakDBBuffer::GetValuePtr(int32_t aOffset)
+Red::Instance Red::TweakDBBuffer::GetValuePtr(int32_t aOffset)
 {
     if (aOffset < 0)
         return {};
@@ -107,10 +106,23 @@ Red::ScriptInstance Red::TweakDBBuffer::GetValuePtr(int32_t aOffset)
     if (m_bufferEnd != m_tweakDb->flatDataBufferEnd)
         SyncBufferData();
 
-    return ResolveOffset(aOffset).value;
+    return ResolveOffset(aOffset).instance;
 }
 
-uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue)
+uint64_t Red::TweakDBBuffer::GetValueHash(int32_t aOffset)
+{
+    if (aOffset < 0)
+        return {};
+
+    if (m_bufferEnd != m_tweakDb->flatDataBufferEnd)
+        SyncBufferData();
+
+    const auto data = ResolveOffset(aOffset);
+
+    return ComputeHash(data.type, data.instance);
+}
+
+uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance)
 {
     // Case 1: Everything is processed as a sequence of bytes and passed to the hash function,
     //         except for an array of strings.
@@ -129,7 +141,7 @@ uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::S
 
         if (innerType->GetName() == "String")
         {
-            const auto* array = reinterpret_cast<Red::DynArray<Red::CString>*>(aValue);
+            const auto* array = reinterpret_cast<Red::DynArray<Red::CString>*>(aInstance);
             hash = Red::FNV1a64(reinterpret_cast<uint8_t*>(0), 0); // Initial seed
             for (uint32_t i = 0; i != array->size; ++i)
             {
@@ -141,26 +153,26 @@ uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::S
         }
         else
         {
-            const auto* array = reinterpret_cast<Red::DynArray<uint8_t>*>(aValue);
+            const auto* array = reinterpret_cast<Red::DynArray<uint8_t>*>(aInstance);
             hash = Red::FNV1a64(array->entries, array->size * innerType->GetSize());
         }
     }
     else if (aType->GetName() == "String")
     {
-        const auto* str = reinterpret_cast<Red::CString*>(aValue);
+        const auto* str = reinterpret_cast<Red::CString*>(aInstance);
         const auto* data = reinterpret_cast<const uint8_t*>(str->c_str());
         hash = Red::FNV1a64(data, str->Length());
     }
     else
     {
-        const auto* data = reinterpret_cast<const uint8_t*>(aValue);
+        const auto* data = reinterpret_cast<const uint8_t*>(aInstance);
         hash = Red::FNV1a64(data, aType->GetSize());
     }
 
     return hash;
 }
 
-Red::CStackType Red::TweakDBBuffer::ResolveOffset(int32_t aOffset)
+Red::Value<> Red::TweakDBBuffer::ResolveOffset(int32_t aOffset)
 {
     // This method uses VFTs to determine the flat type.
     // It's 11% to 33% faster than calling GetValue() every time.
@@ -207,7 +219,7 @@ void Red::TweakDBBuffer::FillDefaults()
             auto& pool = m_pools.at(typeName);
 
             const auto value = Red::MakeValue(typeName);
-            const auto hash = ComputeHash(value->type, value->value);
+            const auto hash = ComputeHash(value->type, value->instance);
             const auto it = pool.find(hash);
 
             int32_t offset = -1;
@@ -259,7 +271,7 @@ void Red::TweakDBBuffer::SyncBufferData()
                  offset += 8u;
 
             const auto data = ResolveOffset(static_cast<int32_t>(offset));
-            const auto hash = ComputeHash(data.type, data.value);
+            const auto hash = ComputeHash(data.type, data.instance);
 
             auto& pool = m_pools.at(data.type->GetName());
 

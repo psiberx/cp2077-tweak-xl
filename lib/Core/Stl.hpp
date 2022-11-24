@@ -51,9 +51,9 @@ template<class T>
 using UniquePtr = std::unique_ptr<T, Detail::UniqueDeleter<T>>;
 
 template<typename T, typename... Args>
-auto MakeShared(Args&&... args)
+auto MakeShared(Args&&... aArgs)
 {
-    return std::allocate_shared<T>(TiltedPhoques::StlAllocator<T>(), std::forward<Args>(args)...);
+    return std::allocate_shared<T>(TiltedPhoques::StlAllocator<T>(), std::forward<Args>(aArgs)...);
 }
 
 template<typename T, typename... Args>

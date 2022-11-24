@@ -135,7 +135,7 @@ const Red::CBaseRTTIType* App::BaseTweakReader::ResolveFlatInstanceType(App::Twe
                                                                     Red::TweakDBID aFlatId)
 {
     const auto existingFlat = m_manager->GetFlat(aFlatId);
-    if (existingFlat.value)
+    if (existingFlat.instance)
     {
         return existingFlat.type;
     }
@@ -155,10 +155,10 @@ const Red::CClass* App::BaseTweakReader::ResolveRecordInstanceType(App::TweakCha
     if (!aRecordId.IsValid())
         return nullptr;
 
-    const auto existingRecord = m_manager->GetRecord(aRecordId);
-    if (existingRecord)
+    const auto existingRecordType = m_manager->GetRecordType(aRecordId);
+    if (existingRecordType)
     {
-        return existingRecord->GetType();
+        return existingRecordType;
     }
 
     const auto pendingRecord = aChangeset.GetRecord(aRecordId);

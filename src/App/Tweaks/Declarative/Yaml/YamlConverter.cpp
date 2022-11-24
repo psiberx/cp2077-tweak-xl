@@ -5,9 +5,9 @@
 #include "Red/TweakDB/Reflection.hpp"
 
 template<typename T>
-Core::SharedPtr<T> App::YamlConverter::Convert(const YAML::Node& aNode, bool)
+Red::InstancePtr<T> App::YamlConverter::Convert(const YAML::Node& aNode, bool)
 {
-    auto value = Core::MakeShared<T>();
+    auto value = Red::MakeInstance<T>();
     if (YAML::convert<T>::decode(aNode, *value))
         return value;
 
@@ -15,7 +15,7 @@ Core::SharedPtr<T> App::YamlConverter::Convert(const YAML::Node& aNode, bool)
 }
 
 template<>
-Core::SharedPtr<Red::CName> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Red::InstancePtr<Red::CName> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     // Quoted format: n"Name"
     constexpr const char* QuotedPrefix = "n\"";
@@ -38,19 +38,19 @@ Core::SharedPtr<Red::CName> App::YamlConverter::Convert(const YAML::Node& aNode,
 
         if (str.starts_with(QuotedPrefix) && str.ends_with(QuotedSuffix))
         {
-            return Core::MakeShared<Red::CName>(
+            return Red::MakeInstance<Red::CName>(
                 Red::CNamePool::Add(str.substr(QuotedSkip, str.length() - QuotedDiff).c_str()));
         }
 
         if (str.starts_with(WrappedPrefix) && str.ends_with(WrappedSuffix))
         {
-            return Core::MakeShared<Red::CName>(
+            return Red::MakeInstance<Red::CName>(
                 Red::CNamePool::Add(str.substr(WrappedSkip, str.length() - WrappedDiff).c_str()));
         }
 
         if (!aStrict)
         {
-            return Core::MakeShared<Red::CName>(Red::CNamePool::Add(str.c_str()));
+            return Red::MakeInstance<Red::CName>(Red::CNamePool::Add(str.c_str()));
         }
     }
 
@@ -58,7 +58,7 @@ Core::SharedPtr<Red::CName> App::YamlConverter::Convert(const YAML::Node& aNode,
 }
 
 template<>
-Core::SharedPtr<Red::TweakDBID> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Red::InstancePtr<Red::TweakDBID> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     // Quoted format: t"Package.Item"
     constexpr const char* QuotedPrefix = "t\"";
@@ -94,13 +94,13 @@ Core::SharedPtr<Red::TweakDBID> App::YamlConverter::Convert(const YAML::Node& aN
 
         if (str.starts_with(QuotedPrefix) && str.ends_with(QuotedSuffix))
         {
-            return Core::MakeShared<Red::TweakDBID>(
+            return Red::MakeInstance<Red::TweakDBID>(
                 str.substr(QuotedSkip, str.length() - QuotedDiff));
         }
 
         if (str.starts_with(WrappedPrefix) && str.ends_with(WrappedSuffix))
         {
-            return Core::MakeShared<Red::TweakDBID>(
+            return Red::MakeInstance<Red::TweakDBID>(
                 str.substr(WrappedSkip, str.length() - WrappedDiff));
         }
 
@@ -109,15 +109,15 @@ Core::SharedPtr<Red::TweakDBID> App::YamlConverter::Convert(const YAML::Node& aN
             auto hash = ParseInt<uint32_t>(str.substr(DebugHashPos, DebugHashSize), 16);
             auto len = ParseInt<uint8_t>(str.substr(DebugLenPos, DebugLenSize), 16);
 
-            return Core::MakeShared<Red::TweakDBID>(hash, len);
+            return Red::MakeInstance<Red::TweakDBID>(hash, len);
         }
 
         if (!aStrict)
         {
             if (str == EmptyValue)
-                return Core::MakeShared<Red::TweakDBID>();
+                return Red::MakeInstance<Red::TweakDBID>();
 
-            return Core::MakeShared<Red::TweakDBID>(str);
+            return Red::MakeInstance<Red::TweakDBID>(str);
         }
     }
 
@@ -125,7 +125,7 @@ Core::SharedPtr<Red::TweakDBID> App::YamlConverter::Convert(const YAML::Node& aN
 }
 
 template<>
-Core::SharedPtr<Red::LocKeyWrapper> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Red::InstancePtr<Red::LocKeyWrapper> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     // Quoted format: l"Secondary-Loc-Key"
     constexpr const char* QuotedPrefix = "l\"";
@@ -153,7 +153,7 @@ Core::SharedPtr<Red::LocKeyWrapper> App::YamlConverter::Convert(const YAML::Node
 
         if (str.starts_with(QuotedPrefix) && str.ends_with(QuotedSuffix))
         {
-            return Core::MakeShared<Red::LocKeyWrapper>(
+            return Red::MakeInstance<Red::LocKeyWrapper>(
                 str.substr(QuotedSkip, str.length() - QuotedDiff).c_str());
         }
 
@@ -163,11 +163,11 @@ Core::SharedPtr<Red::LocKeyWrapper> App::YamlConverter::Convert(const YAML::Node
             auto value = str.substr(WrappedSkip + quoted, str.length() - WrappedDiff - (quoted << 1));
 
             if (quoted)
-                return Core::MakeShared<Red::LocKeyWrapper>(value.c_str());
+                return Red::MakeInstance<Red::LocKeyWrapper>(value.c_str());
 
             uint64_t key;
             if (ParseInt(value, key))
-                return Core::MakeShared<Red::LocKeyWrapper>(key);
+                return Red::MakeInstance<Red::LocKeyWrapper>(key);
 
             return nullptr;
         }
@@ -178,18 +178,18 @@ Core::SharedPtr<Red::LocKeyWrapper> App::YamlConverter::Convert(const YAML::Node
 
             uint64_t key;
             if (ParseInt(value, key))
-                return Core::MakeShared<Red::LocKeyWrapper>(key);
+                return Red::MakeInstance<Red::LocKeyWrapper>(key);
 
-            return Core::MakeShared<Red::LocKeyWrapper>(value.c_str());
+            return Red::MakeInstance<Red::LocKeyWrapper>(value.c_str());
         }
 
         if (!aStrict)
         {
             uint64_t key;
             if (ParseInt(str, key))
-                return Core::MakeShared<Red::LocKeyWrapper>(key);
+                return Red::MakeInstance<Red::LocKeyWrapper>(key);
 
-            return Core::MakeShared<Red::LocKeyWrapper>(str.c_str());
+            return Red::MakeInstance<Red::LocKeyWrapper>(str.c_str());
         }
     }
 
@@ -197,7 +197,7 @@ Core::SharedPtr<Red::LocKeyWrapper> App::YamlConverter::Convert(const YAML::Node
 }
 
 template<>
-Core::SharedPtr<Red::ResourceAsyncReference<>> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Red::InstancePtr<Red::ResourceAsyncReference<>> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     // Quoted format: r"base\gameplay\resource.ext"
     constexpr const char* QuotedPrefix = "r\"";
@@ -222,7 +222,7 @@ Core::SharedPtr<Red::ResourceAsyncReference<>> App::YamlConverter::Convert(const
         {
             auto value = str.substr(QuotedSkip, str.length() - QuotedDiff);
 
-            return Core::MakeShared<Red::ResourceAsyncReference<>>(value.c_str());
+            return Red::MakeInstance<Red::ResourceAsyncReference<>>(value.c_str());
         }
 
         if (str.starts_with(WrappedPrefix) && str.ends_with(WrappedSuffix))
@@ -231,11 +231,11 @@ Core::SharedPtr<Red::ResourceAsyncReference<>> App::YamlConverter::Convert(const
             auto value = str.substr(WrappedSkip + quoted, str.length() - WrappedDiff - (quoted << 1));
 
             if (quoted)
-                return Core::MakeShared<Red::ResourceAsyncReference<>>(value.c_str());
+                return Red::MakeInstance<Red::ResourceAsyncReference<>>(value.c_str());
 
             uint64_t hash;
             if (ParseInt(value, hash))
-                return Core::MakeShared<Red::ResourceAsyncReference<>>(hash);
+                return Red::MakeInstance<Red::ResourceAsyncReference<>>(hash);
 
             return nullptr;
         }
@@ -244,9 +244,9 @@ Core::SharedPtr<Red::ResourceAsyncReference<>> App::YamlConverter::Convert(const
         {
             uint64_t hash;
             if (ParseInt(str, hash))
-                return Core::MakeShared<Red::ResourceAsyncReference<>>(hash);
+                return Red::MakeInstance<Red::ResourceAsyncReference<>>(hash);
 
-            return Core::MakeShared<Red::ResourceAsyncReference<>>(str.c_str());
+            return Red::MakeInstance<Red::ResourceAsyncReference<>>(str.c_str());
         }
     }
 
@@ -254,7 +254,7 @@ Core::SharedPtr<Red::ResourceAsyncReference<>> App::YamlConverter::Convert(const
 }
 
 template<>
-Core::SharedPtr<Red::CString> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Red::InstancePtr<Red::CString> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (!aNode.IsScalar())
         return nullptr;
@@ -273,22 +273,22 @@ Core::SharedPtr<Red::CString> App::YamlConverter::Convert(const YAML::Node& aNod
         {
             const auto locKeyStr = std::string(Red::LocKeyPrefix).append(std::to_string(locKey->primaryKey));
 
-            return Core::MakeShared<Red::CString>(locKeyStr.c_str());
+            return Red::MakeInstance<Red::CString>(locKeyStr.c_str());
         }
     }
 
-    return Core::MakeShared<Red::CString>(aNode.Scalar().c_str());
+    return Red::MakeInstance<Red::CString>(aNode.Scalar().c_str());
 }
 
 template<>
-Core::SharedPtr<Red::Quaternion> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Red::InstancePtr<Red::Quaternion> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (aNode.IsMap())
     {
         if (aStrict && (!aNode["i"] || !aNode["j"] || !aNode["k"] || !aNode["r"]))
             return nullptr;
 
-        auto value = Core::MakeShared<Red::Quaternion>();
+        auto value = Red::MakeInstance<Red::Quaternion>();
         value->i = aNode["i"].as<float>(0.0f);
         value->j = aNode["j"].as<float>(0.0f);
         value->k = aNode["k"].as<float>(0.0f);
@@ -301,14 +301,14 @@ Core::SharedPtr<Red::Quaternion> App::YamlConverter::Convert(const YAML::Node& a
 }
 
 template<>
-Core::SharedPtr<Red::EulerAngles> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Red::InstancePtr<Red::EulerAngles> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (aNode.IsMap())
     {
         if (aStrict && (!aNode["roll"] || !aNode["pitch"] || !aNode["yaw"]))
             return nullptr;
 
-        auto value = Core::MakeShared<Red::EulerAngles>();
+        auto value = Red::MakeInstance<Red::EulerAngles>();
         value->Roll = aNode["roll"].as<float>(0.0f);
         value->Pitch = aNode["pitch"].as<float>(0.0f);
         value->Yaw = aNode["yaw"].as<float>(0.0f);
@@ -320,14 +320,14 @@ Core::SharedPtr<Red::EulerAngles> App::YamlConverter::Convert(const YAML::Node& 
 }
 
 template<>
-Core::SharedPtr<Red::Vector3> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Red::InstancePtr<Red::Vector3> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (aNode.IsMap())
     {
         if (aStrict && (!aNode["x"] || !aNode["y"] || !aNode["z"]))
             return nullptr;
 
-        auto value = Core::MakeShared<Red::Vector3>();
+        auto value = Red::MakeInstance<Red::Vector3>();
         value->X = aNode["x"].as<float>(0.0f);
         value->Y = aNode["y"].as<float>(0.0f);
         value->Z = aNode["z"].as<float>(0.0f);
@@ -339,14 +339,14 @@ Core::SharedPtr<Red::Vector3> App::YamlConverter::Convert(const YAML::Node& aNod
 }
 
 template<>
-Core::SharedPtr<Red::Vector2> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Red::InstancePtr<Red::Vector2> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (aNode.IsMap())
     {
         if (aStrict && (!aNode["x"] || !aNode["y"]))
             return nullptr;
 
-        auto value = Core::MakeShared<Red::Vector2>();
+        auto value = Red::MakeInstance<Red::Vector2>();
         value->X = aNode["x"].as<float>(0.0f);
         value->Y = aNode["y"].as<float>(0.0f);
 
@@ -357,14 +357,14 @@ Core::SharedPtr<Red::Vector2> App::YamlConverter::Convert(const YAML::Node& aNod
 }
 
 template<>
-Core::SharedPtr<Red::Color> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
+Red::InstancePtr<Red::Color> App::YamlConverter::Convert(const YAML::Node& aNode, bool aStrict)
 {
     if (aNode.IsMap())
     {
         if (aStrict && (!aNode["red"] || !aNode["green"] || !aNode["blue"] || !aNode["alpha"]))
             return nullptr;
 
-        auto value = Core::MakeShared<Red::Color>();
+        auto value = Red::MakeInstance<Red::Color>();
         value->Red = aNode["red"].as<uint8_t>(0);
         value->Green = aNode["green"].as<uint8_t>(0);
         value->Blue = aNode["blue"].as<uint8_t>(0);
@@ -377,11 +377,11 @@ Core::SharedPtr<Red::Color> App::YamlConverter::Convert(const YAML::Node& aNode,
 }
 
 template<typename E>
-Core::SharedPtr<Red::DynArray<E>> App::YamlConverter::ConvertArray(const YAML::Node& aNode, bool)
+Red::InstancePtr<Red::DynArray<E>> App::YamlConverter::ConvertArray(const YAML::Node& aNode, bool)
 {
     if (aNode.IsSequence())
     {
-        auto array = Core::MakeShared<Red::DynArray<E>>();
+        auto array = Red::MakeInstance<Red::DynArray<E>>();
 
         if (aNode.size() > 0)
         {
@@ -406,25 +406,25 @@ Core::SharedPtr<Red::DynArray<E>> App::YamlConverter::ConvertArray(const YAML::N
 }
 
 template<typename T>
-bool App::YamlConverter::Convert(const YAML::Node& aNode, Core::SharedPtr<void>& aValue, bool aStrict)
+bool App::YamlConverter::Convert(const YAML::Node& aNode, Red::InstancePtr<>& aValue, bool aStrict)
 {
     aValue = Convert<T>(aNode, aStrict);
     return aValue != nullptr;
 }
 
 template<typename E>
-bool App::YamlConverter::ConvertArray(const YAML::Node& aNode, Core::SharedPtr<void>& aValue, bool aStrict)
+bool App::YamlConverter::ConvertArray(const YAML::Node& aNode, Red::InstancePtr<>& aValue, bool aStrict)
 {
     aValue = ConvertArray<E>(aNode, aStrict);
     return aValue != nullptr;
 }
 
-Core::SharedPtr<void> App::YamlConverter::Convert(const Red::CBaseRTTIType* aType, const YAML::Node& aNode)
+Red::InstancePtr<> App::YamlConverter::Convert(const Red::CBaseRTTIType* aType, const YAML::Node& aNode)
 {
     return Convert(aType->GetName(), aNode);
 }
 
-Core::SharedPtr<void> App::YamlConverter::Convert(Red::CName aTypeName, const YAML::Node& aNode)
+Red::InstancePtr<> App::YamlConverter::Convert(Red::CName aTypeName, const YAML::Node& aNode)
 {
     switch (aTypeName)
     {
@@ -497,9 +497,9 @@ Core::SharedPtr<void> App::YamlConverter::Convert(Red::CName aTypeName, const YA
     return nullptr;
 }
 
-std::pair<Red::CName, Core::SharedPtr<void>> App::YamlConverter::Convert(const YAML::Node& aNode)
+std::pair<Red::CName, Red::InstancePtr<>> App::YamlConverter::Convert(const YAML::Node& aNode)
 {
-    Core::SharedPtr<void> value;
+    Red::InstancePtr<> value;
 
     switch (aNode.Type())
     {
@@ -565,6 +565,9 @@ std::pair<Red::CName, Core::SharedPtr<void>> App::YamlConverter::Convert(const Y
         }
         break;
     }
+    case YAML::NodeType::Undefined:
+    case YAML::NodeType::Null:
+        break;
     }
 
     return { {}, value };

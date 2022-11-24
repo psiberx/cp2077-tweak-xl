@@ -5,41 +5,61 @@ bool App::TweakChangelog::AssociateFlat(Red::TweakDBID aFlatId, Red::TweakDBID a
     if (!aRecordId.IsValid() || !aFlatId.IsValid())
         return false;
 
-    m_mutations[aFlatId].recordId = aRecordId;
+    aFlatId.SetTDBOffset(0);
+
+    m_associations[aFlatId] = aRecordId;
 
     return true;
 }
 
-bool App::TweakChangelog::RegisterInsertion(Red::TweakDBID aFlatId, int32_t aIndex,
-                                            const Core::SharedPtr<void>& aValue)
+bool App::TweakChangelog::RegisterAssignment(Red::TweakDBID aFlatId, Red::Instance aOldValue, Red::Instance aNewValue)
 {
-    if (!aFlatId.IsValid() || !aValue)
+    if (!aFlatId.IsValid() || !aOldValue || !aNewValue || aOldValue == aNewValue)
         return false;
 
+    aFlatId.SetTDBOffset(0);
+
+    auto& entry = m_assignments[aFlatId];
+    entry.previous = aOldValue;
+    entry.current = aNewValue;
+
+    return false;
+}
+
+bool App::TweakChangelog::RegisterInsertion(Red::TweakDBID aFlatId, int32_t aIndex, const Red::InstancePtr<>& aInstance)
+{
+    if (!aFlatId.IsValid() || !aInstance)
+        return false;
+
+    aFlatId.SetTDBOffset(0);
+
     auto& entry = m_mutations[aFlatId];
-    entry.insertions[aIndex] = aValue;
+    entry.insertions[aIndex] = aInstance;
 
     return true;
 }
 
-bool App::TweakChangelog::RegisterDeletion(Red::TweakDBID aFlatId, int32_t aIndex,
-                                           const Core::SharedPtr<void>& aValue)
+bool App::TweakChangelog::RegisterDeletion(Red::TweakDBID aFlatId, int32_t aIndex, const Red::InstancePtr<>& aInstance)
 {
-    if (!aFlatId.IsValid() || !aValue)
+    if (!aFlatId.IsValid() || !aInstance)
         return false;
 
+    aFlatId.SetTDBOffset(0);
+
     auto& entry = m_mutations[aFlatId];
-    entry.deletions[aIndex] = aValue;
+    entry.deletions[aIndex] = aInstance;
 
     return true;
 }
 
 void App::TweakChangelog::ForgetChanges(Red::TweakDBID aFlatId)
 {
-    if (aFlatId.IsValid())
-    {
-        m_mutations.erase(aFlatId);
-    }
+    if (!aFlatId.IsValid())
+        return;
+
+    aFlatId.SetTDBOffset(0);
+
+    m_mutations.erase(aFlatId);
 }
 
 void App::TweakChangelog::RegisterForeignKey(Red::TweakDBID aForeignKey)
@@ -65,6 +85,8 @@ void App::TweakChangelog::ForgetForeignKeys()
 
 void App::TweakChangelog::RegisterName(Red::TweakDBID aId, const std::string& aName)
 {
+    aId.SetTDBOffset(0);
+
     m_knownNames[aId] = aName;
 }
 
@@ -74,26 +96,28 @@ void App::TweakChangelog::CheckForIssues(const Core::SharedPtr<Red::TweakDBManag
     {
         if (!aManager->IsRecordExists(foreignKey) && !aManager->IsFlatExists(foreignKey))
         {
-            LogWarning("Foreign key [{}] refers to a non-existent record or flat.", AsString(foreignKey));
+            LogWarning("Foreign key [{}] refers to a non-existent record or flat.", ToName(foreignKey));
         }
     }
 }
 
 void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManager>& aManager)
 {
+    Core::Set<Red::TweakDBID> updates;
+
     for (const auto& [flatId, mutation] : m_mutations)
     {
         const auto& flatData = aManager->GetFlat(flatId);
 
-        if (!flatData.value)
+        if (!flatData.instance)
         {
-            LogWarning("Cannot restore [{}], the flat doesn't exist.", AsString(flatId));
+            LogWarning("Cannot restore [{}], the flat doesn't exist.", ToName(flatId));
             continue;
         }
 
         if (flatData.type->GetType() != Red::ERTTIType::Array)
         {
-            LogWarning("Cannot restore [{}], it's not an array.", AsString(flatId));
+            LogWarning("Cannot restore [{}], it's not an array.", ToName(flatId));
             continue;
         }
 
@@ -102,7 +126,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
         auto canRestore = true;
 
         {
-            auto currentArray = flatData.value;
+            auto currentArray = flatData.instance;
             auto currentSize = arrayType->GetLength(currentArray);
 
             for (const auto& [insertionIndex, insertionValue] : mutation.insertions)
@@ -137,12 +161,12 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!canRestore)
         {
-            LogWarning("Cannot restore [{}], third party changes detected.", AsString(flatId));
+            LogWarning("Cannot restore [{}], third party changes detected.", ToName(flatId));
             continue;
         }
 
         auto restoredArray = aManager->GetReflection()->Construct(arrayType);
-        arrayType->Assign(restoredArray.get(), flatData.value);
+        arrayType->Assign(restoredArray.get(), flatData.instance);
 
         for (const auto& [insertionIndex, insertionValue] : mutation.insertions | std::views::reverse)
         {
@@ -159,20 +183,35 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!success)
         {
-            LogError("Cannot restore [{}], failed to assign the value.", AsString(flatId));
+            LogError("Cannot restore [{}], failed to assign the value.", ToName(flatId));
             continue;
         }
 
-        if (mutation.recordId.IsValid())
         {
-            aManager->UpdateRecord(mutation.recordId);
+            const auto association = m_associations.find(flatId);
+            if (association != m_associations.end())
+            {
+                updates.insert(association.value());
+            }
         }
     }
 
+    for (const auto recordId : updates)
+    {
+        const auto success = aManager->UpdateRecord(recordId);
+
+        if (!success)
+        {
+            LogError("Cannot restore [{}], failed to update the record.", ToName(recordId));
+        }
+    }
+
+    m_associations.clear();
+    m_assignments.clear();
     m_mutations.clear();
 }
 
-std::string App::TweakChangelog::AsString(Red::TweakDBID aId)
+std::string App::TweakChangelog::ToName(Red::TweakDBID aId)
 {
     const auto name = m_knownNames.find(aId);
 
