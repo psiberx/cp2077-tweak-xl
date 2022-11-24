@@ -22,11 +22,11 @@ public:
     TweakDBBuffer();
     explicit TweakDBBuffer(Red::TweakDB* aTweakDb);
 
-    int32_t AllocateData(const Red::CStackType& aData);
+    int32_t AllocateValue(const Red::CStackType& aData);
     int32_t AllocateValue(const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue);
     int32_t AllocateDefault(const Red::CBaseRTTIType* aType);
 
-    Red::CStackType GetData(int32_t aOffset);
+    Red::CStackType GetValue(int32_t aOffset);
     Red::ScriptInstance GetValuePtr(int32_t aOffset);
 
     [[nodiscard]] BufferStats GetStats() const;
@@ -45,19 +45,22 @@ private:
     using FlatDefaultMap = Core::Map<Red::CName, int32_t>; // TypeName -> BufferOffset
     using FlatTypeMap = Core::Map<uintptr_t, FlatTypeInfo>; // VFT -> FlatTypeInfo
 
-    void Initialize();
-    void UpdateStats(float updateTime = 0);
-    void SyncBuffer();
+    inline static uint64_t ComputeHash(const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue);
+    inline Red::CStackType ResolveOffset(int32_t aOffset);
 
-    inline Red::CStackType GetFlatData(int32_t aOffset);
-    inline static uint64_t Hash(const Red::CBaseRTTIType* aType, Red::ScriptInstance aValue);
+    void CreatePools();
+    void FillDefaults();
+    void SyncBufferData();
+    void SyncBufferBounds();
+    void UpdateStats(float updateTime = 0);
 
     Red::TweakDB* m_tweakDb;
-    uintptr_t m_bufferEnd;
-    uintptr_t m_offsetEnd;
     FlatPoolMap m_pools;
     FlatDefaultMap m_defaults;
-    FlatTypeMap m_vfts;
+    FlatTypeMap m_types;
+    uintptr_t m_bufferEnd;
+    uintptr_t m_offsetEnd;
     BufferStats m_stats;
+    std::shared_mutex m_poolMutex;
 };
 }

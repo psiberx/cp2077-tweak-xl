@@ -84,8 +84,8 @@ private:
 
     Red::CName GetFlatTypeName(const Red::TweakFlatPtr& aFlat);
 
-    Red::ValuePtr<> MakeValue(const FlatStatePtr& aState, const Red::TweakValuePtr& aValue);
-    Red::ValuePtr<> MakeValue(const FlatStatePtr& aState, const Core::Vector<Red::TweakValuePtr>& aValues = {});
+    Core::SharedPtr<void> MakeValue(const FlatStatePtr& aState, const Red::TweakValuePtr& aValue);
+    Core::SharedPtr<void> MakeValue(const FlatStatePtr& aState, const Core::Vector<Red::TweakValuePtr>& aValues = {});
 
     std::filesystem::path m_path;
     Red::TweakSourcePtr m_source;

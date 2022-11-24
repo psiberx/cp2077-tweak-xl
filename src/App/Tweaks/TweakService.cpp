@@ -31,7 +31,6 @@ void App::TweakService::LoadTweaks()
         m_importer->ImportTweaks(m_tweaksDir, m_changelog);
         m_executor->ExecuteTweaks();
         m_changelog->CheckForIssues(m_manager);
-        m_manager->Invalidate();
     }
 }
 
@@ -40,7 +39,6 @@ void App::TweakService::ImportTweaks()
     if (m_manager)
     {
         m_importer->ImportTweaks(m_tweaksDir, m_changelog);
-        m_manager->Invalidate();
     }
 }
 
@@ -49,7 +47,6 @@ void App::TweakService::ExecuteTweaks()
     if (m_manager)
     {
         m_executor->ExecuteTweaks();
-        m_manager->Invalidate();
     }
 }
 
@@ -58,7 +55,6 @@ void App::TweakService::ExecuteTweak(Red::CName aName)
     if (m_manager)
     {
         m_executor->ExecuteTweak(aName);
-        m_manager->Invalidate();
     }
 }
 

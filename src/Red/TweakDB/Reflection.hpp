@@ -136,7 +136,6 @@ private:
     using RecordInfoMap = Core::Map<Red::CName, Core::SharedPtr<Red::TweakDBRecordInfo>>;
 
     Core::SharedPtr<Red::TweakDBRecordInfo> CollectRecordInfo(const Red::CClass* aType, Red::TweakDBID aSampleId = {});
-
     Red::TweakDBID GetRecordSampleId(const Red::CClass* aType);
     uint32_t GetRecordTypeHash(const Red::CClass* aType);
     std::string ResolvePropertyName(Red::TweakDBID aSampleId, Red::CName aGetterName);
@@ -145,6 +144,7 @@ private:
     Red::TweakDB* m_tweakDb;
     Red::CRTTISystem* m_rtti;
     RecordInfoMap m_resolved;
+    std::shared_mutex m_mutex;
 
     static ExtraFlatMap s_extraFlats;
 };

@@ -33,20 +33,24 @@ const Red::TweakDBRecordInfo* Red::TweakDBReflection::GetRecordInfo(const Red::C
     if (!IsRecordType(aType))
         return nullptr;
 
-    auto iter = m_resolved.find(aType->GetName());
-
-    if (iter != m_resolved.end())
-        return iter->second.get();
+    {
+        std::shared_lock lockR(m_mutex);
+        auto iter = m_resolved.find(aType->GetName());
+        if (iter != m_resolved.end())
+            return iter->second.get();
+    }
 
     return CollectRecordInfo(aType).get();
 }
 
 const Red::TweakDBRecordInfo* Red::TweakDBReflection::GetRecordInfo(Red::CName aTypeName)
 {
-    auto iter = m_resolved.find(aTypeName);
-
-    if (iter != m_resolved.end())
-        return iter->second.get();
+    {
+        std::shared_lock lockR(m_mutex);
+        auto iter = m_resolved.find(aTypeName);
+        if (iter != m_resolved.end())
+            return iter->second.get();
+    }
 
     return CollectRecordInfo(m_rtti->GetClass(aTypeName)).get();
 }
@@ -244,7 +248,10 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
         }
     }
 
-    m_resolved.insert({ recordInfo->name, recordInfo });
+    {
+        std::unique_lock lockRW(m_mutex);
+        m_resolved.insert({ recordInfo->name, recordInfo });
+    }
 
     return recordInfo;
 }

@@ -18,10 +18,10 @@ inline bool ParseFloat(const std::string& aData, float& aResult)
 }
 
 template<typename T>
-Red::ValuePtr<T> ConvertValue(const Red::TweakValuePtr& aValue);
+Core::SharedPtr<T> ConvertValue(const Red::TweakValuePtr& aValue);
 
 template<>
-Red::ValuePtr<int> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<int> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::Number)
     {
@@ -30,7 +30,7 @@ Red::ValuePtr<int> ConvertValue(const Red::TweakValuePtr& aValue)
 
         if (ParseInt(data, result))
         {
-            return Red::MakeValue<int>(result);
+            return Core::MakeShared<int>(result);
         }
     }
 
@@ -38,7 +38,7 @@ Red::ValuePtr<int> ConvertValue(const Red::TweakValuePtr& aValue)
 }
 
 template<>
-Red::ValuePtr<float> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<float> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::Number)
     {
@@ -47,7 +47,7 @@ Red::ValuePtr<float> ConvertValue(const Red::TweakValuePtr& aValue)
 
         if (ParseFloat(data, result))
         {
-            return Red::MakeValue<float>(result);
+            return Core::MakeShared<float>(result);
         }
     }
 
@@ -55,20 +55,20 @@ Red::ValuePtr<float> ConvertValue(const Red::TweakValuePtr& aValue)
 }
 
 template<>
-Red::ValuePtr<bool> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<bool> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::Bool)
     {
         auto& data = aValue->data.front();
 
-        return Red::MakeValue<bool>(data == Red::TweakGrammar::Bool::True);
+        return Core::MakeShared<bool>(data == Red::TweakGrammar::Bool::True);
     }
 
     return {};
 }
 
 template<>
-Red::ValuePtr<Red::LocKeyWrapper> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<Red::LocKeyWrapper> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::String)
     {
@@ -76,7 +76,7 @@ Red::ValuePtr<Red::LocKeyWrapper> ConvertValue(const Red::TweakValuePtr& aValue)
 
         if (data.empty())
         {
-            return Red::MakeValue<Red::LocKeyWrapper>();
+            return Core::MakeShared<Red::LocKeyWrapper>();
         }
 
         if (data.starts_with(Red::LocKeyPrefix))
@@ -89,7 +89,7 @@ Red::ValuePtr<Red::LocKeyWrapper> ConvertValue(const Red::TweakValuePtr& aValue)
                 return Core::MakeShared<Red::LocKeyWrapper>(hash);
             }
 
-            return Red::MakeValue<Red::LocKeyWrapper>(key.c_str());
+            return Core::MakeShared<Red::LocKeyWrapper>(key.c_str());
         }
     }
 
@@ -97,7 +97,7 @@ Red::ValuePtr<Red::LocKeyWrapper> ConvertValue(const Red::TweakValuePtr& aValue)
 }
 
 template<>
-Red::ValuePtr<Red::CString> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<Red::CString> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::String)
     {
@@ -105,23 +105,23 @@ Red::ValuePtr<Red::CString> ConvertValue(const Red::TweakValuePtr& aValue)
 
         if (data.empty())
         {
-            return Red::MakeValue<Red::CString>();
+            return Core::MakeShared<Red::CString>();
         }
 
         if (const auto locKey = ConvertValue<Red::LocKeyWrapper>(aValue))
         {
-            return Red::MakeValue<Red::CString>(
+            return Core::MakeShared<Red::CString>(
                 std::string(Red::LocKeyPrefix).append(std::to_string(locKey->primaryKey)).c_str());
         }
 
-        return Red::MakeValue<Red::CString>(data.c_str());
+        return Core::MakeShared<Red::CString>(data.c_str());
     }
 
     return {};
 }
 
 template<>
-Red::ValuePtr<Red::CName> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<Red::CName> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::String)
     {
@@ -129,30 +129,30 @@ Red::ValuePtr<Red::CName> ConvertValue(const Red::TweakValuePtr& aValue)
 
         if (data.empty())
         {
-            return Red::MakeValue<Red::CName>();
+            return Core::MakeShared<Red::CName>();
         }
 
-        return Red::MakeValue<Red::CName>(data.c_str());
+        return Core::MakeShared<Red::CName>(data.c_str());
     }
 
     return {};
 }
 
 template<>
-Red::ValuePtr<Red::ResourceAsyncReference<>> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<Red::ResourceAsyncReference<>> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::String)
     {
         auto& data = aValue->data.front();
 
-        return Red::MakeValue<Red::ResourceAsyncReference<>>(data.c_str());
+        return Core::MakeShared<Red::ResourceAsyncReference<>>(data.c_str());
     }
 
     return {};
 }
 
 template<>
-Red::ValuePtr<Red::TweakDBID> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<Red::TweakDBID> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::String)
     {
@@ -160,22 +160,22 @@ Red::ValuePtr<Red::TweakDBID> ConvertValue(const Red::TweakValuePtr& aValue)
 
         if (data.empty())
         {
-            return Red::MakeValue<Red::TweakDBID>();
+            return Core::MakeShared<Red::TweakDBID>();
         }
 
-        return Red::MakeValue<Red::TweakDBID>(data.c_str());
+        return Core::MakeShared<Red::TweakDBID>(data.c_str());
     }
 
     return {};
 }
 
 template<>
-Red::ValuePtr<Red::Quaternion> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<Red::Quaternion> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::Struct && aValue->data.size() == 4)
     {
         auto& data = aValue->data;
-        auto result = Red::MakeValue<Red::Quaternion>();
+        auto result = Core::MakeShared<Red::Quaternion>();
 
         if (ParseFloat(data[0], result->i) && ParseFloat(data[1], result->j)
             && ParseFloat(data[2], result->k) && ParseFloat(data[3], result->r))
@@ -188,12 +188,12 @@ Red::ValuePtr<Red::Quaternion> ConvertValue(const Red::TweakValuePtr& aValue)
 }
 
 template<>
-Red::ValuePtr<Red::EulerAngles> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<Red::EulerAngles> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::Struct && aValue->data.size() == 3)
     {
         auto& data = aValue->data;
-        auto result = Red::MakeValue<Red::EulerAngles>();
+        auto result = Core::MakeShared<Red::EulerAngles>();
 
         if (ParseFloat(data[0], result->Roll) && ParseFloat(data[1], result->Pitch) && ParseFloat(data[2], result->Yaw))
         {
@@ -205,12 +205,12 @@ Red::ValuePtr<Red::EulerAngles> ConvertValue(const Red::TweakValuePtr& aValue)
 }
 
 template<>
-Red::ValuePtr<Red::Vector3> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<Red::Vector3> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::Struct && aValue->data.size() == 3)
     {
         auto& data = aValue->data;
-        auto result = Red::MakeValue<Red::Vector3>();
+        auto result = Core::MakeShared<Red::Vector3>();
 
         if (ParseFloat(data[0], result->X) && ParseFloat(data[1], result->Y) && ParseFloat(data[2], result->Z))
         {
@@ -222,12 +222,12 @@ Red::ValuePtr<Red::Vector3> ConvertValue(const Red::TweakValuePtr& aValue)
 }
 
 template<>
-Red::ValuePtr<Red::Vector2> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<Red::Vector2> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::Struct && aValue->data.size() == 2)
     {
         auto& data = aValue->data;
-        auto result = Red::MakeValue<Red::Vector2>();
+        auto result = Core::MakeShared<Red::Vector2>();
 
         if (ParseFloat(data[0], result->X) && ParseFloat(data[1], result->Y))
         {
@@ -239,12 +239,12 @@ Red::ValuePtr<Red::Vector2> ConvertValue(const Red::TweakValuePtr& aValue)
 }
 
 template<>
-Red::ValuePtr<Red::Color> ConvertValue(const Red::TweakValuePtr& aValue)
+Core::SharedPtr<Red::Color> ConvertValue(const Red::TweakValuePtr& aValue)
 {
     if (aValue->type == Red::ETweakValueType::Struct && aValue->data.size() == 4)
     {
         auto& data = aValue->data;
-        auto result = Red::MakeValue<Red::Color>();
+        auto result = Core::MakeShared<Red::Color>();
 
         if (ParseInt(data[0], result->Red) && ParseInt(data[1], result->Green)
             && ParseInt(data[2], result->Blue) && ParseInt(data[3], result->Alpha))
@@ -257,9 +257,9 @@ Red::ValuePtr<Red::Color> ConvertValue(const Red::TweakValuePtr& aValue)
 }
 
 template<typename T>
-Red::ValuePtr<Red::DynArray<T>> ConvertValue(const Core::Vector<Red::TweakValuePtr>& aValues)
+Core::SharedPtr<Red::DynArray<T>> ConvertValue(const Core::Vector<Red::TweakValuePtr>& aValues)
 {
-    auto array = Red::MakeValue<Red::DynArray<T>>();
+    auto array = Core::MakeShared<Red::DynArray<T>>();
 
     for (const auto& value : aValues)
     {
@@ -275,8 +275,8 @@ Red::ValuePtr<Red::DynArray<T>> ConvertValue(const Core::Vector<Red::TweakValueP
 }
 }
 
-Red::ValuePtr<> App::RedReader::MakeValue(const App::RedReader::FlatStatePtr& aState,
-                                          const Red::TweakValuePtr& aValue)
+Core::SharedPtr<void> App::RedReader::MakeValue(const App::RedReader::FlatStatePtr& aState,
+                                                const Red::TweakValuePtr& aValue)
 {
     const auto& type = aState->isArray ? aState->elementType : aState->resolvedType;
 
@@ -300,8 +300,8 @@ Red::ValuePtr<> App::RedReader::MakeValue(const App::RedReader::FlatStatePtr& aS
     return {};
 }
 
-Red::ValuePtr<> App::RedReader::MakeValue(const App::RedReader::FlatStatePtr& aState,
-                                          const Core::Vector<Red::TweakValuePtr>& aValues)
+Core::SharedPtr<void> App::RedReader::MakeValue(const App::RedReader::FlatStatePtr& aState,
+                                                const Core::Vector<Red::TweakValuePtr>& aValues)
 {
     if (!aState->isArray)
     {

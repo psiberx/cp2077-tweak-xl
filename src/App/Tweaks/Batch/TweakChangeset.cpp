@@ -171,96 +171,98 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
     Core::Set<Red::TweakDBID> updates;
     Core::Map<Red::TweakDBID, Red::TweakDBID> associations;
 
-    aManager->StartBatch();
-
-    for (const auto& item : m_pendingFlats)
     {
-        const auto& flatId = item.first;
-        const auto& flatType = item.second.type;
-        const auto& flatValue = item.second.value.get();
+        const auto batch = aManager->StartBatch();
 
-        const auto success = aManager->SetFlat(flatId, flatType, flatValue);
-
-        if (!success)
+        for (const auto& item : m_pendingFlats)
         {
-            LogError("Can't assign flat {}.", ToName(flatId));
-            continue;
-        }
+            const auto& flatId = item.first;
+            const auto& flatType = item.second.type;
+            const auto& flatValue = item.second.value.get();
 
-        if (aChangelog)
-        {
-            if (aManager->GetReflection()->IsForeignKey(flatType))
-            {
-                const auto foreignKey = reinterpret_cast<Red::TweakDBID*>(flatValue);
-                aChangelog->RegisterForeignKey(*foreignKey);
-            }
-            else if (aManager->GetReflection()->IsForeignKeyArray(flatType))
-            {
-                const auto foreignKeyList = reinterpret_cast<Red::DynArray<Red::TweakDBID>*>(flatValue);
-                for (const auto& foreignKey : *foreignKeyList)
-                {
-                    aChangelog->RegisterForeignKey(foreignKey);
-                }
-            }
-        }
-    }
-
-    for (const auto& recordId : m_orderedRecords)
-    {
-        const auto& recordEntry = m_pendingRecords[recordId];
-
-        if (aManager->IsRecordExists(recordId))
-        {
-            updates.insert(recordId);
-            continue;
-        }
-
-        if (recordEntry.sourceId.IsValid())
-        {
-            const auto success = aManager->CloneRecord(recordId, recordEntry.sourceId);
+            const auto success = aManager->SetFlat(batch, flatId, flatType, flatValue);
 
             if (!success)
             {
-                LogError("Cannot clone record {} from {}.", ToName(recordId), ToName(recordEntry.sourceId));
-                continue;
-            }
-        }
-        else
-        {
-            const auto success = aManager->CreateRecord(recordId, recordEntry.type);
-
-            if (!success)
-            {
-                LogError("Cannot create record {} of type {}.", ToName(recordId), ToName(recordEntry.type));
-                continue;
-            }
-        }
-
-        {
-            const auto recordInfo = aManager->GetReflection()->GetRecordInfo(recordEntry.type);
-
-            if (!recordInfo)
-            {
-                LogWarning("Missing metadata for record {}.", ToName(recordId));
+                LogError("Can't assign flat {}.", ToName(flatId));
                 continue;
             }
 
-            for (const auto& [_, propInfo] : recordInfo->props)
+            if (aChangelog)
             {
-                if (propInfo->dataOffset)
+                if (aManager->GetReflection()->IsForeignKey(flatType))
                 {
-                    associations.emplace(recordId + propInfo->appendix, recordId);
+                    const auto foreignKey = reinterpret_cast<Red::TweakDBID*>(flatValue);
+                    aChangelog->RegisterForeignKey(*foreignKey);
+                }
+                else if (aManager->GetReflection()->IsForeignKeyArray(flatType))
+                {
+                    const auto foreignKeyList = reinterpret_cast<Red::DynArray<Red::TweakDBID>*>(flatValue);
+                    for (const auto& foreignKey : *foreignKeyList)
+                    {
+                        aChangelog->RegisterForeignKey(foreignKey);
+                    }
                 }
             }
         }
-    }
 
-    for (const auto& item : m_pendingNames)
-    {
-        aManager->RegisterName(item.first, item.second);
-    }
+        for (const auto& recordId : m_orderedRecords)
+        {
+            const auto& recordEntry = m_pendingRecords[recordId];
 
-    aManager->CommitBatch();
+            if (aManager->IsRecordExists(recordId))
+            {
+                updates.insert(recordId);
+                continue;
+            }
+
+            if (recordEntry.sourceId.IsValid())
+            {
+                const auto success = aManager->CloneRecord(batch, recordId, recordEntry.sourceId);
+
+                if (!success)
+                {
+                    LogError("Cannot clone record {} from {}.", ToName(recordId), ToName(recordEntry.sourceId));
+                    continue;
+                }
+            }
+            else
+            {
+                const auto success = aManager->CreateRecord(batch, recordId, recordEntry.type);
+
+                if (!success)
+                {
+                    LogError("Cannot create record {} of type {}.", ToName(recordId), ToName(recordEntry.type));
+                    continue;
+                }
+            }
+
+            {
+                const auto recordInfo = aManager->GetReflection()->GetRecordInfo(recordEntry.type);
+
+                if (!recordInfo)
+                {
+                    LogWarning("Missing metadata for record {}.", ToName(recordId));
+                    continue;
+                }
+
+                for (const auto& [_, propInfo] : recordInfo->props)
+                {
+                    if (propInfo->dataOffset)
+                    {
+                        associations.emplace(recordId + propInfo->appendix, recordId);
+                    }
+                }
+            }
+        }
+
+        for (const auto& item : m_pendingNames)
+        {
+            aManager->RegisterName(batch, item.first, item.second);
+        }
+
+        aManager->CommitBatch(batch);
+    }
 
     for (const auto& [flatId, mutation] : m_pendingMutations)
     {
