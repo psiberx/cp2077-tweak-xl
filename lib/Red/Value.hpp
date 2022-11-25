@@ -55,6 +55,20 @@ struct Value
         return instance != nullptr;
     }
 
+    template<typename U>
+    requires (std::is_pointer_v<U>)
+    inline U As()
+    {
+        return *reinterpret_cast<U>(instance);
+    }
+
+    template<typename U>
+    requires (!std::is_pointer_v<U>)
+    inline U& As()
+    {
+        return *reinterpret_cast<U*>(instance);
+    }
+
     CBaseRTTIType* type;
     T* instance;
 };

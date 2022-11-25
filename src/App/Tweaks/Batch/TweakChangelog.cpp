@@ -1,13 +1,11 @@
 #include "TweakChangelog.hpp"
 
-bool App::TweakChangelog::AssociateFlat(Red::TweakDBID aFlatId, Red::TweakDBID aRecordId)
+bool App::TweakChangelog::RegisterRecord(Red::TweakDBID aRecordId)
 {
-    if (!aRecordId.IsValid() || !aFlatId.IsValid())
+    if (!aRecordId.IsValid())
         return false;
 
-    aFlatId.SetTDBOffset(0);
-
-    m_associations[aFlatId] = aRecordId;
+    m_records.insert(aRecordId);
 
     return true;
 }
@@ -18,6 +16,7 @@ bool App::TweakChangelog::RegisterAssignment(Red::TweakDBID aFlatId, Red::Instan
         return false;
 
     aFlatId.SetTDBOffset(0);
+    m_ownedKeys.insert(aFlatId);
 
     auto& entry = m_assignments[aFlatId];
     entry.previous = aOldValue;
@@ -32,6 +31,7 @@ bool App::TweakChangelog::RegisterInsertion(Red::TweakDBID aFlatId, int32_t aInd
         return false;
 
     aFlatId.SetTDBOffset(0);
+    m_ownedKeys.insert(aFlatId);
 
     auto& entry = m_mutations[aFlatId];
     entry.insertions[aIndex] = aInstance;
@@ -45,6 +45,7 @@ bool App::TweakChangelog::RegisterDeletion(Red::TweakDBID aFlatId, int32_t aInde
         return false;
 
     aFlatId.SetTDBOffset(0);
+    m_ownedKeys.insert(aFlatId);
 
     auto& entry = m_mutations[aFlatId];
     entry.deletions[aIndex] = aInstance;
@@ -186,17 +187,34 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
             LogError("Cannot restore [{}], failed to assign the value.", ToName(flatId));
             continue;
         }
+    }
 
+    for (const auto& [flatId, assignment] : m_assignments)
+    {
+        const auto& flatData = aManager->GetFlat(flatId);
+
+        if (!flatData.instance)
         {
-            const auto association = m_associations.find(flatId);
-            if (association != m_associations.end())
-            {
-                updates.insert(association.value());
-            }
+            LogWarning("Cannot restore [{}], the flat doesn't exist.", ToName(flatId));
+            continue;
+        }
+
+        if (!IsOwnKey(flatId) && flatData.instance != assignment.current)
+        {
+            LogWarning("Cannot restore [{}], third party changes detected.", ToName(flatId));
+            continue;
+        }
+
+        const auto success = aManager->SetFlat(flatId, flatData.type, assignment.previous);
+
+        if (!success)
+        {
+            LogError("Cannot restore [{}], failed to assign the value.", ToName(flatId));
+            continue;
         }
     }
 
-    for (const auto recordId : updates)
+    for (const auto recordId : m_records)
     {
         const auto success = aManager->UpdateRecord(recordId);
 
@@ -206,9 +224,14 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
         }
     }
 
-    m_associations.clear();
+    m_records.clear();
     m_assignments.clear();
     m_mutations.clear();
+}
+
+bool App::TweakChangelog::IsOwnKey(Red::TweakDBID aId)
+{
+    return m_ownedKeys.contains(aId);
 }
 
 std::string App::TweakChangelog::ToName(Red::TweakDBID aId)

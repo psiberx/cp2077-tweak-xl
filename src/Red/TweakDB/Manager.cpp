@@ -56,7 +56,7 @@ Red::Handle<Red::TweakDBRecord> Red::TweakDBManager::GetRecord(Red::TweakDBID aR
     return *reinterpret_cast<const Red::Handle<Red::TweakDBRecord>*>(record);
 }
 
-Red::CClass* Red::TweakDBManager::GetRecordType(Red::TweakDBID aRecordId)
+const Red::CClass* Red::TweakDBManager::GetRecordType(Red::TweakDBID aRecordId)
 {
     std::shared_lock recordLockR(m_tweakDb->mutex01);
     const auto* record = m_tweakDb->recordsByID.Get(aRecordId);
@@ -114,10 +114,14 @@ bool Red::TweakDBManager::CreateRecord(Red::TweakDBID aRecordId, const Red::CCla
 
 bool Red::TweakDBManager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId)
 {
-    if (!aRecordId.IsValid() || !aSourceId.IsValid() || IsRecordExists(aRecordId))
+    if (!aRecordId.IsValid() || !aSourceId.IsValid())
         return false;
 
-    const auto recordInfo = m_reflection->GetRecordInfo(GetRecordType(aSourceId));
+    if (IsRecordExists(aRecordId) || !IsRecordExists(aSourceId))
+        return false;
+
+    const auto recordType = GetRecordType(aSourceId);
+    const auto recordInfo = m_reflection->GetRecordInfo(recordType);
 
     if (!recordInfo)
         return false;
@@ -132,6 +136,37 @@ bool Red::TweakDBManager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID a
     }
 
     Raw::CreateRecord(m_tweakDb, recordInfo->typeHash, aRecordId);
+
+    return true;
+}
+
+bool Red::TweakDBManager::InheritProps(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId)
+{
+    if (!aRecordId.IsValid() || !aSourceId.IsValid())
+        return false;
+
+    if (!IsRecordExists(aRecordId) || !IsRecordExists(aSourceId))
+        return false;
+
+    const auto recordType = GetRecordType(aRecordId);
+    const auto sourceType = GetRecordType(aSourceId);
+
+    if (recordType != sourceType)
+        return false;
+
+    const auto recordInfo = m_reflection->GetRecordInfo(recordType);
+
+    if (!recordInfo)
+        return false;
+
+    Red::SortedUniqueArray<Red::TweakDBID> propFlats;
+    propFlats.Reserve(recordInfo->props.size());
+    InheritFlats(propFlats, aRecordId, recordInfo, aSourceId);
+
+    {
+        std::unique_lock flatLockRW(m_tweakDb->mutex00);
+        m_tweakDb->flats.Insert(propFlats);
+    }
 
     return true;
 }
@@ -183,14 +218,36 @@ Red::Value<> Red::TweakDBManager::GetFlat(const Red::TweakDBManager::BatchPtr& a
     return m_buffer->GetValue(offset);
 }
 
-bool Red::TweakDBManager::HasFlat(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aFlatId)
+const Red::CClass* Red::TweakDBManager::GetRecordType(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId)
 {
+    auto recordType = GetRecordType(aRecordId);
+
+    if (!recordType)
+    {
+        std::shared_lock batchLockR(aBatch->mutex);
+        const auto it = aBatch->records.find(aRecordId);
+
+        if (it != aBatch->records.end())
+            recordType = it.value()->type;
+    }
+
+    return recordType;
+}
+
+bool Red::TweakDBManager::IsFlatExists(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aFlatId)
+{
+    if (IsFlatExists(aFlatId))
+        return true;
+
     std::shared_lock batchLockR(aBatch->mutex);
     return aBatch->flats.Find(aFlatId) != nullptr;
 }
 
-bool Red::TweakDBManager::HasRecord(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId)
+bool Red::TweakDBManager::IsRecordExists(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId)
 {
+    if (IsRecordExists(aRecordId))
+        return true;
+
     std::shared_lock batchLockR(aBatch->mutex);
     return aBatch->records.contains(aRecordId);
 }
@@ -213,7 +270,7 @@ bool Red::TweakDBManager::SetFlat(const Red::TweakDBManager::BatchPtr& aBatch, R
 bool Red::TweakDBManager::CreateRecord(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId,
                                        const Red::CClass* aType)
 {
-    if (!aRecordId.IsValid() || IsRecordExists(aRecordId))
+    if (!aRecordId.IsValid() || IsRecordExists(aBatch, aRecordId))
         return false;
 
     const auto recordInfo = m_reflection->GetRecordInfo(aType);
@@ -222,10 +279,6 @@ bool Red::TweakDBManager::CreateRecord(const Red::TweakDBManager::BatchPtr& aBat
         return false;
 
     std::unique_lock batchLockRW(aBatch->mutex);
-
-    if (aBatch->records.contains(aRecordId))
-        return false;
-
     InheritFlats(aBatch->flats, aRecordId, recordInfo);
     aBatch->records.emplace(aRecordId, recordInfo);
 
@@ -235,29 +288,47 @@ bool Red::TweakDBManager::CreateRecord(const Red::TweakDBManager::BatchPtr& aBat
 bool Red::TweakDBManager::CloneRecord(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId,
                                       Red::TweakDBID aSourceId)
 {
-    if (!aRecordId.IsValid() || !aSourceId.IsValid() || IsRecordExists(aRecordId))
+    if (!aRecordId.IsValid() || !aSourceId.IsValid())
         return false;
 
-    auto recordInfo = m_reflection->GetRecordInfo(GetRecordType(aSourceId));
+    if (IsRecordExists(aBatch, aRecordId) || !IsRecordExists(aBatch, aSourceId))
+        return false;
+
+    auto recordType = GetRecordType(aBatch, aSourceId);
+    auto recordInfo = m_reflection->GetRecordInfo(recordType);
 
     if (!recordInfo)
-    {
-        std::shared_lock batchLockR(aBatch->mutex);
-        const auto it = aBatch->records.find(aSourceId);
-
-        if (it == aBatch->records.end())
-            return false;
-
-        recordInfo = it.value();
-    }
-
-    std::unique_lock batchLockRW(aBatch->mutex);
-
-    if (aBatch->records.contains(aRecordId))
         return false;
 
+    std::unique_lock batchLockRW(aBatch->mutex);
     InheritFlats(aBatch->flats, aRecordId, recordInfo, aSourceId);
     aBatch->records.emplace(aRecordId, recordInfo);
+
+    return true;
+}
+
+bool Red::TweakDBManager::InheritProps(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId,
+                                       Red::TweakDBID aSourceId)
+{
+    if (!aRecordId.IsValid() || !aSourceId.IsValid())
+        return false;
+
+    if (!IsRecordExists(aBatch, aRecordId) || !IsRecordExists(aBatch, aSourceId))
+        return false;
+
+    const auto recordType = GetRecordType(aBatch, aRecordId);
+    const auto sourceType = GetRecordType(aBatch, aSourceId);
+
+    if (recordType != sourceType)
+        return false;
+
+    auto recordInfo = m_reflection->GetRecordInfo(recordType);
+
+    if (!recordInfo)
+        return false;
+
+    std::unique_lock batchLockRW(aBatch->mutex);
+    InheritFlats(aBatch->flats, aRecordId, recordInfo, aSourceId);
 
     return true;
 }

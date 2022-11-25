@@ -88,10 +88,10 @@ private:
     static std::string ToName(const Red::CBaseRTTIType* aType);
     std::string ToName(Red::TweakDBID aId);
 
-    Core::Map<Red::TweakDBID, FlatEntry> m_pendingFlats;
-    Core::Map<Red::TweakDBID, RecordEntry> m_pendingRecords;
     Core::Vector<Red::TweakDBID> m_orderedRecords;
+    Core::Map<Red::TweakDBID, RecordEntry> m_pendingRecords;
     Core::Map<Red::TweakDBID, MutationEntry> m_pendingMutations;
+    Core::Map<Red::TweakDBID, FlatEntry> m_pendingFlats;
     Core::Map<Red::TweakDBID, std::string> m_pendingNames;
 };
 }
