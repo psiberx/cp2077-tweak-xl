@@ -2,7 +2,6 @@
 
 #include "App/Tweaks/Batch/TweakChangeset.hpp"
 #include "App/Tweaks/Declarative/TweakReader.hpp"
-#include "App/Tweaks/Declarative/Yaml/YamlConverter.hpp"
 #include "Core/Logging/LoggingAgent.hpp"
 
 namespace App
@@ -45,10 +44,25 @@ private:
     const Red::CClass* ResolveRecordType(const YAML::Node& aNode);
     Red::TweakDBID ResolveTweakDBID(const YAML::Node& aNode);
 
+    template<typename T>
+    Red::InstancePtr<T> ConvertValue(const YAML::Node& aNode, bool aStrict = false);
+
+    template<typename T>
+    bool ConvertValue(const YAML::Node& aNode, Red::InstancePtr<>& aValue, bool aStrict = false);
+
+    template<typename E>
+    Red::InstancePtr<Red::DynArray<E>> ConvertArray(const YAML::Node& aNode, bool aStrict = false);
+
+    template<typename E>
+    bool ConvertArray(const YAML::Node& aNode, Red::InstancePtr<>& aValue, bool aStrict = false);
+
+    Red::InstancePtr<> MakeValue(Red::CName aTypeName, const YAML::Node& aNode);
+    Red::InstancePtr<> MakeValue(const Red::CBaseRTTIType* aType, const YAML::Node& aNode);
+    std::pair<Red::CName, Red::InstancePtr<>> TryMakeValue(const YAML::Node& aNode);
+
     void ConvertLegacyNodes();
 
     std::filesystem::path m_path;
     YAML::Node m_data;
-    YamlConverter m_converter;
 };
 }

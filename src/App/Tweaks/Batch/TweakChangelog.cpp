@@ -97,7 +97,7 @@ void App::TweakChangelog::CheckForIssues(const Core::SharedPtr<Red::TweakDBManag
     {
         if (!aManager->IsRecordExists(foreignKey) && !aManager->IsFlatExists(foreignKey))
         {
-            LogWarning("Foreign key [{}] refers to a non-existent record or flat.", ToName(foreignKey));
+            LogWarning("Foreign key {} refers to a non-existent record or flat.", ToName(foreignKey));
         }
     }
 }
@@ -112,13 +112,13 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!flatData.instance)
         {
-            LogWarning("Cannot restore [{}], the flat doesn't exist.", ToName(flatId));
+            LogWarning("Cannot restore {}, the flat doesn't exist.", ToName(flatId));
             continue;
         }
 
         if (flatData.type->GetType() != Red::ERTTIType::Array)
         {
-            LogWarning("Cannot restore [{}], it's not an array.", ToName(flatId));
+            LogWarning("Cannot restore {}, it's not an array.", ToName(flatId));
             continue;
         }
 
@@ -162,7 +162,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!canRestore)
         {
-            LogWarning("Cannot restore [{}], third party changes detected.", ToName(flatId));
+            LogWarning("Cannot restore {}, third party changes detected.", ToName(flatId));
             continue;
         }
 
@@ -184,7 +184,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!success)
         {
-            LogError("Cannot restore [{}], failed to assign the value.", ToName(flatId));
+            LogError("Cannot restore {}, failed to assign the value.", ToName(flatId));
             continue;
         }
     }
@@ -195,13 +195,13 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!flatData.instance)
         {
-            LogWarning("Cannot restore [{}], the flat doesn't exist.", ToName(flatId));
+            LogWarning("Cannot restore {}, the flat doesn't exist.", ToName(flatId));
             continue;
         }
 
         if (!IsOwnKey(flatId) && flatData.instance != assignment.current)
         {
-            LogWarning("Cannot restore [{}], third party changes detected.", ToName(flatId));
+            LogWarning("Cannot restore {}, third party changes detected.", ToName(flatId));
             continue;
         }
 
@@ -209,7 +209,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!success)
         {
-            LogError("Cannot restore [{}], failed to assign the value.", ToName(flatId));
+            LogError("Cannot restore {}, failed to assign the value.", ToName(flatId));
             continue;
         }
     }
@@ -220,7 +220,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!success)
         {
-            LogError("Cannot restore [{}], failed to update the record.", ToName(recordId));
+            LogError("Cannot restore {}, failed to update the record.", ToName(recordId));
         }
     }
 

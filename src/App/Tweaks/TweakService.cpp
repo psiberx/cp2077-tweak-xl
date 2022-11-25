@@ -66,7 +66,7 @@ void App::TweakService::CreateTweaksDir()
     {
         if (!std::filesystem::create_directories(m_tweaksDir, error))
         {
-            LogError("Cannot create tweaks directory [{}]: {}.",
+            LogError("Cannot create tweaks directory \"{}\": {}.",
                      m_tweaksDir.string(), error.message());
             return;
         }

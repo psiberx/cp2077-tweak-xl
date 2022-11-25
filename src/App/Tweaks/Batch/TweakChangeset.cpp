@@ -205,6 +205,23 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 LogError("Can't assign flat {}.", ToName(flatId));
                 continue;
             }
+
+            if (aChangelog)
+            {
+                if (aManager->GetReflection()->IsForeignKey(flatType))
+                {
+                    const auto foreignKey = reinterpret_cast<Red::TweakDBID*>(flatValue);
+                    aChangelog->RegisterForeignKey(*foreignKey);
+                }
+                else if (aManager->GetReflection()->IsForeignKeyArray(flatType))
+                {
+                    const auto foreignKeyList = reinterpret_cast<Red::DynArray<Red::TweakDBID>*>(flatValue);
+                    for (const auto& foreignKey : *foreignKeyList)
+                    {
+                        aChangelog->RegisterForeignKey(foreignKey);
+                    }
+                }
+            }
         }
 
         for (const auto& recordId : m_orderedRecords)
@@ -241,23 +258,11 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 }
                 else if (flatOld.type != flatNew.type)
                 {
-                    LogWarning("Type mismatch for [{}].", ToName(flatId));
+                    LogWarning("Type mismatch for {} assignment.", ToName(flatId));
                     continue;
                 }
 
                 aChangelog->RegisterAssignment(flatId, flatOld.instance, flatNew.instance);
-
-                if (aManager->GetReflection()->IsForeignKey(flatNew.type))
-                {
-                    aChangelog->RegisterForeignKey(flatNew.As<Red::TweakDBID>());
-                }
-                else if (aManager->GetReflection()->IsForeignKeyArray(flatNew.type))
-                {
-                    for (const auto& foreignKey : flatNew.As<Red::DynArray<Red::TweakDBID>>())
-                    {
-                        aChangelog->RegisterForeignKey(foreignKey);
-                    }
-                }
             }
         }
 
@@ -270,13 +275,13 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
         if (!flatData.instance)
         {
-            LogError("Cannot apply changes to [{}], the flat doesn't exist.", ToName(flatId));
+            LogError("Cannot apply changes to {}, the flat doesn't exist.", ToName(flatId));
             continue;
         }
 
         if (flatData.type->GetType() != Red::ERTTIType::Array)
         {
-            LogError("Cannot apply changes to [{}], it's not an array.", ToName(flatId));
+            LogError("Cannot apply changes to {}, it's not an array.", ToName(flatId));
             continue;
         }
 
@@ -372,7 +377,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
                     if (!sourceData.instance || sourceData.type != targetType)
                     {
-                        LogError("Cannot merge [{}] with [{}] because it's not an array.",
+                        LogError("Cannot merge {} with {} because it's not an array.",
                                  ToName(merge.sourceId), ToName(flatId));
                         continue;
                     }
@@ -425,7 +430,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
         if (!success)
         {
-            LogError("Cannot assign flat value [{}].", ToName(flatId));
+            LogError("Cannot assign flat value {}.", ToName(flatId));
             continue;
         }
 
@@ -460,7 +465,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
         if (!success)
         {
-            LogError("Cannot update record [{}].", ToName(recordId));
+            LogError("Cannot update record {}.", ToName(recordId));
         }
     }
 

@@ -32,7 +32,6 @@ constexpr auto LegacyValueNodeKey = "value";
 
 App::YamlReader::YamlReader(Core::SharedPtr<Red::TweakDBManager> aManager)
     : BaseTweakReader(std::move(aManager))
-    , m_converter{}
     , m_path{}
     , m_data{}
 {
@@ -120,13 +119,13 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 
                     if (!sourceType)
                     {
-                        LogWarning("{}: Cannot clone [{}], the record doesn't exists.", aName, cloneAttr.Scalar());
+                        LogWarning("{}: Cannot clone {}, the record doesn't exists.", aName, cloneAttr.Scalar());
                         break;
                     }
 
                     if (sourceType != recordType)
                     {
-                        LogWarning("{}: Cannot clone [{}], the record has incompatible type.", aName, cloneAttr.Scalar());
+                        LogWarning("{}: Cannot clone {}, the record has incompatible type.", aName, cloneAttr.Scalar());
                         break;
                     }
 
@@ -161,7 +160,7 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 
                 if (!sourceType)
                 {
-                    LogWarning("{}: Cannot clone [{}], the record doesn't exists.", aName, cloneAttr.Scalar());
+                    LogWarning("{}: Cannot clone {}, the record doesn't exists.", aName, cloneAttr.Scalar());
                     break;
                 }
 
@@ -183,7 +182,7 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 
                     if (!flatType)
                     {
-                        LogWarning("{}: Invalid value type [{}].", aName, typeAttr.Scalar());
+                        LogWarning("{}: Invalid value type {}.", aName, typeAttr.Scalar());
                         break;
                     }
 
@@ -196,7 +195,7 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 
                     if (!recordType)
                     {
-                        LogWarning("{}: Invalid record type [{}].", aName, typeAttr.Scalar());
+                        LogWarning("{}: Invalid record type {}.", aName, typeAttr.Scalar());
                         break;
                     }
 
@@ -241,7 +240,7 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
         }
 
         flatType = aType;
-        flatValue = m_converter.Convert(aType, aNode);
+        flatValue = MakeValue(aType, aNode);
 
         if (!flatValue)
         {
@@ -251,7 +250,7 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
     }
     else
     {
-        const auto x = m_converter.Convert(aNode);
+        const auto x = TryMakeValue(aNode);
 
         if (!x.second)
         {
@@ -417,7 +416,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
                 continue;
         }
 
-        const auto propValue = m_converter.Convert(propInfo->type, nodeData);
+        const auto propValue = MakeValue(propInfo->type, nodeData);
 
         if (!propValue)
         {
@@ -456,13 +455,13 @@ bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const s
                 }
                 else
                 {
-                    LogError("{}: Cannot inline from [{}], the record has incompatible type.",
+                    LogError("{}: Cannot inline from {}, the record has incompatible type.",
                              aPath, cloneAttr.Scalar());
                 }
             }
             else
             {
-                LogError("{}: Cannot clone from [{}], the record doesn't exists.",
+                LogError("{}: Cannot clone from {}, the record doesn't exists.",
                          aPath, cloneAttr.Scalar());
             }
 
@@ -486,13 +485,13 @@ bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const s
                 }
                 else
                 {
-                    LogError("{}: Cannot be inlined, provided type [{}] is incompatible with property type.",
+                    LogError("{}: Cannot be inlined, provided type {} is incompatible with property type.",
                              aPath, typeAttr.Scalar());
                 }
             }
             else
             {
-                LogError("{}: Cannot be inlined, provided type [{}] is not a known record type or abstract.",
+                LogError("{}: Cannot be inlined, provided type {} is not a known record type or abstract.",
                          aPath, typeAttr.Scalar());
 
             }
@@ -533,7 +532,7 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
         case AppendOp:
         case AppendOnceOp:
         {
-            const auto itemValue = m_converter.Convert(aElementType, itemData);
+            const auto itemValue = MakeValue(aElementType, itemData);
 
             if (!itemValue)
             {
@@ -549,7 +548,7 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
         case PrependOp:
         case PrependOnceOp:
         {
-            const auto itemValue = m_converter.Convert(aElementType, itemData);
+            const auto itemValue = MakeValue(aElementType, itemData);
 
             if (!itemValue)
             {
@@ -593,7 +592,7 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
         }
         case RemoveOp:
         {
-            const auto itemValue = m_converter.Convert(aElementType, itemData);
+            const auto itemValue = MakeValue(aElementType, itemData);
 
             if (!itemValue)
             {
@@ -608,7 +607,7 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
         }
         default:
         {
-            LogError("{}.{}: Invalid action [{}].", aPath, std::to_string(itemIndex), itemData.Tag());
+            LogError("{}.{}: Invalid action {}.", aPath, std::to_string(itemIndex), itemData.Tag());
         }
         }
     }
@@ -642,85 +641,10 @@ Red::TweakDBID App::YamlReader::ResolveTweakDBID(const YAML::Node& aNode)
     if (!aNode.IsDefined())
         return {};
 
-    const auto resolvedId = m_converter.Convert<Red::TweakDBID>(aNode);
+    const auto resolvedId = ConvertValue<Red::TweakDBID>(aNode);
 
     if (!resolvedId)
         return {};
 
     return *resolvedId;
-}
-
-void App::YamlReader::ConvertLegacyNodes()
-{
-    const auto groupsNode = m_data[LegacyGroupsNodeKey];
-
-    if (groupsNode.IsMap())
-    {
-        for (const auto& groupIt : groupsNode)
-        {
-            const auto groupKey = groupIt.first;
-            const auto groupNode = groupIt.second;
-
-            if (!groupKey.IsDefined() || !groupNode.IsMap())
-                continue;
-
-            const auto groupTypeNode = groupNode[LegacyTypeNodeKey];
-            const auto groupMembersNode = groupNode[LegacyMembersNodeKey];
-
-            if (!groupTypeNode.IsDefined() || !groupMembersNode.IsMap())
-                continue;
-
-            auto convertedNode = YAML::Node();
-            convertedNode[TypeAttrKey] = groupTypeNode;
-
-            for (const auto& memberIt : groupMembersNode)
-            {
-                const auto memberKey = memberIt.first;
-                const auto memberNode = memberIt.second;
-
-                if (!memberKey.IsDefined() || !memberNode.IsMap())
-                    continue;
-
-                const auto memberTypeNode = groupNode[LegacyTypeNodeKey];
-                const auto memberValueNode = groupNode[LegacyValueNodeKey];
-
-                if (!memberTypeNode.IsDefined() || !memberValueNode.IsDefined())
-                    continue;
-
-                convertedNode[memberKey] = memberValueNode;
-            }
-
-            m_data[groupKey] = convertedNode;
-        }
-
-        m_data.remove(LegacyGroupsNodeKey);
-    }
-
-    const auto flatsNode = m_data[LegacyFlatsNodeKey];
-
-    if (flatsNode.IsMap())
-    {
-        for (const auto& flatIt : flatsNode)
-        {
-            const auto flatKey = flatIt.first;
-            const auto flatNode = flatIt.second;
-
-            if (!flatKey.IsDefined() || !flatNode.IsMap())
-                continue;
-
-            const auto flatTypeNode = flatNode[LegacyTypeNodeKey];
-            const auto flatValueNode = flatNode[LegacyValueNodeKey];
-
-            if (!flatTypeNode.IsDefined() || !flatValueNode.IsDefined())
-                continue;
-
-            auto convertedNode = YAML::Node();
-            convertedNode[TypeAttrKey] = flatTypeNode;
-            convertedNode[ValueAttrKey] = flatValueNode;
-
-            m_data[flatKey] = convertedNode;
-        }
-
-        m_data.remove(LegacyFlatsNodeKey);
-    }
 }
