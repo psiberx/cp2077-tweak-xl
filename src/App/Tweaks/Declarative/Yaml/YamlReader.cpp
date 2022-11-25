@@ -145,7 +145,8 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 
             if (flatType)
             {
-                HandleFlatNode(aChangeset, aName, aNode, flatType);
+                const auto& valueAttr = aNode[ValueAttrKey];
+                HandleFlatNode(aChangeset, aName, valueAttr.IsDefined() ? valueAttr : aNode, flatType);
                 break;
             }
         }
