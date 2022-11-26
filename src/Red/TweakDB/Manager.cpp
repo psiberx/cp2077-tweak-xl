@@ -185,10 +185,10 @@ bool Red::TweakDBManager::UpdateRecord(Red::TweakDBID aRecordId)
     return m_tweakDb->UpdateRecord(record);
 }
 
-void Red::TweakDBManager::RegisterName(Red::TweakDBID aId, const std::string& aName)
+void Red::TweakDBManager::RegisterName(Red::TweakDBID aId, const std::string& aName, const Red::CClass* aType)
 {
     CreateBaseName(aId, aName);
-    CreateExtraNames(aId, aName);
+    CreateExtraNames(aId, aName, aType);
 }
 
 Red::TweakDBManager::BatchPtr Red::TweakDBManager::StartBatch()
@@ -498,27 +498,47 @@ void Red::TweakDBManager::InheritFlats(RED4ext::SortedUniqueArray<Red::TweakDBID
 
 void Red::TweakDBManager::CreateBaseName(Red::TweakDBID aId, const std::string& aName)
 {
-    Red::TweakDBID base;
-    Raw::CreateTweakDBID(&base, &aId, aName.c_str());
+    Red::TweakDBID empty;
+    Raw::CreateTweakDBID(&empty, &aId, aName.c_str());
+
+    m_knownNames[aId] = aName;
 }
 
-void Red::TweakDBManager::CreateExtraNames(Red::TweakDBID aId, const std::string& aName)
+void Red::TweakDBManager::CreateExtraNames(Red::TweakDBID aId, const std::string& aName, const Red::CClass* aType)
 {
-    const auto recordInfo = m_reflection->GetRecordInfo(GetRecordType(aId));
+    const auto recordInfo = m_reflection->GetRecordInfo(aType ? aType : GetRecordType(aId));
 
     if (!recordInfo)
         return;
 
-    Red::TweakDBID base;
-
     for (const auto& [_, propInfo] : recordInfo->props)
     {
-        if (!propInfo->dataOffset)
-        {
-            const auto propId = aId + propInfo->appendix;
-            const auto propName = aName + propInfo->appendix;
+        const auto propId = aId + propInfo->appendix;
+        const auto propName = aName + propInfo->appendix;
 
-            Raw::CreateTweakDBID(&base, &propId, propName.c_str());
+        if (propInfo->dataOffset)
+        {
+            Raw::CreateTweakDBID(&aId, &propId, propInfo->appendix.c_str());
         }
+        else
+        {
+            Red::TweakDBID empty;
+            Raw::CreateTweakDBID(&empty, &propId, propName.c_str());
+        }
+
+        m_knownNames[propId] = propName;
     }
+}
+
+const std::string& Red::TweakDBManager::GetName(Red::TweakDBID aId)
+{
+    auto it = m_knownNames.find(aId);
+
+    if (it == m_knownNames.end())
+    {
+        const auto name = std::format("<TDBID:{:08X}:{:02X}>", aId.name.hash, aId.name.length);
+        it = m_knownNames.emplace(aId, name).first;
+    }
+
+    return it->second;
 }

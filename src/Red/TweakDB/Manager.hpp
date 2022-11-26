@@ -35,11 +35,13 @@ public:
     bool IsRecordExists(Red::TweakDBID aRecordId);
     bool SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, Red::Instance aInstance);
     bool SetFlat(Red::TweakDBID aFlatId, const Red::Value<>& aData);
+    bool SetDefault(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType);
     bool CreateRecord(Red::TweakDBID aRecordId, const Red::CClass* aType);
     bool CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool InheritProps(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool UpdateRecord(Red::TweakDBID aRecordId);
-    void RegisterName(Red::TweakDBID aId, const std::string& aName);
+    void RegisterName(Red::TweakDBID aId, const std::string& aName, const Red::CClass* aType = nullptr);
+    const std::string& GetName(Red::TweakDBID aId);
 
     BatchPtr StartBatch();
     const Red::SortedUniqueArray<Red::TweakDBID>& GetFlats(const BatchPtr& aBatch);
@@ -72,10 +74,11 @@ private:
                              const Red::TweakDBRecordInfo* aRecordInfo, Red::TweakDBID aSourceId);
 
     void CreateBaseName(Red::TweakDBID aId, const std::string& aName);
-    void CreateExtraNames(Red::TweakDBID aId, const std::string& aName);
+    void CreateExtraNames(Red::TweakDBID aId, const std::string& aName, const Red::CClass* aType = nullptr);
 
     Red::TweakDB* m_tweakDb;
     Core::SharedPtr<Red::TweakDBBuffer> m_buffer;
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;
+    Core::Map<Red::TweakDBID, std::string> m_knownNames;
 };
 }

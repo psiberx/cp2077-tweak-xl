@@ -102,7 +102,7 @@ bool App::TweakChangeset::PrependFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSo
     return true;
 }
 
-bool App::TweakChangeset::InheritChanges(Red::TweakDBID aFlatId, Red::TweakDBID aBaseId)
+bool App::TweakChangeset::InheritMutations(Red::TweakDBID aFlatId, Red::TweakDBID aBaseId)
 {
     if (!aFlatId.IsValid() || !aBaseId.IsValid())
         return false;
@@ -146,6 +146,16 @@ const App::TweakChangeset::RecordEntry* App::TweakChangeset::GetRecord(Red::Twea
     return &it->second;
 }
 
+const Red::CClass* App::TweakChangeset::GetRecordType(Red::TweakDBID aRecordId)
+{
+    const auto it = m_pendingRecords.find(aRecordId);
+
+    if (it == m_pendingRecords.end())
+        return nullptr;
+
+    return it->second.type;
+}
+
 bool App::TweakChangeset::HasRecord(Red::TweakDBID aRecordId)
 {
     return m_pendingRecords.find(aRecordId) != m_pendingRecords.end();
@@ -168,6 +178,11 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         aChangelog->ForgetForeignKeys();
     }
 
+    for (const auto& [id, name] : m_pendingNames)
+    {
+        aManager->RegisterName(id, name, GetRecordType(id));
+    }
+
     {
         const auto batch = aManager->StartBatch();
 
@@ -180,7 +195,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
                 if (!success)
                 {
-                    LogError("Cannot create record {} of type {}.", ToName(recordId), ToName(entry.type));
+                    LogError("Cannot create record {}.", aManager->GetName(recordId));
                     continue;
                 }
             }
@@ -202,7 +217,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
             if (!success)
             {
-                LogError("Can't assign flat {}.", ToName(flatId));
+                LogError("Can't assign flat {}.", aManager->GetName(flatId));
                 continue;
             }
 
@@ -211,14 +226,14 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 if (aManager->GetReflection()->IsForeignKey(flatType))
                 {
                     const auto foreignKey = reinterpret_cast<Red::TweakDBID*>(flatValue);
-                    aChangelog->RegisterForeignKey(*foreignKey);
+                    aChangelog->RegisterForeignKey(*foreignKey, flatId);
                 }
                 else if (aManager->GetReflection()->IsForeignKeyArray(flatType))
                 {
                     const auto foreignKeyList = reinterpret_cast<Red::DynArray<Red::TweakDBID>*>(flatValue);
                     for (const auto& foreignKey : *foreignKeyList)
                     {
-                        aChangelog->RegisterForeignKey(foreignKey);
+                        aChangelog->RegisterForeignKey(foreignKey, flatId);
                     }
                 }
             }
@@ -234,15 +249,10 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
                 if (!success)
                 {
-                    LogError("Cannot clone record {} from {}.", ToName(recordId), ToName(entry.sourceId));
+                    LogError("Cannot clone record {} from {}.", aManager->GetName(recordId), aManager->GetName(entry.sourceId));
                     continue;
                 }
             }
-        }
-
-        for (const auto& item : m_pendingNames)
-        {
-            aManager->RegisterName(batch, item.first, item.second);
         }
 
         if (aChangelog)
@@ -258,7 +268,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 }
                 else if (flatOld.type != flatNew.type)
                 {
-                    LogWarning("Type mismatch for {} assignment.", ToName(flatId));
+                    LogWarning("Type mismatch for {} assignment.", aManager->GetName(flatId));
                     continue;
                 }
 
@@ -271,27 +281,39 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
     for (const auto& [flatId, mutation] : m_pendingMutations)
     {
-        const auto& flatData = aManager->GetFlat(flatId);
+        auto flatData = aManager->GetFlat(flatId);
 
         if (!flatData.instance)
         {
-            LogError("Cannot apply changes to {}, the flat doesn't exist.", ToName(flatId));
-            continue;
-        }
+            auto* elementType = !mutation.prependings.empty()
+                                    ? mutation.prependings.front().type
+                                    : (!mutation.appendings.empty()
+                                           ? mutation.appendings.front().type
+                                           : nullptr);
 
-        if (flatData.type->GetType() != Red::ERTTIType::Array)
+            if (!elementType)
+            {
+                LogError("Cannot apply changes to {}, the flat doesn't exist.", aManager->GetName(flatId));
+                continue;
+            }
+
+            flatData.type = aManager->GetReflection()->GetArrayType(elementType);
+        }
+        else if (flatData.type->GetType() != Red::ERTTIType::Array)
         {
-            LogError("Cannot apply changes to {}, it's not an array.", ToName(flatId));
+            LogError("Cannot apply changes to {}, it's not an array.", aManager->GetName(flatId));
             continue;
         }
 
-        auto* targetType = reinterpret_cast<Red::CRTTIArrayType*>(flatData.type);
+        auto* targetType = reinterpret_cast<const Red::CRTTIArrayType*>(flatData.type);
         auto* elementType = targetType->innerType;
 
         // The data returned by manager is a pointer to the TweakDB flat buffer,
         // we must make a copy of the original array for modifications.
         auto targetArray = aManager->GetReflection()->Construct(targetType);
-        targetType->Assign(targetArray.get(), flatData.instance);
+
+        if (flatData.instance)
+            targetType->Assign(targetArray.get(), flatData.instance);
 
         Core::Vector<ElementChange> skips;
         Core::Vector<ElementChange> deletions;
@@ -378,7 +400,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                     if (!sourceData.instance || sourceData.type != targetType)
                     {
                         LogError("Cannot merge {} with {} because it's not an array.",
-                                 ToName(merge.sourceId), ToName(flatId));
+                                 aManager->GetName(merge.sourceId), aManager->GetName(flatId));
                         continue;
                     }
 
@@ -430,7 +452,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
         if (!success)
         {
-            LogError("Cannot assign flat value {}.", ToName(flatId));
+            LogError("Cannot assign flat value {}.", aManager->GetName(flatId));
             continue;
         }
 
@@ -450,12 +472,9 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 if (isForeignKey)
                 {
                     const auto foreignKey = reinterpret_cast<Red::TweakDBID*>(insertionValue.get());
-                    aChangelog->RegisterForeignKey(*foreignKey);
-                    aChangelog->RegisterName(*foreignKey, ToName(*foreignKey));
+                    aChangelog->RegisterForeignKey(*foreignKey, flatId);
                 }
             }
-
-            aChangelog->RegisterName(flatId, ToName(flatId));
         }
     }
 
@@ -465,7 +484,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
         if (!success)
         {
-            LogError("Cannot update record {}.", ToName(recordId));
+            LogError("Cannot update record {}.", aManager->GetName(recordId));
         }
     }
 
@@ -476,7 +495,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
     m_pendingMutations.clear();
 }
 
-int32_t App::TweakChangeset::FindElement(Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
+int32_t App::TweakChangeset::FindElement(const Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
 {
     const auto length = aArrayType->GetLength(aArray);
 
@@ -493,12 +512,12 @@ int32_t App::TweakChangeset::FindElement(Red::CRTTIArrayType* aArrayType, void* 
     return -1;
 }
 
-bool App::TweakChangeset::InArray(Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
+bool App::TweakChangeset::InArray(const Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
 {
     return FindElement(aArrayType, aArray, aValue) > 0;
 }
 
-bool App::TweakChangeset::IsSkip(Red::CRTTIArrayType* aArrayType, void* aValue, int32_t aLevel,
+bool App::TweakChangeset::IsSkip(const Red::CRTTIArrayType* aArrayType, void* aValue, int32_t aLevel,
                                  const Core::Vector<ElementChange>& aChanges)
 {
     for (const auto& [level, value] : aChanges)
@@ -510,19 +529,4 @@ bool App::TweakChangeset::IsSkip(Red::CRTTIArrayType* aArrayType, void* aValue, 
     }
 
     return false;
-}
-
-std::string App::TweakChangeset::ToName(const Red::CBaseRTTIType* aType)
-{
-    return aType->GetName().ToString();
-}
-
-std::string App::TweakChangeset::ToName(Red::TweakDBID aId)
-{
-    const auto name = m_pendingNames.find(aId);
-
-    if (name != m_pendingNames.end())
-        return name.value();
-
-    return fmt::format("<TDBID:{:08X}:{:02X}>", aId.name.hash, aId.name.length);
 }

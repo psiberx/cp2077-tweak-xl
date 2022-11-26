@@ -348,12 +348,22 @@ const Red::CClass* Red::TweakDBReflection::GetRecordType(const char* aTypeName)
     return type;
 }
 
-const Red::CBaseRTTIType* Red::TweakDBReflection::GetElementType(Red::CName aTypeName)
+Red::CBaseRTTIType* Red::TweakDBReflection::GetArrayType(Red::CName aTypeName)
+{
+    return m_rtti->GetType(GetArrayTypeName(aTypeName));
+}
+
+Red::CBaseRTTIType* Red::TweakDBReflection::GetArrayType(const Red::CBaseRTTIType* aType)
+{
+    return m_rtti->GetType(GetArrayTypeName(aType));
+}
+
+Red::CBaseRTTIType* Red::TweakDBReflection::GetElementType(Red::CName aTypeName)
 {
     return GetElementType(m_rtti->GetType(aTypeName));
 }
 
-const Red::CBaseRTTIType* Red::TweakDBReflection::GetElementType(const Red::CBaseRTTIType* aType)
+Red::CBaseRTTIType* Red::TweakDBReflection::GetElementType(const Red::CBaseRTTIType* aType)
 {
     if (!aType || aType->GetType() != Red::ERTTIType::Array)
         return nullptr;

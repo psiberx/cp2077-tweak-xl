@@ -41,12 +41,12 @@ public:
 
     struct MutationEntry
     {
-        Red::TweakDBID baseId;
         Core::Vector<DeletionEntry> deletions;
         Core::Vector<InsertionEntry> appendings;
         Core::Vector<InsertionEntry> prependings;
         Core::Vector<MergingEntry> appendingMerges;
         Core::Vector<MergingEntry> prependingMerges;
+        Red::TweakDBID baseId;
     };
 
     bool SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
@@ -64,12 +64,13 @@ public:
                        const Red::InstancePtr<>& aValue);
     bool AppendFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId);
     bool PrependFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId);
-    bool InheritChanges(Red::TweakDBID aFlatId, Red::TweakDBID aBaseId);
+    bool InheritMutations(Red::TweakDBID aFlatId, Red::TweakDBID aBaseId);
 
     bool RegisterName(Red::TweakDBID aId, const std::string& aName);
 
     const FlatEntry* GetFlat(Red::TweakDBID aFlatId);
     const RecordEntry* GetRecord(Red::TweakDBID aRecordId);
+    const Red::CClass* GetRecordType(Red::TweakDBID aRecordId);
     bool HasRecord(Red::TweakDBID aRecordId);
 
     bool IsEmpty();
@@ -80,13 +81,10 @@ public:
 private:
     using ElementChange = std::pair<int32_t, Core::SharedPtr<void>>;
 
-    static int32_t FindElement(Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue);
-    static bool InArray(Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue);
-    static bool IsSkip(Red::CRTTIArrayType* aArrayType, void* aValue, int32_t aLevel,
+    static int32_t FindElement(const Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue);
+    static bool InArray(const Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue);
+    static bool IsSkip(const Red::CRTTIArrayType* aArrayType, void* aValue, int32_t aLevel,
                        const Core::Vector<ElementChange>& aChanges);
-
-    static std::string ToName(const Red::CBaseRTTIType* aType);
-    std::string ToName(Red::TweakDBID aId);
 
     Core::Vector<Red::TweakDBID> m_orderedRecords;
     Core::Map<Red::TweakDBID, RecordEntry> m_pendingRecords;

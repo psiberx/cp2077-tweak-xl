@@ -80,8 +80,11 @@ public:
     const Red::CClass* GetRecordType(Red::CName aTypeName);
     const Red::CClass* GetRecordType(const char* aTypeName);
 
-    const Red::CBaseRTTIType* GetElementType(Red::CName aTypeName);
-    const Red::CBaseRTTIType* GetElementType(const Red::CBaseRTTIType* aType);
+    Red::CBaseRTTIType* GetArrayType(Red::CName aTypeName);
+    Red::CBaseRTTIType* GetArrayType(const Red::CBaseRTTIType* aType);
+
+    Red::CBaseRTTIType* GetElementType(Red::CName aTypeName);
+    Red::CBaseRTTIType* GetElementType(const Red::CBaseRTTIType* aType);
 
     bool IsFlatType(Red::CName aTypeName);
     bool IsFlatType(const Red::CBaseRTTIType* aType);

@@ -15,11 +15,9 @@ public:
     bool RegisterDeletion(Red::TweakDBID aFlatId, int32_t aIndex, const Red::InstancePtr<>& aInstance);
     void ForgetChanges(Red::TweakDBID aFlatId);
 
-    void RegisterForeignKey(Red::TweakDBID aForeignKey);
+    void RegisterForeignKey(Red::TweakDBID aForeignKey, Red::TweakDBID aFlatId);
     void ForgetForeignKey(Red::TweakDBID aForeignKey);
     void ForgetForeignKeys();
-
-    void RegisterName(Red::TweakDBID aId, const std::string& aName);
 
     void CheckForIssues(const Core::SharedPtr<Red::TweakDBManager>& aManager);
     void RevertChanges(const Core::SharedPtr<Red::TweakDBManager>& aManager);
@@ -37,14 +35,10 @@ private:
         Core::SortedMap<int32_t, Red::InstancePtr<>> deletions;
     };
 
-    inline bool IsOwnKey(Red::TweakDBID aId);
-    std::string ToName(Red::TweakDBID aId);
-
     Core::Set<Red::TweakDBID> m_records;
     Core::Map<Red::TweakDBID, AssignmentEntry> m_assignments;
     Core::Map<Red::TweakDBID, MutationEntry> m_mutations;
-    Core::Map<Red::TweakDBID, std::string> m_knownNames;
-    Core::Set<Red::TweakDBID> m_foreignKeys;
+    Core::Map<Red::TweakDBID, Red::TweakDBID> m_foreignKeys;
     Core::Set<Red::TweakDBID> m_ownedKeys;
 };
 }

@@ -226,20 +226,24 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std::string& aName, const YAML::Node& aNode,
                                      const Red::CBaseRTTIType* aType)
 {
+    const auto flatId = Red::TweakDBID(aName);
     const Red::CBaseRTTIType* flatType;
     Red::InstancePtr<> flatValue;
 
+    aChangeset.RegisterName(flatId, aName);
+
     if (aType != nullptr)
     {
-        if (m_reflection->IsArrayType(aType))
+        flatType = aType;
+
+        if (m_reflection->IsArrayType(flatType))
         {
-            const auto elementType = ResolveFlatType(m_reflection->GetElementTypeName(aType));
+            const auto elementType = ResolveFlatType(m_reflection->GetElementTypeName(flatType));
 
             if (HandleMutations(aChangeset, aName, aName, aNode, elementType))
                 return;
         }
 
-        flatType = aType;
         flatValue = MakeValue(aType, aNode);
 
         if (!flatValue)
@@ -259,13 +263,19 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
         }
 
         flatType = m_reflection->GetFlatType(x.first);
+
+        if (m_reflection->IsArrayType(flatType))
+        {
+            const auto elementType = ResolveFlatType(m_reflection->GetElementTypeName(flatType));
+
+            if (HandleMutations(aChangeset, aName, aName, aNode, elementType))
+                return;
+        }
+
         flatValue = x.second;
     }
 
-    const auto flatId = Red::TweakDBID(aName);
-
     aChangeset.SetFlat(flatId, flatType, flatValue);
-    aChangeset.RegisterName(flatId, aName);
 
     {
         const auto separatorPos = aName.find_last_of(PropSeparator);
@@ -504,8 +514,8 @@ bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const s
 }
 
 bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::string& aPath,
-                                            const std::string& aName, const YAML::Node& aNode,
-                                            const Red::CBaseRTTIType* aElementType)
+                                      const std::string& aName, const YAML::Node& aNode,
+                                      const Red::CBaseRTTIType* aElementType)
 {
     if (!aNode.IsSequence())
         return false;

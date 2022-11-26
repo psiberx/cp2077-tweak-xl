@@ -249,7 +249,10 @@ App::RedReader::FlatStatePtr App::RedReader::HandleFlat(App::TweakChangeset& aCh
         return flatState;
     }
 
-    aChangeset.RegisterName(flatState->flatId, flatState->flatName);
+    if (!aRequiredType)
+    {
+        aChangeset.RegisterName(flatState->flatId, flatState->flatName);
+    }
 
     if (flatState->isForeignKey)
     {
@@ -280,12 +283,6 @@ App::RedReader::FlatStatePtr App::RedReader::HandleFlat(App::TweakChangeset& aCh
             LogError("{}: Compound operations are only supported for array types.", flatState->flatPath);
 
             return flatState;
-        }
-
-        if (!flatState->isRedefined)
-        {
-            const auto defaultValue = MakeValue(flatState);
-            aChangeset.SetFlat(flatState->flatId, flatState->resolvedType, defaultValue);
         }
 
         auto index = 0;

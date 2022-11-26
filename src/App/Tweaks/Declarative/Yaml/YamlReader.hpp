@@ -23,7 +23,7 @@ private:
     enum class PropertyMode
     {
         Strict,
-        Auto
+        Auto,
     };
 
     void HandleTopNode(TweakChangeset& aChangeset, PropertyMode aPropMode, const std::string& aName,

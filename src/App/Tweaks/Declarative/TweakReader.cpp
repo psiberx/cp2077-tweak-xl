@@ -24,7 +24,7 @@ App::BaseTweakReader::BaseTweakReader(Core::SharedPtr<Red::TweakDBManager> aMana
 }
 
 bool App::BaseTweakReader::InheritMutations(App::TweakChangeset& aChangeset, Red::TweakDBID aRecordId,
-                                          Red::TweakDBID aSourceId)
+                                            Red::TweakDBID aSourceId)
 {
     const auto source = aChangeset.GetRecord(aSourceId);
 
@@ -42,7 +42,7 @@ bool App::BaseTweakReader::InheritMutations(App::TweakChangeset& aChangeset, Red
     {
         if (propInfo->isArray)
         {
-            if (aChangeset.InheritChanges(aRecordId + propInfo->appendix, aSourceId + propInfo->appendix))
+            if (aChangeset.InheritMutations(aRecordId + propInfo->appendix, aSourceId + propInfo->appendix))
             {
                 inheritedAny = true;
             }
@@ -132,7 +132,7 @@ std::string App::BaseTweakReader::ComposePath(const std::string& aParentPath, in
 }
 
 const Red::CBaseRTTIType* App::BaseTweakReader::ResolveFlatInstanceType(App::TweakChangeset& aChangeset,
-                                                                    Red::TweakDBID aFlatId)
+                                                                        Red::TweakDBID aFlatId)
 {
     const auto existingFlat = m_manager->GetFlat(aFlatId);
     if (existingFlat.instance)
@@ -150,7 +150,7 @@ const Red::CBaseRTTIType* App::BaseTweakReader::ResolveFlatInstanceType(App::Twe
 }
 
 const Red::CClass* App::BaseTweakReader::ResolveRecordInstanceType(App::TweakChangeset& aChangeset,
-                                                               Red::TweakDBID aRecordId)
+                                                                   Red::TweakDBID aRecordId)
 {
     if (!aRecordId.IsValid())
         return nullptr;

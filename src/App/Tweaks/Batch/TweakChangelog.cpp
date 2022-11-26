@@ -63,11 +63,11 @@ void App::TweakChangelog::ForgetChanges(Red::TweakDBID aFlatId)
     m_mutations.erase(aFlatId);
 }
 
-void App::TweakChangelog::RegisterForeignKey(Red::TweakDBID aForeignKey)
+void App::TweakChangelog::RegisterForeignKey(Red::TweakDBID aForeignKey, Red::TweakDBID aFlatId)
 {
     if (aForeignKey.IsValid())
     {
-        m_foreignKeys.insert(aForeignKey);
+        m_foreignKeys[aForeignKey] = aFlatId;
     }
 }
 
@@ -84,21 +84,21 @@ void App::TweakChangelog::ForgetForeignKeys()
     m_foreignKeys.clear();
 }
 
-void App::TweakChangelog::RegisterName(Red::TweakDBID aId, const std::string& aName)
-{
-    aId.SetTDBOffset(0);
-
-    m_knownNames[aId] = aName;
-}
-
 void App::TweakChangelog::CheckForIssues(const Core::SharedPtr<Red::TweakDBManager>& aManager)
 {
-    for (const auto& foreignKey : m_foreignKeys)
+    Core::Set<Red::TweakDBID> brokenRefIds;
+
+    for (const auto& [foreignKey, flatId] : m_foreignKeys)
     {
         if (!aManager->IsRecordExists(foreignKey) && !aManager->IsFlatExists(foreignKey))
         {
-            LogWarning("Foreign key {} refers to a non-existent record or flat.", ToName(foreignKey));
+            brokenRefIds.insert(flatId);
         }
+    }
+
+    for (const auto& flatId : brokenRefIds)
+    {
+        LogWarning("{} refers to a non-existent record or flat.", aManager->GetName(flatId));
     }
 }
 
@@ -112,17 +112,17 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!flatData.instance)
         {
-            LogWarning("Cannot restore {}, the flat doesn't exist.", ToName(flatId));
+            LogWarning("Cannot restore {}, the flat doesn't exist.", aManager->GetName(flatId));
             continue;
         }
 
         if (flatData.type->GetType() != Red::ERTTIType::Array)
         {
-            LogWarning("Cannot restore {}, it's not an array.", ToName(flatId));
+            LogWarning("Cannot restore {}, it's not an array.", aManager->GetName(flatId));
             continue;
         }
 
-        auto arrayType = reinterpret_cast<Red::CRTTIArrayType*>(flatData.type);
+        auto arrayType = reinterpret_cast<const Red::CRTTIArrayType*>(flatData.type);
         auto elementType = arrayType->innerType;
         auto canRestore = true;
 
@@ -162,7 +162,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!canRestore)
         {
-            LogWarning("Cannot restore {}, third party changes detected.", ToName(flatId));
+            LogWarning("Cannot restore {}, third party changes detected.", aManager->GetName(flatId));
             continue;
         }
 
@@ -184,7 +184,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!success)
         {
-            LogError("Cannot restore {}, failed to assign the value.", ToName(flatId));
+            LogError("Cannot restore {}, failed to assign the value.", aManager->GetName(flatId));
             continue;
         }
     }
@@ -195,13 +195,13 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!flatData.instance)
         {
-            LogWarning("Cannot restore {}, the flat doesn't exist.", ToName(flatId));
+            LogWarning("Cannot restore {}, the flat doesn't exist.", aManager->GetName(flatId));
             continue;
         }
 
-        if (!IsOwnKey(flatId) && flatData.instance != assignment.current)
+        if (!m_ownedKeys.contains(flatId) && flatData.instance != assignment.current)
         {
-            LogWarning("Cannot restore {}, third party changes detected.", ToName(flatId));
+            LogWarning("Cannot restore {}, third party changes detected.", aManager->GetName(flatId));
             continue;
         }
 
@@ -209,7 +209,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!success)
         {
-            LogError("Cannot restore {}, failed to assign the value.", ToName(flatId));
+            LogError("Cannot restore {}, failed to assign the value.", aManager->GetName(flatId));
             continue;
         }
     }
@@ -220,26 +220,11 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
 
         if (!success)
         {
-            LogError("Cannot restore {}, failed to update the record.", ToName(recordId));
+            LogError("Cannot restore {}, failed to update the record.", aManager->GetName(recordId));
         }
     }
 
     m_records.clear();
     m_assignments.clear();
     m_mutations.clear();
-}
-
-bool App::TweakChangelog::IsOwnKey(Red::TweakDBID aId)
-{
-    return m_ownedKeys.contains(aId);
-}
-
-std::string App::TweakChangelog::ToName(Red::TweakDBID aId)
-{
-    const auto name = m_knownNames.find(aId);
-
-    if (name != m_knownNames.end())
-        return name.value();
-
-    return fmt::format("<TDBID:{:08X}:{:02X}>", aId.name.hash, aId.name.length);
 }

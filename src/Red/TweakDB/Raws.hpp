@@ -16,6 +16,5 @@ constexpr auto CreateRecord = Core::RawFunc<
 
 constexpr auto CreateTweakDBID = Core::RawFunc<
     /* addr = */ Red::Addresses::TweakDBID_Derive,
-    /* type = */ void (*)(Red::TweakDBID*, const Red::TweakDBID*, const char*)>();
-
+    /* type = */ void (*)(const Red::TweakDBID*, const Red::TweakDBID*, const char*)>();
 }
