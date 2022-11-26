@@ -1,6 +1,13 @@
 # TweakXL
 
-TweakXL is a modding tool that allows you to modify TweakDB.
+TweakXL is a modding tool and a framework to create mods that modify TweakDB, 
+a proprietary database of REDengine 4, 
+containing essential information about game entities and behavior.
+
+- [YAML](https://github.com/psiberx/cp2077-tweak-xl/wiki/YAML-Tweaks) and [RED](https://github.com/psiberx/cp2077-tweak-xl/wiki/RED-Tweaks) formats for manipulating data in a declarative style 
+- [Script extensions](https://github.com/psiberx/cp2077-tweak-xl/wiki/Script-Extensions) to add complex logic and dynamic changes 
+- [Hot reloading](https://github.com/psiberx/cp2077-tweak-xl/wiki/Modder-Tools) to speed up development
+- Focused on mods compatibility and maintainability  
 
 ## Getting Started
 
@@ -15,8 +22,9 @@ TweakXL is a modding tool that allows you to modify TweakDB.
 
 ## Documentation
 
-- [About TweakDB](https://github.com/psiberx/cp2077-tweak-xl/wiki/About-TweakDB)
+- [TweakDB](https://github.com/psiberx/cp2077-tweak-xl/wiki/TweakDB)
 - [YAML Tweaks](https://github.com/psiberx/cp2077-tweak-xl/wiki/YAML-Tweaks)
+- [RED Tweaks](https://github.com/psiberx/cp2077-tweak-xl/wiki/RED-Tweaks)
 - [Script Extensions](https://github.com/psiberx/cp2077-tweak-xl/wiki/Script-Extensions)
 - [Modder Tools](https://github.com/psiberx/cp2077-tweak-xl/wiki/Modder-Tools)
 - [Examples](https://github.com/psiberx/cp2077-tweak-xl/wiki/Examples)
