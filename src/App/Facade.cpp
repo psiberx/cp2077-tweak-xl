@@ -35,6 +35,12 @@ void App::Facade::ExecuteTweak(Red::CName aName)
     Core::Resolve<TweakService>()->ExecuteTweak(aName);
 }
 
+bool App::Facade::Require(Red::CString& aVersion)
+{
+    const auto requirement = semver::from_string_noexcept(aVersion.c_str());
+    return requirement.has_value() ? Project::Version >= requirement.value() : false;
+}
+
 Red::CString App::Facade::GetVersion()
 {
     return Project::Version.to_string().c_str();
@@ -48,11 +54,12 @@ void App::Facade::OnRegister(Descriptor* aType)
 
 void App::Facade::OnDescribe(Descriptor* aType)
 {
-    aType->AddFunction<&Reload>("Reload", { .isFinal = true });
-    aType->AddFunction<&ImportAll>("ImportAll", { .isFinal = true });
-    aType->AddFunction<&ImportDir>("ImportDir", { .isFinal = true });
-    aType->AddFunction<&ImportTweak>("Import", { .isFinal = true });
-    aType->AddFunction<&ExecuteAll>("ExecuteAll", { .isFinal = true });
-    aType->AddFunction<&ExecuteTweak>("Execute", { .isFinal = true });
-    aType->AddFunction<&GetVersion>("Version", { .isFinal = true });
+    aType->AddFunction<&Reload>("Reload");
+    aType->AddFunction<&ImportAll>("ImportAll");
+    aType->AddFunction<&ImportDir>("ImportDir");
+    aType->AddFunction<&ImportTweak>("Import");
+    aType->AddFunction<&ExecuteAll>("ExecuteAll");
+    aType->AddFunction<&ExecuteTweak>("Execute");
+    aType->AddFunction<&Require>("Require");
+    aType->AddFunction<&GetVersion>("Version");
 }

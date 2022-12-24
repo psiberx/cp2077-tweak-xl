@@ -16,21 +16,21 @@ public final static native func GetRecordByIndex(type: CName, index: Uint32) -> 
 
 @addMethod(TweakDBInterface)
 public final static func GetRecords(keys: array<TweakDBID>) -> array<ref<TweakDBRecord>> {
-  let records: array<ref<TweakDBRecord>>;
-  for key in keys {
-    let record = TweakDBInterface.GetRecord(key);
-    if IsDefined(record) {
-      ArrayPush(records, record);
+    let records: array<ref<TweakDBRecord>>;
+    for key in keys {
+        let record = TweakDBInterface.GetRecord(key);
+        if IsDefined(record) {
+            ArrayPush(records, record);
+        }
     }
-  }
-  return records;
+    return records;
 }
 
 @addMethod(TweakDBInterface)
 public final static func GetRecordIDs(type: CName) -> array<TweakDBID> {
-  let ids: array<TweakDBID>;
-  for record in TweakDBInterface.GetRecords(type) {
-    ArrayPush(ids, record.GetID());
-  }
-  return ids;
+    let ids: array<TweakDBID>;
+    for record in TweakDBInterface.GetRecords(type) {
+        ArrayPush(ids, record.GetID());
+    }
+    return ids;
 }

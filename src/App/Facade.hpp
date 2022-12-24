@@ -13,6 +13,7 @@ public:
     static void ImportTweak(Red::CString& aPath);
     static void ExecuteAll();
     static void ExecuteTweak(Red::CName aName);
+    static bool Require(Red::CString& aVersion);
     static Red::CString GetVersion();
 
 private:
