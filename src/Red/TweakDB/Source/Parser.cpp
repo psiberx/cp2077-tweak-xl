@@ -287,24 +287,24 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::inline_begin>
 template<>
 struct Red::TweakParser::ParseAction<Red::TweakGrammar::inline_end>
 {
-  template<typename ParseInput>
-  static void apply(const ParseInput& in, ParseState& state, TweakSource& package)
-  {
-      state.closed = state.group;
-      state.group = state.nested.back().first;
-      state.flat = state.nested.back().second;
-      state.nested.pop_back();
-  }
+    template<typename ParseInput>
+    static void apply(const ParseInput& in, ParseState& state, TweakSource& package)
+    {
+        state.closed = state.group;
+        state.group = state.nested.back().first;
+        state.flat = state.nested.back().second;
+        state.nested.pop_back();
+    }
 };
 
 template<>
 struct Red::TweakParser::ParseAction<Red::TweakGrammar::inline_base>
 {
-  template<typename ParseInput>
-  static void apply(const ParseInput& in, ParseState& state, TweakSource& package)
-  {
-      state.closed->base = in.string();
-  }
+    template<typename ParseInput>
+    static void apply(const ParseInput& in, ParseState& state, TweakSource& package)
+    {
+        state.closed->base = in.string();
+    }
 };
 
 /***/
