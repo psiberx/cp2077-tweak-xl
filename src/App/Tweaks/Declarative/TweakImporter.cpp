@@ -98,7 +98,15 @@ bool App::TweakImporter::Read(App::TweakChangeset& aChangeset, const std::filesy
 
     try
     {
-        LogInfo("Reading \"{}\"...", std::filesystem::relative(aPath, aDir).string());
+        std::error_code error;
+        auto path = std::filesystem::relative(aPath, aDir, error);
+        if (path.empty())
+        {
+            path = std::filesystem::absolute(aPath, error);
+            path = std::filesystem::relative(path, aDir, error);
+        }
+
+        LogInfo("Reading \"{}\"...", path.string());
 
         if (reader->Load(aPath))
         {
