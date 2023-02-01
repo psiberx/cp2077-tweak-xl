@@ -132,7 +132,7 @@ Red::InstancePtr<Red::CName> ConvertValue(const Red::TweakValuePtr& aValue)
             return Red::MakeInstance<Red::CName>();
         }
 
-        return Red::MakeInstance<Red::CName>(data.c_str());
+        return Red::MakeInstance<Red::CName>(Red::CNamePool::Add(data.c_str()));
     }
 
     return {};
