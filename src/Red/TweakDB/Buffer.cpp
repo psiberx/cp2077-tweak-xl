@@ -68,7 +68,9 @@ int32_t Red::TweakDBBuffer::AllocateValue(const Red::CBaseRTTIType* aType, Red::
             return offsetIt->second;
     }
 
-    const auto offset = m_tweakDb->CreateFlatValue({ const_cast<Red::CBaseRTTIType*>(aType), aInstance});
+    const auto offset = m_tweakDb->CreateFlatValue({const_cast<Red::CBaseRTTIType*>(aType), aInstance});
+    // const auto copy = Red::MakeValue(const_cast<Red::CBaseRTTIType*>(aType), aInstance);
+    // const auto offset = m_tweakDb->CreateFlatValue(*copy);
 
     if (offset > 0)
     {

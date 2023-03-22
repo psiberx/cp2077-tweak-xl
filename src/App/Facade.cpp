@@ -45,21 +45,3 @@ Red::CString App::Facade::GetVersion()
 {
     return Project::Version.to_string().c_str();
 }
-
-void App::Facade::OnRegister(Descriptor* aType)
-{
-    aType->SetName(App::Project::Name);
-    aType->SetFlags({ .isAbstract = true });
-}
-
-void App::Facade::OnDescribe(Descriptor* aType)
-{
-    aType->AddFunction<&Reload>("Reload");
-    aType->AddFunction<&ImportAll>("ImportAll");
-    aType->AddFunction<&ImportDir>("ImportDir");
-    aType->AddFunction<&ImportTweak>("Import");
-    aType->AddFunction<&ExecuteAll>("ExecuteAll");
-    aType->AddFunction<&ExecuteTweak>("Execute");
-    aType->AddFunction<&Require>("Require");
-    aType->AddFunction<&GetVersion>("Version");
-}

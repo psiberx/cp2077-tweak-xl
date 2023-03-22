@@ -6,6 +6,8 @@
 namespace
 {
 constexpr auto ApplyMethodName = "OnApply";
+
+static const Red::ClassLocator<App::ScriptableTweak> s_scriptableTweakType;
 }
 
 App::TweakExecutor::TweakExecutor(Core::SharedPtr<Red::TweakDBManager> aManager)
@@ -26,7 +28,7 @@ void App::TweakExecutor::ExecuteTweaks()
     try
     {
         Red::DynArray<Red::CClass*> tweakClasses;
-        m_rtti->GetDerivedClasses(ScriptableTweak::GetRTTIType(), tweakClasses);
+        m_rtti->GetDerivedClasses(s_scriptableTweakType, tweakClasses);
 
         if (tweakClasses.size == 0)
             return;
@@ -60,10 +62,10 @@ void App::TweakExecutor::ExecuteTweak(Red::CName aTweakName)
         return;
     }
 
-    if (!tweakClass->IsA(ScriptableTweak::GetRTTIType()))
+    if (!tweakClass->IsA(s_scriptableTweakType))
     {
         LogError(R"(Tweak class "{}" must inherit from "{}".)",
-                 aTweakName.ToString(), ScriptableTweak::GetRTTIName().ToString());
+                 aTweakName.ToString(), s_scriptableTweakType->GetName().ToString());
         return;
     }
 
@@ -85,7 +87,7 @@ bool App::TweakExecutor::Execute(Red::CClass* aTweakClass)
             return false;
         }
 
-        auto tweakHandle = ScriptableTweak::NewInstance(aTweakClass);
+        auto tweakHandle = Red::Handle(reinterpret_cast<ScriptableTweak*>(aTweakClass->CreateInstance()));
 
         if (!tweakHandle)
         {

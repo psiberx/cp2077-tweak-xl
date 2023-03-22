@@ -1,16 +1,13 @@
 #pragma once
 
-#include "Red/Rtti/Class.hpp"
-
 namespace App
 {
-class ScriptableTweak : public Red::Rtti::Class<ScriptableTweak>
+class ScriptableTweak : public Red::IScriptable
 {
-    friend Descriptor;
-
-    inline static void OnRegister(Descriptor* aType)
-    {
-        aType->SetFlags({ .isAbstract = true });
-    }
+    RTTI_IMPL_TYPEINFO(App::ScriptableTweak);
 };
 }
+
+RTTI_DEFINE_CLASS(App::ScriptableTweak, {
+    RTTI_ABSTRACT();
+})

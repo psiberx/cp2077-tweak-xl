@@ -1,7 +1,6 @@
 #include "YamlReader.hpp"
 #include "App/Utils/Str.hpp"
 #include "Red/Localization.hpp"
-#include "Red/Rtti/Utils.hpp"
 #include "Red/TweakDB/Reflection.hpp"
 
 template<typename T>
@@ -559,7 +558,9 @@ std::pair<Red::CName, Red::InstancePtr<>> App::YamlReader::TryMakeValue(const YA
 
             if (item.second)
             {
-                auto arrayTypeName = Red::ToArrayType(item.first);
+                constexpr auto ArrayPrefix = Red::GetTypePrefixStr<Red::DynArray>();
+                auto arrayTypeName = Red::CName(std::string(ArrayPrefix.data()).append(item.first.ToString()).c_str());
+
                 return { arrayTypeName, MakeValue(arrayTypeName, aNode) };
             }
         }

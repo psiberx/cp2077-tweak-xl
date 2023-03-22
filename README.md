@@ -13,7 +13,7 @@ containing essential information about game entities and behavior.
 
 ### Prerequisites
 
-- [RED4ext](https://docs.red4ext.com/getting-started/installing-red4ext) 1.9.0+
+- [RED4ext](https://docs.red4ext.com/getting-started/installing-red4ext) 1.10.0+
 
 ### Installation
 

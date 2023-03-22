@@ -10,3 +10,6 @@
 [submodule "vendor/pegtl"]
 	path = vendor/pegtl
 	url = git@github.com:psiberx/PEGTL.git
+[submodule "vendor/nameof"]
+	path = vendor/nameof
+	url = git@github.com:Neargye/nameof.git

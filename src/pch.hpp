@@ -9,6 +9,7 @@
 #include <map>
 #include <memory>
 #include <ranges>
+#include <source_location>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -31,6 +32,7 @@
 #include <RED4ext/ResourcePath.hpp>
 #include <RED4ext/ResourceReference.hpp>
 #include <RED4ext/RTTISystem.hpp>
+#include <RED4ext/RTTITypes.hpp>
 #include <RED4ext/SortedArray.hpp>
 #include <RED4ext/TweakDB.hpp>
 #include <RED4ext/Scripting/CProperty.hpp>
@@ -43,6 +45,8 @@
 #include <RED4ext/Scripting/Natives/Generated/Quaternion.hpp>
 #include <RED4ext/Scripting/Natives/Generated/game/data/TweakDBInterface.hpp>
 
+#include <nameof.hpp>
+#include <semver.hpp>
 #include <tao/pegtl.hpp>
 #include <yaml-cpp/yaml.h>
 
@@ -52,6 +56,9 @@
 #include "Red/Alias.hpp"
 #include "Red/Stl.hpp"
 #include "Red/Value.hpp"
+#include "Red/Rtti/Construction.hpp"
+#include "Red/Rtti/Definition.hpp"
+#include "Red/Rtti/Resolving.hpp"
 
 #ifdef VERBOSE
 #include "Red/Log.hpp"

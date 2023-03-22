@@ -132,33 +132,3 @@ App::ScriptedInterface::ScriptableArray* App::ScriptedInterface::FetchRecords(Re
 
     return tdb->recordsByType.Get(recordType);
 }
-
-void App::ScriptedInterface::OnExpand(Descriptor* aType)
-{
-    {
-        auto func = aType->AddFunction(&GetRecords, "GetRecords", { .isFinal = true });
-        func->AddParam("CName", "type");
-        func->SetReturnType("array:handle:gamedataTweakDBRecord");
-    }
-    {
-        auto func = aType->AddFunction(&GetRecordCount, "GetRecordCount", { .isFinal = true });
-        func->AddParam("CName", "type");
-        func->SetReturnType("Int32");
-    }
-    {
-        auto func = aType->AddFunction(&GetRecordByIndex, "GetRecordByIndex", { .isFinal = true });
-        func->AddParam("CName", "type");
-        func->AddParam("Int32", "index");
-        func->SetReturnType("handle:gamedataTweakDBRecord");
-    }
-    {
-        auto func = aType->AddFunction(&GetRecord, "GetRecord", { .isFinal = true });
-        func->AddParam("TweakDBID", "path");
-        func->SetReturnType("handle:gamedataTweakDBRecord");
-    }
-    {
-        auto func = aType->AddFunction(&GetFlat, "GetFlat", { .isFinal = true });
-        func->AddParam("TweakDBID", "path");
-        func->SetReturnType("Variant");
-    }
-}

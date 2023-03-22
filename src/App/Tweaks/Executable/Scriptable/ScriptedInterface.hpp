@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Red/Rtti/Expansion.hpp"
 #include "Red/TweakDB/Reflection.hpp"
 
 namespace App
 {
-class ScriptedInterface : public Red::Rtti::Expansion<ScriptedInterface, Red::game::data::TweakDBInterface>
+class ScriptedInterface : public Red::TweakDBInterface
 {
 public:
     static void SetReflection(Core::SharedPtr<Red::TweakDBReflection> aReflection);
@@ -28,9 +27,43 @@ private:
 
     static ScriptableArray* FetchRecords(Red::CName aTypeName);
 
-    friend Descriptor;
-    static void OnExpand(Descriptor* aType);
-
     inline static Core::SharedPtr<Red::TweakDBReflection> s_reflection;
+
+    RTTI_DECLARE_FRIENDS(App::ScriptedInterface);
 };
 }
+
+RTTI_EXPAND_CLASS(App::ScriptedInterface, Red::TweakDBInterface, {
+    // RTTI_METHOD(GetRecords, [](Red::CName type) -> App::ScriptedInterface::RecordArray {});
+    // RTTI_METHOD(GetRecordCount);
+    // RTTI_METHOD(GetRecordByIndex);
+    // RTTI_METHOD(GetRecord);
+    // RTTI_METHOD(GetFlat);
+
+    {
+        auto func = type->AddFunction(&Type::GetRecords, "GetRecords", { .isFinal = true });
+        func->AddParam("CName", "type");
+        func->SetReturnType("array:handle:gamedataTweakDBRecord");
+    }
+    {
+        auto func = type->AddFunction(&Type::GetRecordCount, "GetRecordCount", { .isFinal = true });
+        func->AddParam("CName", "type");
+        func->SetReturnType("Int32");
+    }
+    {
+        auto func = type->AddFunction(&Type::GetRecordByIndex, "GetRecordByIndex", { .isFinal = true });
+        func->AddParam("CName", "type");
+        func->AddParam("Int32", "index");
+        func->SetReturnType("handle:gamedataTweakDBRecord");
+    }
+    {
+        auto func = type->AddFunction(&Type::GetRecord, "GetRecord", { .isFinal = true });
+        func->AddParam("TweakDBID", "path");
+        func->SetReturnType("handle:gamedataTweakDBRecord");
+    }
+    {
+        auto func = type->AddFunction(&Type::GetFlat, "GetFlat", { .isFinal = true });
+        func->AddParam("TweakDBID", "path");
+        func->SetReturnType("Variant");
+    }
+});
