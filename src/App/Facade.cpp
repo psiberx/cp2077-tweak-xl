@@ -3,7 +3,7 @@
 #include "App/Project.hpp"
 #include "App/Tweaks/TweakService.hpp"
 #include "Core/Facades/Container.hpp"
-#include "Red/Log.hpp"
+#include "Red/LogChannel.hpp"
 
 void App::Facade::Reload()
 {

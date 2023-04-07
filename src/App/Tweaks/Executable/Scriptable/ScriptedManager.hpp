@@ -20,7 +20,7 @@ private:
     inline static Core::SharedPtr<Red::TweakDBReflection> s_reflection;
 
     RTTI_IMPL_TYPEINFO(App::ScriptedManager);
-    RTTI_DECLARE_FRIENDS(App::ScriptedManager);
+    RTTI_MEMBER_ACCESS(App::ScriptedManager);
 };
 }
 

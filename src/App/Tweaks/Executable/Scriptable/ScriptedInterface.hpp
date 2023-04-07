@@ -29,11 +29,11 @@ private:
 
     inline static Core::SharedPtr<Red::TweakDBReflection> s_reflection;
 
-    RTTI_DECLARE_FRIENDS(App::ScriptedInterface);
+    RTTI_MEMBER_ACCESS(App::ScriptedInterface);
 };
 }
 
-RTTI_EXPAND_CLASS(App::ScriptedInterface, Red::TweakDBInterface, {
+RTTI_EXPAND_CLASS(Red::TweakDBInterface, App::ScriptedInterface, {
     // RTTI_METHOD(GetRecords, [](Red::CName type) -> App::ScriptedInterface::RecordArray {});
     // RTTI_METHOD(GetRecordCount);
     // RTTI_METHOD(GetRecordByIndex);

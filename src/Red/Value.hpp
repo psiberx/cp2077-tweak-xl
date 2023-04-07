@@ -2,8 +2,6 @@
 
 namespace Red
 {
-// TODO: Use RED4ext::SharedPtrBase for smart pointers
-
 using Instance = void*;
 
 template<typename T = void>
