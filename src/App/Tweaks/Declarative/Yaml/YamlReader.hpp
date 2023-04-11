@@ -32,7 +32,7 @@ private:
                         const Red::CBaseRTTIType* aType = nullptr);
     void HandleRecordNode(TweakChangeset& aChangeset, PropertyMode aPropMode, const std::string& aRecordPath,
                           const std::string& aRecordName, const YAML::Node& aNode, const Red::CClass* aRecordType,
-                          Red::TweakDBID aSourceId = 0);
+                          Red::TweakDBID aSourceId = {});
     bool ResolveInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath, const YAML::Node& aNode,
                            const Red::CClass*& aForeignType, Red::TweakDBID& aSourceId);
     bool HandleMutations(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,

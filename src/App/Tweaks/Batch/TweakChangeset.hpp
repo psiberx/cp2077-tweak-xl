@@ -53,7 +53,7 @@ public:
                  const Red::InstancePtr<>& aValue);
 
     bool MakeRecord(Red::TweakDBID aRecordId, const Red::CClass* aType,
-                    Red::TweakDBID aSourceId = 0);
+                    Red::TweakDBID aSourceId = {});
     bool UpdateRecord(Red::TweakDBID aRecordId);
 
     bool AppendElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,

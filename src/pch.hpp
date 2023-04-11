@@ -47,6 +47,7 @@
 #include <RED4ext/Scripting/Natives/Generated/Vector3.hpp>
 #include <RED4ext/Scripting/Natives/Generated/game/data/TweakDBInterface.hpp>
 #include <RED4ext/Scripting/Natives/Generated/game/IGameSystem.hpp>
+#include <RED4ext/Scripting/Natives/Generated/game/ScriptableSystem.hpp>
 
 #include <nameof.hpp>
 #include <semver.hpp>
