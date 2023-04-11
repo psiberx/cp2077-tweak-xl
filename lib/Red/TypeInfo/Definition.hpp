@@ -24,6 +24,12 @@ concept HasDescribeHandler = requires(TDescriptor* d)
     { TSpec::Describe(d) };
 };
 
+template<typename T>
+concept HasSystemGetter = requires(T*)
+{
+    { T::Get() } -> std::convertible_to<Handle<T>>;
+};
+
 template<typename TSpec>
 concept HasMinValueGetter = requires
 {
@@ -34,6 +40,18 @@ template<typename TSpec>
 concept HasMaxValueGetter = requires
 {
     { TSpec::Max() };
+};
+
+template<typename T>
+concept IsAllocationForwarded = requires
+{
+    { T::ForwardAllocator };
+};
+
+template<typename T>
+concept IsConstructionForwarded = requires
+{
+    { T::ForwardInitializer };
 };
 
 template<typename TEnum>
@@ -145,6 +163,7 @@ template<typename C, typename... Args>
 inline void ExtractArgs(CStackFrame* aFrame, std::tuple<Args...>& aArgs)
 {
     ExtractArgs<C>(aFrame, aArgs, std::make_index_sequence<sizeof...(Args)>());
+    aFrame->currentParam = 0;
     ++aFrame->code;
 }
 
@@ -239,7 +258,7 @@ inline ScriptingFunction_t<void*> MakeNativeGetter()
 }
 
 template<typename T>
-void DescribeParameter(CBaseFunction* aFunc)
+inline void DescribeParameter(CBaseFunction* aFunc)
 {
     using U = std::remove_cvref_t<T>;
 
@@ -254,7 +273,7 @@ void DescribeParameter(CBaseFunction* aFunc)
 }
 
 template<typename T>
-void DescribeReturnValue(CBaseFunction* aFunc)
+inline void DescribeReturnValue(CBaseFunction* aFunc)
 {
     using U = std::remove_cvref_t<T>;
 
@@ -272,7 +291,7 @@ void DescribeReturnValue(CBaseFunction* aFunc)
 }
 
 template<typename R, typename... Args>
-void DescribeNativeFunction(CBaseFunction* aFunc, R(*)(Args...))
+inline void DescribeNativeFunction(CBaseFunction* aFunc, R(*)(Args...))
 {
     (DescribeParameter<Args>(aFunc), ...);
 
@@ -283,7 +302,7 @@ void DescribeNativeFunction(CBaseFunction* aFunc, R(*)(Args...))
 }
 
 template<typename C, typename R, typename... Args>
-void DescribeNativeFunction(CBaseFunction* aFunc, R (C::*)(Args...))
+inline void DescribeNativeFunction(CBaseFunction* aFunc, R (C::*)(Args...))
 {
     if constexpr (!IsScriptable<C>)
     {
@@ -299,7 +318,7 @@ void DescribeNativeFunction(CBaseFunction* aFunc, R (C::*)(Args...))
 }
 
 template<typename C, typename R, typename... Args>
-void DescribeNativeFunction(CBaseFunction* aFunc, R (C::*aHandler)(Args...) const)
+inline void DescribeNativeFunction(CBaseFunction* aFunc, R (C::*aHandler)(Args...) const)
 {
     DescribeNativeFunction(aFunc, reinterpret_cast<R (C::*)(Args...)>(aHandler));
 }
@@ -315,6 +334,117 @@ concept IsNativeFunctionPtr = Detail::IsFunctionPtr<F>
     && std::is_pointer_v<typename Detail::FunctionPtr<F>::template argument_type<2>>
     && std::is_pointer_v<typename Detail::FunctionPtr<F>::template argument_type<3>>
     && Detail::IsTypeOrVoid<std::remove_pointer_t<typename Detail::FunctionPtr<F>::template argument_type<3>>>;
+
+inline std::string MakeScriptTypeName(CBaseRTTIType* aType)
+{
+    switch (aType->GetType())
+    {
+    case RED4ext::ERTTIType::Class:
+    {
+        return CRTTISystem::Get()->ConvertNativeToScriptName(aType->GetName()).ToString();
+    }
+    case RED4ext::ERTTIType::Handle:
+    case RED4ext::ERTTIType::WeakHandle:
+    {
+        auto pInnerType = reinterpret_cast<RED4ext::CRTTIHandleType*>(aType)->innerType;
+        return MakeScriptTypeName(pInnerType);
+    }
+    case RED4ext::ERTTIType::Array:
+    {
+        auto pInnerType = reinterpret_cast<RED4ext::CRTTIArrayType*>(aType)->innerType;
+        return "array<" + MakeScriptTypeName(pInnerType) + ">";
+    }
+    case RED4ext::ERTTIType::ScriptReference:
+    {
+        auto pInnerType = reinterpret_cast<RED4ext::CRTTIScriptReferenceType*>(aType)->innerType;
+        return "script_ref<" + MakeScriptTypeName(pInnerType) + ">";
+    }
+    default: return aType->GetName().ToString();
+    }
+}
+
+inline std::string MakeScriptFunctionName(CBaseFunction* aFunc, const char* aName = nullptr)
+{
+    auto name = std::string(aName ? aName : aFunc->shortName.ToString()) + ';';
+
+    for (const auto& param : aFunc->params)
+    {
+        name += MakeScriptTypeName(param->type);
+    }
+
+    return name;
+}
+
+inline RawBuffer MakeScriptForwardCode(CBaseFunction* aFunc)
+{
+    constexpr uint8_t ParamOp = 25;
+    constexpr uint8_t CallStaticOp = 36;
+    constexpr uint8_t ParamEndOp = 38;
+    constexpr uint8_t ReturnOp = 39;
+    constexpr uint32_t OpSize = sizeof(char);
+    constexpr uint32_t OffsetSize = sizeof(uint16_t);
+    constexpr uint32_t FlagsSize = sizeof(uint16_t);
+    constexpr uint32_t PointerSize = sizeof(void*);
+    constexpr uint32_t BaseCodeSize = OpSize + OffsetSize * 2 + PointerSize + FlagsSize + OpSize;
+    constexpr uint16_t BaseExitOffset = BaseCodeSize - OpSize - OffsetSize;
+
+    const uint32_t extraCodeSize = aFunc->params.size * (OpSize + PointerSize) + (aFunc->returnType ? 1 : 0);
+    const uint32_t finalCodeSize = BaseCodeSize + extraCodeSize;
+    const uint16_t finalExitOffset = BaseExitOffset + extraCodeSize;
+
+    Memory::EngineAllocator allocator;
+    auto buffer = allocator.Alloc(finalCodeSize);
+    auto code = reinterpret_cast<uint8_t*>(buffer.memory);
+
+    if (aFunc->returnType)
+    {
+        *code = ReturnOp;
+        code += OpSize;
+    }
+
+    *code = CallStaticOp;
+    code += OpSize;
+
+    *reinterpret_cast<uint16_t*>(code) = finalExitOffset;
+    code += OffsetSize;
+
+    *reinterpret_cast<uint16_t*>(code) = 0;
+    code += OffsetSize;
+
+    *reinterpret_cast<void**>(code) = aFunc;
+    code += PointerSize;
+
+    *reinterpret_cast<uint16_t*>(code) = 0;
+    code += FlagsSize;
+
+    for (const auto& param : aFunc->params)
+    {
+        *code = ParamOp;
+        code += OpSize;
+
+        *reinterpret_cast<void**>(code) = param;
+        code += PointerSize;
+    }
+
+    *code = ParamEndOp;
+    code += OpSize;
+
+    return {buffer.memory, finalCodeSize};
+}
+
+using FunctionFlagsStorage = uint32_t;
+static_assert(sizeof(CBaseFunction::Flags) == sizeof(FunctionFlagsStorage));
+constexpr auto FunctionSpecialFlag = 1 << (8 * sizeof(FunctionFlagsStorage) - 1);
+}
+
+inline bool IsSpecial(CBaseFunction* aFunc)
+{
+    return *reinterpret_cast<Detail::FunctionFlagsStorage*>(&aFunc->flags) & Detail::FunctionSpecialFlag;
+}
+
+inline void MarkSpecial(CBaseFunction* aFunc)
+{
+    *reinterpret_cast<Detail::FunctionFlagsStorage*>(&aFunc->flags) |= Detail::FunctionSpecialFlag;
 }
 
 template<typename C, typename R, typename RT>
@@ -335,6 +465,18 @@ public:
     void MarkAbstract()
     {
         flags.isAbstract = true;
+    }
+
+    void MarkScripted()
+    {
+        if constexpr (Detail::IsScriptable<TClass>)
+        {
+            flags.isScriptedClass = true;
+        }
+        else
+        {
+            flags.isScriptedStruct = true;
+        }
     }
 
     template<typename TParent>
@@ -432,6 +574,33 @@ public:
         }
     }
 
+    template<auto AFunction>
+    requires Detail::IsFunctionPtr<decltype(AFunction)>
+    CClassFunction* AddScriptFunction(const char* aName, CBaseFunction::Flags aFlags = {})
+    {
+        auto nativeName = std::string("_").append(aName);
+        auto nativeFunc = AddFunction<AFunction>(nativeName.c_str(), aFlags);
+
+        Memory::RTTIFunctionAllocator allocator;
+        auto scriptFunc = allocator.Alloc<CClassFunction>();
+        std::memcpy(scriptFunc, nativeFunc, sizeof(CClassFunction)); // NOLINT(bugprone-undefined-memory-manipulation)
+
+        auto fullName = Detail::MakeScriptFunctionName(scriptFunc, aName);
+        scriptFunc->shortName = CNamePool::Add(aName);
+        scriptFunc->fullName = CNamePool::Add(fullName.c_str());
+
+        auto bytecode = Detail::MakeScriptForwardCode(nativeFunc);
+        scriptFunc->bytecode.bytecode.buffer.data = bytecode.data;
+        scriptFunc->bytecode.bytecode.buffer.size = bytecode.size;
+
+        scriptFunc->flags.isNative = false;
+
+        RegisterFunction(scriptFunc);
+        MarkSpecial(scriptFunc);
+
+        return scriptFunc;
+    }
+
     template<auto AProperty>
     requires Detail::IsPropertyPtr<decltype(AProperty)>
     CProperty* AddProperty(const char* aName, CProperty::Flags aFlags = {})
@@ -470,18 +639,36 @@ public:
 };
 
 template<typename TClass>
-class ClassDescriptorImpl : public ClassDescriptor<TClass>
+class ClassDescriptorDefaultImpl : public ClassDescriptor<TClass>
 {
     const bool IsEqual(const ScriptInstance aLhs, const ScriptInstance aRhs, uint32_t a3) final // 48
     {
-        using func_t = bool (*)(CClass*, const ScriptInstance, const ScriptInstance, uint32_t);
-        RelocFunc<func_t> func(RED4ext::Addresses::TTypedClass_IsEqual);
-        return func(this, aLhs, aRhs, a3);
+        if constexpr (Detail::IsConstructionForwarded<TClass>)
+        {
+            if (!CClass::parent->flags.isAbstract)
+            {
+                return CClass::parent->IsEqual(aLhs, aRhs);
+            }
+            return false;
+        }
+        else
+        {
+            using func_t = bool (*)(CClass*, const ScriptInstance, const ScriptInstance, uint32_t);
+            RelocFunc<func_t> func(RED4ext::Addresses::TTypedClass_IsEqual);
+            return func(this, aLhs, aRhs, a3);
+        }
     }
 
     void Assign(ScriptInstance aLhs, const ScriptInstance aRhs) const final // 50
     {
-        if constexpr (std::is_copy_constructible_v<TClass>)
+        if constexpr (Detail::IsConstructionForwarded<TClass>)
+        {
+            if (!CClass::parent->flags.isAbstract)
+            {
+                CClass::parent->Assign(aLhs, aRhs);
+            }
+        }
+        else if constexpr (std::is_copy_constructible_v<TClass>)
         {
             new (aLhs) TClass(*static_cast<TClass*>(aRhs));
         }
@@ -493,6 +680,10 @@ class ClassDescriptorImpl : public ClassDescriptor<TClass>
         {
             return Detail::ResolveAllocatorType<TClass>::Get();
         }
+        else if constexpr (Detail::IsAllocationForwarded<TClass> || Detail::IsConstructionForwarded<TClass>)
+        {
+            return CClass::parent->GetAllocator();
+        }
         else
         {
             return Memory::RTTIAllocator::Get();
@@ -501,12 +692,32 @@ class ClassDescriptorImpl : public ClassDescriptor<TClass>
 
     void ConstructCls(ScriptInstance aMemory) const final // D8
     {
-        new (aMemory) TClass();
+        if constexpr (Detail::IsConstructionForwarded<TClass>)
+        {
+            if (!CClass::parent->flags.isAbstract)
+            {
+                CClass::parent->ConstructCls(aMemory);
+            }
+        }
+        else
+        {
+            new (aMemory) TClass();
+        }
     }
 
     void DestructCls(ScriptInstance aMemory) const final // E0
     {
-        static_cast<TClass*>(aMemory)->~TClass();
+        if constexpr (Detail::IsConstructionForwarded<TClass>)
+        {
+            if (!CClass::parent->flags.isAbstract)
+            {
+                CClass::parent->DestructCls(aMemory);
+            }
+        }
+        else
+        {
+            static_cast<TClass*>(aMemory)->~TClass();
+        }
     }
 
     [[nodiscard]] void* AllocMemory() const final // E8
@@ -643,7 +854,7 @@ template<typename TClass>
 requires std::is_class_v<TClass>
 struct ClassDefinition
 {
-    using Descriptor = ClassDescriptorImpl<TClass>;
+    using Descriptor = ClassDescriptorDefaultImpl<TClass>;
     using Specialization = TypeInfoBuilder<Scope::For<TClass>()>;
 
     static inline void RegisterType()
@@ -680,6 +891,10 @@ struct ClassDefinition
                 {
                     type->parent = GetClass<IGameSystem>();
                 }
+                else if constexpr (Detail::IsScriptableSystem<TClass>)
+                {
+                    type->parent = GetClass<ScriptableSystem>();
+                }
                 else
                 {
                     type->parent = GetClass<IScriptable>();
@@ -693,6 +908,11 @@ struct ClassDefinition
         }
 
         type->flags.isNative = true;
+
+        if constexpr (Detail::IsScriptableSystem<TClass>)
+        {
+            type->flags.isScriptedClass = true;
+        }
 
         if constexpr (Detail::IsGameSystem<TClass>)
         {
@@ -719,13 +939,22 @@ struct SystemBuilder
 
         if (aRet)
         {
-            static const auto& gameInstance = CGameEngine::Get()->framework->gameInstance;
-            static const auto systemType = GetType<TSystem>();
-
-            const auto systemInstance = gameInstance->systemMap.Get(systemType);
-            if (systemInstance)
+            if constexpr (Detail::HasSystemGetter<TSystem>)
             {
-                *aRet = *systemInstance;
+                *aRet = TSystem::Get();
+            }
+            else
+            {
+                const auto framework = CGameEngine::Get()->framework;
+                if (framework && framework->gameInstance)
+                {
+                    static const auto systemType = GetType<TSystem>();
+                    const auto systemInstance = framework->gameInstance->systemMap.Get(systemType);
+                    if (systemInstance)
+                    {
+                        *aRet = *systemInstance;
+                    }
+                }
             }
         }
     }
@@ -759,7 +988,7 @@ struct SystemBuilder
         if (gameInstance->systemMap.Get(systemType))
             return;
 
-        auto systemInstance = MakeHandle<TSystem>();
+        auto systemInstance = BuildSystem();
 
         if (!systemInstance)
             return;
@@ -770,6 +999,18 @@ struct SystemBuilder
 
         gameInstance->systemInstances.PushBack(systemInstance);
         gameInstance->systemMap.Insert(systemType, systemInstance);
+    }
+
+    static inline Handle<TSystem> BuildSystem()
+    {
+        if constexpr (Detail::HasSystemGetter<TSystem>)
+        {
+            return TSystem::Get();
+        }
+        else
+        {
+            return MakeHandle<TSystem>();
+        }
     }
 };
 
