@@ -5,9 +5,14 @@
 #include "Core/Facades/Container.hpp"
 #include "Red/LogChannel.hpp"
 
-void App::Facade::Reload()
+bool App::Facade::RegisterDir(Red::CString& aPath)
 {
-    Core::Resolve<TweakService>()->LoadTweaks();
+    return Core::Resolve<TweakService>()->RegisterDirectory(aPath.c_str());
+}
+
+bool App::Facade::RegisterTweak(Red::CString& aPath)
+{
+    return Core::Resolve<TweakService>()->RegisterTweak(aPath.c_str());
 }
 
 void App::Facade::ImportAll()
@@ -35,10 +40,15 @@ void App::Facade::ExecuteTweak(Red::CName aName)
     Core::Resolve<TweakService>()->ExecuteTweak(aName);
 }
 
+void App::Facade::Reload()
+{
+    Core::Resolve<TweakService>()->LoadTweaks();
+}
+
 bool App::Facade::Require(Red::CString& aVersion)
 {
     const auto requirement = semver::from_string_noexcept(aVersion.c_str());
-    return requirement.has_value() ? Project::Version >= requirement.value() : false;
+    return requirement.has_value() && Project::Version >= requirement.value();
 }
 
 Red::CString App::Facade::GetVersion()

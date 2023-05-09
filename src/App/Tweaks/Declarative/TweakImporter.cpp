@@ -8,32 +8,42 @@ App::TweakImporter::TweakImporter(Core::SharedPtr<Red::TweakDBManager> aManager)
 {
 }
 
-void App::TweakImporter::ImportTweaks(const std::filesystem::path& aDir,
+void App::TweakImporter::ImportTweaks(const Core::Vector<std::filesystem::path>& aImportPaths,
                                       const Core::SharedPtr<App::TweakChangelog>& aChangelog,
                                       bool aDryRun)
 {
-    std::error_code error;
-    if (!std::filesystem::is_directory(aDir, error))
-    {
-        LogError(R"(Directory "{}" not found.)", aDir.string());
-        return;
-    }
-
     try
     {
         LogInfo("Scanning for tweaks...");
 
         TweakChangeset changeset;
 
-        const auto tweakDirIt = std::filesystem::recursive_directory_iterator(
-            aDir, std::filesystem::directory_options::follow_directory_symlink);
-
-        for (const auto& entry : tweakDirIt)
+        for (const auto& importPath : aImportPaths)
         {
-            if (entry.is_regular_file())
+            std::error_code error;
+
+            if (std::filesystem::is_directory(importPath, error))
             {
-                Read(changeset, entry.path(), aDir);
+                const auto dirIt = std::filesystem::recursive_directory_iterator(
+                    importPath, std::filesystem::directory_options::follow_directory_symlink);
+
+                for (const auto& entry : dirIt)
+                {
+                    if (entry.is_regular_file())
+                    {
+                        Read(changeset, entry.path(), importPath);
+                    }
+                }
+                continue;
             }
+
+            if (std::filesystem::is_regular_file(importPath, error))
+            {
+                Read(changeset, importPath, importPath.parent_path());
+                continue;
+            }
+
+            LogWarning("Can't import \"{}\".", importPath.string());
         }
 
         if (!aDryRun)
@@ -48,28 +58,6 @@ void App::TweakImporter::ImportTweaks(const std::filesystem::path& aDir,
     catch (...)
     {
         LogError("An unknown error occurred while trying to import tweaks.");
-    }
-}
-
-void App::TweakImporter::ImportTweak(const std::filesystem::path& aPath,
-                                     const Core::SharedPtr<App::TweakChangelog>& aChangelog,
-                                     bool aDryRun)
-{
-    std::error_code error;
-    if (!std::filesystem::is_regular_file(aPath, error))
-    {
-        LogError(R"(Tweak "{}" not found.)", aPath.string());
-        return;
-    }
-
-    TweakChangeset changeset;
-
-    if (Read(changeset, aPath, aPath.parent_path()))
-    {
-        if (!aDryRun)
-        {
-            Apply(changeset, aChangelog);
-        }
     }
 }
 

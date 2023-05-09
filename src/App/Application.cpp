@@ -14,5 +14,5 @@ App::Application::Application(HMODULE aHandle, const RED4ext::Sdk*)
     Register<Support::SpdlogProvider>();
     Register<Support::RedLibProvider>();
 
-    Register<App::TweakService>(Env::TweaksDir());
+    Register<App::TweakService>(Env::GameDir(), Env::TweaksDir());
 }

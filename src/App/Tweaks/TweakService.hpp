@@ -17,7 +17,10 @@ class TweakService
     , public Core::LoggingAgent
 {
 public:
-    TweakService(std::filesystem::path aTweaksDir);
+    TweakService(std::filesystem::path aGameDir, std::filesystem::path aTweaksDir);
+
+    bool RegisterTweak(std::filesystem::path aPath);
+    bool RegisterDirectory(std::filesystem::path aPath);
 
     void LoadTweaks();
     void ImportTweaks();
@@ -28,7 +31,9 @@ protected:
     void OnBootstrap() override;
     void CreateTweaksDir();
 
+    std::filesystem::path m_gameDir;
     std::filesystem::path m_tweaksDir;
+    Core::Vector<std::filesystem::path> m_importPaths;
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;
     Core::SharedPtr<Red::TweakDBManager> m_manager;
     Core::SharedPtr<App::TweakChangelog> m_changelog;

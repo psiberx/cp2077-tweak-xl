@@ -3,9 +3,11 @@
 #include "App/Tweaks/Executable/TweakExecutor.hpp"
 #include "Red/TweakDB/Raws.hpp"
 
-App::TweakService::TweakService(std::filesystem::path aTweaksDir)
-    : m_tweaksDir(std::move(aTweaksDir))
+App::TweakService::TweakService(std::filesystem::path aGameDir, std::filesystem::path aTweaksDir)
+    : m_gameDir(std::move(aGameDir))
+    , m_tweaksDir(std::move(aTweaksDir))
 {
+    m_importPaths.push_back(m_tweaksDir);
 }
 
 void App::TweakService::OnBootstrap()
@@ -28,7 +30,7 @@ void App::TweakService::LoadTweaks()
 {
     if (m_manager)
     {
-        m_importer->ImportTweaks(m_tweaksDir, m_changelog);
+        m_importer->ImportTweaks(m_importPaths, m_changelog);
         m_executor->ExecuteTweaks();
         m_changelog->CheckForIssues(m_manager);
     }
@@ -38,7 +40,7 @@ void App::TweakService::ImportTweaks()
 {
     if (m_manager)
     {
-        m_importer->ImportTweaks(m_tweaksDir, m_changelog);
+        m_importer->ImportTweaks(m_importPaths, m_changelog);
     }
 }
 
@@ -67,8 +69,48 @@ void App::TweakService::CreateTweaksDir()
         if (!std::filesystem::create_directories(m_tweaksDir, error))
         {
             LogError("Cannot create tweaks directory \"{}\": {}.",
-                     m_tweaksDir.string(), error.message());
+                     std::filesystem::relative(m_tweaksDir, m_gameDir).string(), error.message());
             return;
         }
     }
+}
+
+bool App::TweakService::RegisterTweak(std::filesystem::path aPath)
+{
+    std::error_code error;
+
+    if (aPath.is_relative())
+    {
+        aPath = m_gameDir / aPath;
+    }
+
+    if (!std::filesystem::exists(aPath, error) || !std::filesystem::is_regular_file(aPath, error))
+    {
+        LogError("Can't register non-existing tweak \"{}\".",
+                 std::filesystem::relative(aPath, m_gameDir).string());
+        return false;
+    }
+
+    m_importPaths.emplace_back(std::move(aPath));
+    return true;
+}
+
+bool App::TweakService::RegisterDirectory(std::filesystem::path aPath)
+{
+    std::error_code error;
+
+    if (aPath.is_relative())
+    {
+        aPath = m_gameDir / aPath;
+    }
+
+    if (!std::filesystem::exists(aPath, error) || !std::filesystem::is_directory(aPath, error))
+    {
+        LogError("Can't register non-existing tweak directory \"{}\".",
+                 std::filesystem::relative(aPath, m_gameDir).string());
+        return false;
+    }
+
+    m_importPaths.emplace_back(std::move(aPath));
+    return true;
 }

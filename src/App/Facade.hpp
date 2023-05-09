@@ -7,6 +7,8 @@ namespace App
 class Facade : public Red::IScriptable
 {
 public:
+    static bool RegisterDir(Red::CString& aPath);
+    static bool RegisterTweak(Red::CString& aPath);
     static void ImportAll();
     static void ImportDir(Red::CString& aPath);
     static void ImportTweak(Red::CString& aPath);
@@ -22,6 +24,8 @@ public:
 
 RTTI_DEFINE_CLASS(App::Facade, App::Project::Name, {
     RTTI_ABSTRACT();
+    RTTI_METHOD(RegisterDir);
+    RTTI_METHOD(RegisterTweak);
     RTTI_METHOD(ImportAll);
     RTTI_METHOD(ImportDir);
     RTTI_METHOD(ImportTweak, "Import");

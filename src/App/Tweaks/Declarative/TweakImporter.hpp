@@ -13,12 +13,9 @@ class TweakImporter : Core::LoggingAgent
 public:
     TweakImporter(Core::SharedPtr<Red::TweakDBManager> aManager);
 
-    void ImportTweaks(const std::filesystem::path& aPath,
+    void ImportTweaks(const Core::Vector<std::filesystem::path>& aImportPaths,
                       const Core::SharedPtr<App::TweakChangelog>& aChangelog = nullptr,
                       bool aDryRun = false);
-    void ImportTweak(const std::filesystem::path& aPath,
-                     const Core::SharedPtr<App::TweakChangelog>& aChangelog = nullptr,
-                     bool aDryRun = false);
 
 private:
     bool Read(App::TweakChangeset& aChangeset, const std::filesystem::path& aPath, const std::filesystem::path& aDir);
