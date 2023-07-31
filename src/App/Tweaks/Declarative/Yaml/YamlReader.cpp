@@ -68,6 +68,7 @@ void App::YamlReader::Read(App::TweakChangeset& aChangeset)
     }
 
     ConvertLegacyNodes();
+    ExpandTemplates(m_data);
 
     auto propMode = ResolvePropertyMode(m_data);
 

@@ -60,6 +60,7 @@ private:
     Red::InstancePtr<> MakeValue(const Red::CBaseRTTIType* aType, const YAML::Node& aNode);
     std::pair<Red::CName, Red::InstancePtr<>> TryMakeValue(const YAML::Node& aNode);
 
+    void ExpandTemplates(YAML::Node& aRootNode);
     void ConvertLegacyNodes();
 
     std::filesystem::path m_path;
