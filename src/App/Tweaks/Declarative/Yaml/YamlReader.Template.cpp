@@ -2,7 +2,7 @@
 
 namespace
 {
-constexpr auto TemplateAttrKey = "$data";
+constexpr auto InstanceAttrKey = "$instances";
 
 constexpr auto AttrMark = '$';
 constexpr auto AttrOpen = '{';
@@ -49,7 +49,10 @@ std::string FormatString(const std::string& aInput, const Core::Map<uint64_t, st
 
         if (*(attrOpen + 1) != AttrOpen)
         {
-            return aInput;
+            *out = *str;
+            ++out;
+            ++str;
+            continue;
         }
 
         auto* attrClose = strchr(str, AttrClose);
@@ -143,7 +146,7 @@ YAML::Node FormatNode(const YAML::Node& aNode, const Core::Map<uint64_t, std::st
 }
 }
 
-void App::YamlReader::ExpandTemplates(YAML::Node& aRootNode)
+void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
 {
     Core::Vector<std::pair<const std::string&, YAML::Node>> templates;
 
@@ -152,7 +155,7 @@ void App::YamlReader::ExpandTemplates(YAML::Node& aRootNode)
         const auto& subKey = nodeIt.first.Scalar();
         const auto& subNode = nodeIt.second;
 
-        if (!subNode.IsMap() || !subNode[TemplateAttrKey].IsDefined())
+        if (!subNode.IsMap() || !subNode[InstanceAttrKey].IsDefined())
             continue;
 
         templates.emplace_back(subKey, subNode);
@@ -162,15 +165,15 @@ void App::YamlReader::ExpandTemplates(YAML::Node& aRootNode)
     {
         aRootNode.remove(templateName);
 
-        const auto& dataNode = templateNode[TemplateAttrKey];
+        const auto& dataNode = templateNode[InstanceAttrKey];
 
         if (!dataNode.IsSequence())
         {
-            LogError("{}: Template data must be an array of structs.", templateName);
+            LogError("{}: Template instances must be an array of structs.", templateName);
             continue;
         }
 
-        templateNode.remove(TemplateAttrKey);
+        templateNode.remove(InstanceAttrKey);
 
         for (std::size_t i = 0; i < dataNode.size(); ++i)
         {
@@ -191,7 +194,7 @@ void App::YamlReader::ExpandTemplates(YAML::Node& aRootNode)
 
             if (aRootNode[instanceName].IsDefined())
             {
-                LogError("{}: Cannot instantiate {}, because it already exists.",
+                LogError("{}: Cannot create instance {}, because it already exists.",
                          templateName, instanceName);
                 continue;
             }
