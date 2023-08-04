@@ -114,3 +114,18 @@ bool App::TweakService::RegisterDirectory(std::filesystem::path aPath)
     m_importPaths.emplace_back(std::move(aPath));
     return true;
 }
+
+Red::TweakDBManager& App::TweakService::GetManager()
+{
+    return *m_manager;
+}
+
+Red::TweakDBReflection& App::TweakService::GetReflection()
+{
+    return *m_reflection;
+}
+
+App::TweakChangelog& App::TweakService::GetChangelog()
+{
+    return *m_changelog;
+}

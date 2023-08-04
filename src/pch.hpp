@@ -18,6 +18,7 @@
 
 #include <RED4ext/RED4ext.hpp>
 
+#include <RED4ext/ResourceDepot.hpp>
 #include <RED4ext/Scripting/Natives/ScriptGameInstance.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Color.hpp>
 #include <RED4ext/Scripting/Natives/Generated/EulerAngles.hpp>
@@ -27,6 +28,7 @@
 #include <RED4ext/Scripting/Natives/Generated/game/data/TweakDBInterface.hpp>
 #include <RED4ext/Scripting/Natives/Generated/game/IGameSystem.hpp>
 #include <RED4ext/Scripting/Natives/Generated/game/ScriptableSystem.hpp>
+#include <RED4ext/Scripting/Natives/Generated/game/data/StatType.hpp>
 
 #include <nameof.hpp>
 #include <semver.hpp>

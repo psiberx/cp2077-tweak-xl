@@ -1,5 +1,6 @@
 #include "Application.hpp"
 #include "App/Environment.hpp"
+#include "App/Stats/StatService.hpp"
 #include "App/Tweaks/TweakService.hpp"
 #include "Core/Foundation/RuntimeProvider.hpp"
 #include "Support/MinHook/MinHookProvider.hpp"
@@ -15,4 +16,5 @@ App::Application::Application(HMODULE aHandle, const RED4ext::Sdk*)
     Register<Support::RedLibProvider>();
 
     Register<App::TweakService>(Env::GameDir(), Env::TweaksDir());
+    Register<App::StatService>();
 }

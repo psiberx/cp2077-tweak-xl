@@ -27,6 +27,10 @@ public:
     void ExecuteTweaks();
     void ExecuteTweak(Red::CName aName);
 
+    Red::TweakDBManager& GetManager();
+    Red::TweakDBReflection& GetReflection();
+    App::TweakChangelog& GetChangelog();
+
 protected:
     void OnBootstrap() override;
     void CreateTweaksDir();
