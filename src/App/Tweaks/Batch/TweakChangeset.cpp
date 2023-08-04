@@ -176,6 +176,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
     {
         aChangelog->RevertChanges(aManager);
         aChangelog->ForgetForeignKeys();
+        aChangelog->ForgetResourcePaths();
     }
 
     for (const auto& [id, name] : m_pendingNames)
@@ -197,6 +198,11 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 {
                     LogError("Cannot create record {}.", aManager->GetName(recordId));
                     continue;
+                }
+
+                if (aChangelog)
+                {
+                    aChangelog->RegisterRecord(recordId);
                 }
             }
         }
@@ -234,6 +240,19 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                     for (const auto& foreignKey : *foreignKeyList)
                     {
                         aChangelog->RegisterForeignKey(foreignKey, flatId);
+                    }
+                }
+                else if (aManager->GetReflection()->IsResRefToken(flatType))
+                {
+                    const auto resRef = reinterpret_cast<Red::ResourceAsyncReference<>*>(flatValue);
+                    aChangelog->RegisterResourcePath(resRef->path, flatId);
+                }
+                else if (aManager->GetReflection()->IsResRefTokenArray(flatType))
+                {
+                    const auto resRefList = reinterpret_cast<Red::DynArray<Red::ResourceAsyncReference<>>*>(flatValue);
+                    for (const auto& resRef : *resRefList)
+                    {
+                        aChangelog->RegisterResourcePath(resRef.path, flatId);
                     }
                 }
             }

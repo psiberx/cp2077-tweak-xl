@@ -19,8 +19,14 @@ public:
     void ForgetForeignKey(Red::TweakDBID aForeignKey);
     void ForgetForeignKeys();
 
+    void RegisterResourcePath(Red::ResourcePath aPath, Red::TweakDBID aFlatId);
+    void ForgetResourcePath(Red::ResourcePath aPath);
+    void ForgetResourcePaths();
+
     void CheckForIssues(const Core::SharedPtr<Red::TweakDBManager>& aManager);
     void RevertChanges(const Core::SharedPtr<Red::TweakDBManager>& aManager);
+
+    [[nodiscard]] const Core::Set<Red::TweakDBID>& GetAffectedRecords() const;
 
 private:
     struct AssignmentEntry
@@ -39,6 +45,7 @@ private:
     Core::Map<Red::TweakDBID, AssignmentEntry> m_assignments;
     Core::Map<Red::TweakDBID, MutationEntry> m_mutations;
     Core::Map<Red::TweakDBID, Red::TweakDBID> m_foreignKeys;
+    Core::Map<Red::ResourcePath, Red::TweakDBID> m_resourcePaths;
     Core::Set<Red::TweakDBID> m_ownedKeys;
 };
 }

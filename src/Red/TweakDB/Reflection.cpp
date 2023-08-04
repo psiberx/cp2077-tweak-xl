@@ -8,6 +8,10 @@ constexpr auto RecordTypeSuffix = "_Record";
 constexpr auto RecordTypeSuffixLength = std::char_traits<char>::length(RecordTypeSuffix);
 
 constexpr auto BaseRecordTypeName = Red::CName("gamedataTweakDBRecord");
+
+constexpr auto ResRefTypeName = Red::CName("raRef:CResource");
+constexpr auto ResRefArrayTypeName = Red::CName("array:raRef:CResource");
+
 constexpr auto ResRefTokenTypeName = Red::CName("redResourceReferenceScriptToken");
 constexpr auto ResRefTokenArrayTypeName = Red::CName("array:redResourceReferenceScriptToken");
 
@@ -474,7 +478,7 @@ bool Red::TweakDBReflection::IsForeignKeyArray(const Red::CBaseRTTIType* aType)
 
 bool Red::TweakDBReflection::IsResRefToken(Red::CName aTypeName)
 {
-    return aTypeName == ResRefTokenTypeName;
+    return aTypeName == ResRefTokenTypeName || aTypeName == ResRefTypeName;
 }
 
 bool Red::TweakDBReflection::IsResRefToken(const Red::CBaseRTTIType* aType)
@@ -484,7 +488,7 @@ bool Red::TweakDBReflection::IsResRefToken(const Red::CBaseRTTIType* aType)
 
 bool Red::TweakDBReflection::IsResRefTokenArray(Red::CName aTypeName)
 {
-    return aTypeName == ResRefTokenArrayTypeName;
+    return aTypeName == ResRefTokenArrayTypeName || aTypeName == ResRefArrayTypeName;
 }
 
 bool Red::TweakDBReflection::IsResRefTokenArray(const Red::CBaseRTTIType* aType)

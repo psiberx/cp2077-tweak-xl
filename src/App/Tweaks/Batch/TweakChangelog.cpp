@@ -84,21 +84,62 @@ void App::TweakChangelog::ForgetForeignKeys()
     m_foreignKeys.clear();
 }
 
+void App::TweakChangelog::RegisterResourcePath(Red::ResourcePath aPath, Red::TweakDBID aFlatId)
+{
+    if (aPath)
+    {
+        m_resourcePaths[aPath] = aFlatId;
+    }
+}
+
+void App::TweakChangelog::ForgetResourcePath(Red::ResourcePath aPath)
+{
+    if (aPath)
+    {
+        m_resourcePaths.erase(aPath);
+    }
+}
+
+void App::TweakChangelog::ForgetResourcePaths()
+{
+    m_resourcePaths.clear();
+}
+
 void App::TweakChangelog::CheckForIssues(const Core::SharedPtr<Red::TweakDBManager>& aManager)
 {
-    Core::Set<Red::TweakDBID> brokenRefIds;
-
-    for (const auto& [foreignKey, flatId] : m_foreignKeys)
     {
-        if (!aManager->IsRecordExists(foreignKey) && !aManager->IsFlatExists(foreignKey))
+        Core::Set<Red::TweakDBID> brokenRefIds;
+
+        for (const auto& [foreignKey, flatId] : m_foreignKeys)
         {
-            brokenRefIds.insert(flatId);
+            if (!aManager->IsRecordExists(foreignKey) && !aManager->IsFlatExists(foreignKey))
+            {
+                brokenRefIds.insert(flatId);
+            }
+        }
+
+        for (const auto& flatId : brokenRefIds)
+        {
+            LogWarning("{} refers to a non-existent record or flat.", aManager->GetName(flatId));
         }
     }
 
-    for (const auto& flatId : brokenRefIds)
     {
-        LogWarning("{} refers to a non-existent record or flat.", aManager->GetName(flatId));
+        Core::Set<Red::TweakDBID> brokenRefIds;
+
+        auto depot = Red::ResourceDepot::Get();
+        for (const auto& [resourcePath, flatId] : m_resourcePaths)
+        {
+            if (!depot->ResourceExists(resourcePath))
+            {
+                brokenRefIds.insert(flatId);
+            }
+        }
+
+        for (const auto& flatId : brokenRefIds)
+        {
+            LogWarning("{} refers to a non-existent resource.", aManager->GetName(flatId));
+        }
     }
 }
 
@@ -227,4 +268,9 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
     m_records.clear();
     m_assignments.clear();
     m_mutations.clear();
+}
+
+const Core::Set<Red::TweakDBID>& App::TweakChangelog::GetAffectedRecords() const
+{
+    return m_records;
 }
