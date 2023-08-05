@@ -35,11 +35,15 @@ constexpr auto InitializeParams = Core::RawFunc<
     /* addr = */ Red::Addresses::StatsDataSystem_InitializeParams,
     /* type = */ void (*)(void* aSystem)>();
 
+constexpr auto GetStatRange = Core::RawFunc<
+    /* addr = */ Red::Addresses::StatsDataSystem_GetStatRange,
+    /* type = */ uint64_t* (*)(void* aSystem, uint64_t*, uint32_t aStat)>();
+
 constexpr auto GetStatFlags = Core::RawFunc<
     /* addr = */ Red::Addresses::StatsDataSystem_GetStatFlags,
     /* type = */ uint32_t (*)(void* aSystem, uint32_t aStat)>();
 
-constexpr auto GetStatRange = Core::RawFunc<
-    /* addr = */ Red::Addresses::StatsDataSystem_GetStatRange,
-    /* type = */ uint64_t* (*)(void* aSystem, uint64_t*, uint32_t aStat)>();
+constexpr auto CheckStatFlag = Core::RawFunc<
+    /* addr = */ Red::Addresses::StatsDataSystem_CheckStatFlag,
+    /* type = */ bool (*)(void* aSystem, uint32_t aStat, uint32_t aFlag)>();
 }

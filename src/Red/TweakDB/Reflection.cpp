@@ -98,7 +98,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
 
         auto propInfo = Red::MakeInstance<Red::TweakDBPropertyInfo>();
         propInfo->name = Red::CName(propName.c_str());
-        propInfo->dataOffset = baseOffset + DataOffsetSize * recordInfo->props.size();
+        propInfo->dataOffset = baseOffset + (recordInfo->props.size() * DataOffsetSize);
 
         // Case: Foreign Key Array => TweakDBID[]
         if (!func->returnType)

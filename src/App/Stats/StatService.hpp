@@ -16,7 +16,8 @@ protected:
     void OnBootstrap() override;
 
     static void OnInitializeStats(void* aSystem);
-    static uint32_t OnGetStatFlags(void* aSystem, uint32_t aStat);
     static uint64_t* OnGetStatRange(void* aSystem, uint64_t* aRange, uint32_t aStat);
+    static uint32_t OnGetStatFlags(void* aSystem, uint32_t aStat);
+    static bool OnCheckStatFlag(void* aSystem, uint32_t aStat, uint32_t aFlag);
 };
 }

@@ -46,35 +46,28 @@ void App::StatService::OnInitializeStats(void* aSystem)
                     statRecords->EmplaceBack();
                 }
 
-                statTypeEnum->AddOption(statRecords->size, enumName);
+                const auto enumValue = statRecords->size;
+
+                statTypeEnum->AddOption(enumValue, enumName);
                 statRecords->PushBack(recordId);
 
                 if (!s_statTypesModified)
                 {
                     s_statTypesModified = true;
-                    Hook<Raw::StatsDataSystem::GetStatFlags>(&OnGetStatFlags);
                     Hook<Raw::StatsDataSystem::GetStatRange>(&OnGetStatRange);
+                    Hook<Raw::StatsDataSystem::GetStatFlags>(&OnGetStatFlags);
+                    Hook<Raw::StatsDataSystem::CheckStatFlag>(&OnCheckStatFlag);
+                }
+
+                {
+                    const auto record = tweakManager.GetRecord(recordId);
+                    const auto recordSize = record->GetType()->GetSize();
+                    const auto enumPropAddr = reinterpret_cast<uintptr_t>(record.instance) + recordSize - 8;
+                    *reinterpret_cast<uint32_t*>(enumPropAddr) = enumValue;
                 }
             }
         }
     }
-}
-
-uint32_t App::StatService::OnGetStatFlags(void* aSystem, uint32_t aStat)
-{
-    if (aStat != InvalidStat)
-    {
-        auto& statParams = Raw::StatsDataSystem::StatParams::Ref(aSystem);
-        auto& statLock = Raw::StatsDataSystem::StatLock::Ref(aSystem);
-
-        std::shared_lock _(statLock);
-        if (aStat < statParams.size)
-        {
-            return statParams[aStat].flags;
-        }
-    }
-
-    return 0;
 }
 
 uint64_t* App::StatService::OnGetStatRange(void* aSystem, uint64_t* aRange, uint32_t aStat)
@@ -94,4 +87,38 @@ uint64_t* App::StatService::OnGetStatRange(void* aSystem, uint64_t* aRange, uint
 
     *aRange = 0;
     return aRange;
+}
+
+uint32_t App::StatService::OnGetStatFlags(void* aSystem, uint32_t aStat)
+{
+    if (aStat != InvalidStat)
+    {
+        auto& statParams = Raw::StatsDataSystem::StatParams::Ref(aSystem);
+        auto& statLock = Raw::StatsDataSystem::StatLock::Ref(aSystem);
+
+        std::shared_lock _(statLock);
+        if (aStat < statParams.size)
+        {
+            return statParams[aStat].flags;
+        }
+    }
+
+    return 0;
+}
+
+bool App::StatService::OnCheckStatFlag(void* aSystem, uint32_t aStat, uint32_t aFlag)
+{
+    if (aStat != InvalidStat)
+    {
+        auto& statParams = Raw::StatsDataSystem::StatParams::Ref(aSystem);
+        auto& statLock = Raw::StatsDataSystem::StatLock::Ref(aSystem);
+
+        std::shared_lock _(statLock);
+        if (aStat < statParams.size)
+        {
+            return statParams[aStat].flags & aFlag;
+        }
+    }
+
+    return false;
 }
