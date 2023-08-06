@@ -1,5 +1,6 @@
 #include "Application.hpp"
 #include "App/Environment.hpp"
+#include "App/Project.hpp"
 #include "App/Stats/StatService.hpp"
 #include "App/Tweaks/TweakService.hpp"
 #include "Core/Foundation/RuntimeProvider.hpp"
@@ -17,4 +18,9 @@ App::Application::Application(HMODULE aHandle, const RED4ext::Sdk*)
 
     Register<App::TweakService>(Env::GameDir(), Env::TweaksDir());
     Register<App::StatService>();
+}
+
+void App::Application::OnStarting()
+{
+    LogInfo("{} {} is starting...", Project::Name, Project::Version.to_string());
 }
