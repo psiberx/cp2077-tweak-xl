@@ -8,6 +8,14 @@ constexpr auto AttrMark = '$';
 constexpr auto AttrOpen = '{';
 constexpr auto AttrClose = '}';
 
+struct InstanceValue
+{
+    const std::string value;
+    const YAML::Node node;
+};
+
+using InstanceData = Core::Map<uint64_t, InstanceValue>;
+
 uint64_t MakeKey(const std::string& aName)
 {
     return Red::FNV1a64(aName.c_str());
@@ -18,7 +26,7 @@ uint64_t MakeKey(const char* aName, uint32_t aSize)
     return Red::FNV1a64(reinterpret_cast<const uint8_t*>(aName), aSize);
 }
 
-std::string FormatString(const std::string& aInput, const Core::Map<uint64_t, std::string>& aData)
+std::string FormatString(const std::string& aInput, const InstanceData& aData)
 {
     constexpr auto MaxLength = 512;
 
@@ -82,7 +90,7 @@ std::string FormatString(const std::string& aInput, const Core::Map<uint64_t, st
         const auto it = aData.find(attr);
         if (it != aData.end())
         {
-            value = it.value().c_str();
+            value = it.value().value.c_str();
         }
 
         if (value)
@@ -106,15 +114,26 @@ std::string FormatString(const std::string& aInput, const Core::Map<uint64_t, st
     return buffer;
 }
 
-YAML::Node FormatNode(const YAML::Node& aNode, const Core::Map<uint64_t, std::string>& aData)
+YAML::Node FormatNode(const YAML::Node& aNode, const InstanceData& aData)
 {
     switch (aNode.Type())
     {
     case YAML::NodeType::Scalar:
     {
         const auto& value = aNode.Scalar();
-        if (value.find(AttrMark) != std::string::npos)
+        const auto markPos = value.find(AttrMark);
+        if (markPos != std::string::npos)
         {
+            if (markPos == 0)
+            {
+                const auto attr = MakeKey(value.data() + 2, value.size() - 3);
+                const auto it = aData.find(attr);
+                if (it != aData.end())
+                {
+                    return it.value().node;
+                }
+            }
+
             return YAML::Node(FormatString(value, aData));
         }
         else
@@ -177,17 +196,21 @@ void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
 
         for (std::size_t i = 0; i < dataNode.size(); ++i)
         {
-            Core::Map<uint64_t, std::string> instanceData;
+            InstanceData instanceData;
 
             for (const auto& propIt : dataNode[i])
             {
                 const auto propKey = MakeKey(propIt.first.Scalar());
                 const auto& propValue = propIt.second;
 
-                if (!propValue.IsScalar())
-                    continue;
-
-                instanceData[propKey] = propValue.Scalar();
+                if (propValue.IsScalar())
+                {
+                    instanceData.insert({propKey, {propValue.Scalar(), propValue}});
+                }
+                else
+                {
+                    instanceData.insert({propKey, {"", propValue}});
+                }
             }
 
             auto instanceName = FormatString(templateName, instanceData);
