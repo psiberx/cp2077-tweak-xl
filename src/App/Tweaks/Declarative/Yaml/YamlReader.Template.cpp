@@ -5,8 +5,8 @@ namespace
 constexpr auto InstanceAttrKey = "$instances";
 
 constexpr auto AttrMark = '$';
-constexpr auto AttrOpen = '{';
-constexpr auto AttrClose = '}';
+constexpr auto AttrOpen = "({";
+constexpr auto AttrClose = ")}";
 
 struct InstanceValue
 {
@@ -55,7 +55,16 @@ std::string FormatString(const std::string& aInput, const InstanceData& aData)
             break;
         }
 
-        if (*(attrOpen + 1) != AttrOpen)
+        int attCloseChr;
+        if (*(attrOpen + 1) == AttrOpen[0])
+        {
+            attCloseChr = AttrClose[0];
+        }
+        else if (*(attrOpen + 1) == AttrOpen[1])
+        {
+            attCloseChr = AttrClose[1];
+        }
+        else
         {
             *out = *str;
             ++out;
@@ -63,7 +72,7 @@ std::string FormatString(const std::string& aInput, const InstanceData& aData)
             continue;
         }
 
-        auto* attrClose = strchr(str, AttrClose);
+        auto* attrClose = strchr(str, attCloseChr);
 
         if (!attrClose)
         {
