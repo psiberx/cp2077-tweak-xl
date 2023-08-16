@@ -19,7 +19,7 @@ void App::StatService::OnBootstrap()
 
 void App::StatService::OnInitializeStats(void* aSystem)
 {
-    auto statRecords = Raw::StatsDataSystem::StatRecords::Get(aSystem);
+    auto statRecords = Raw::StatsDataSystem::StatRecords::Ptr(aSystem);
     auto statTypeEnum = Red::GetDescriptor<Red::game::data::StatType>();
 
     auto& tweakManager = Core::Resolve<TweakService>()->GetManager();

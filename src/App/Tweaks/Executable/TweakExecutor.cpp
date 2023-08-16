@@ -83,7 +83,8 @@ bool App::TweakExecutor::Execute(Red::CClass* aTweakClass)
 
         if (!applyCallback || applyCallback->flags.hasUndefinedBody)
         {
-            LogError(R"(Tweak class "{}" doesn't have "{}" method.)", ApplyMethodName);
+            LogError(R"(Tweak class "{}" doesn't have "{}" method.)",
+                     aTweakClass->GetName().ToString(), ApplyMethodName);
             return false;
         }
 
@@ -91,7 +92,8 @@ bool App::TweakExecutor::Execute(Red::CClass* aTweakClass)
 
         if (!tweakHandle)
         {
-            LogError(R"(Tweak instance "{}" cannot be constructed.)", aTweakClass->GetName().ToString());
+            LogError(R"(Tweak instance "{}" cannot be constructed.)",
+                     aTweakClass->GetName().ToString());
             return false;
         }
 

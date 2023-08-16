@@ -221,7 +221,7 @@ template<CName AType>
 class TypeLocator
 {
 public:
-    static inline CBaseRTTIType* Get()
+    static inline CBaseRTTIType* Get() noexcept
     {
         if (!s_resolved)
         {
@@ -231,7 +231,7 @@ public:
         return s_type;
     }
 
-    static inline CClass* GetClass()
+    static inline CClass* GetClass() noexcept
     {
         if (!s_resolved)
         {
@@ -246,7 +246,7 @@ public:
         return reinterpret_cast<CClass*>(s_type);
     }
 
-    static inline CRTTIHandleType* GetHandle()
+    static inline CRTTIHandleType* GetHandle() noexcept
     {
         if (!s_resolved)
         {
@@ -261,7 +261,7 @@ public:
         return reinterpret_cast<CRTTIHandleType*>(s_type);
     }
 
-    static inline CRTTIWeakHandleType* GetWeakHandle()
+    static inline CRTTIWeakHandleType* GetWeakHandle() noexcept
     {
         if (!s_resolved)
         {
@@ -276,7 +276,7 @@ public:
         return reinterpret_cast<CRTTIWeakHandleType*>(s_type);
     }
 
-    static inline CRTTIArrayType* GetArray()
+    static inline CRTTIArrayType* GetArray() noexcept
     {
         if (!s_resolved)
         {
@@ -291,7 +291,7 @@ public:
         return reinterpret_cast<CRTTIArrayType*>(s_type);
     }
 
-    static inline CEnum* GetEnum()
+    static inline CEnum* GetEnum() noexcept
     {
         if (!s_resolved)
         {
@@ -306,7 +306,7 @@ public:
         return reinterpret_cast<CEnum*>(s_type);
     }
 
-    static inline bool IsDefined()
+    static inline bool IsDefined() noexcept
     {
         if (!s_resolved)
         {
@@ -316,46 +316,49 @@ public:
         return s_type;
     }
 
-    operator CBaseRTTIType*() const
+    operator CBaseRTTIType*() const noexcept
     {
         return Get();
     }
 
-    operator CClass*() const
+    operator CClass*() const noexcept
     {
         return GetClass();
     }
 
-    operator CRTTIHandleType*() const
+    operator CRTTIHandleType*() const noexcept
     {
         return GetHandle();
     }
 
-    operator CRTTIWeakHandleType*() const
+    operator CRTTIWeakHandleType*() const noexcept
     {
         return GetWeakHandle();
     }
 
-    operator CRTTIArrayType*() const
+    operator CRTTIArrayType*() const noexcept
     {
         return GetArray();
     }
 
-    [[nodiscard]] inline CBaseRTTIType* operator->() const
+    [[nodiscard]] inline CBaseRTTIType* operator->() const noexcept
     {
         return Get();
     }
 
-    operator bool()
+    operator bool() noexcept
     {
         return IsDefined();
     }
 
 private:
-    static inline void Resolve()
+    static inline void Resolve() noexcept
     {
-        s_type = CRTTISystem::Get()->GetType(AType);
-        s_resolved = true;
+        if (auto rtti = CRTTISystem::Get())
+        {
+            s_type = rtti->GetType(AType);
+            s_resolved = true;
+        }
     }
 
     static inline CBaseRTTIType* s_type;
@@ -368,13 +371,13 @@ class ClassLocator : public TypeLocator<GetTypeName<T>()>
 };
 
 template<CName AType>
-inline CBaseRTTIType* GetType()
+inline CBaseRTTIType* GetType() noexcept
 {
     return TypeLocator<AType>::Get();
 }
 
 template<typename TType>
-inline CBaseRTTIType* GetType()
+inline CBaseRTTIType* GetType() noexcept
 {
     constexpr auto name = GetTypeName<TType>();
 
@@ -387,13 +390,13 @@ inline CBaseRTTIType* GetType(CName aTypeName)
 }
 
 template<CName AType>
-inline CClass* GetClass()
+inline CClass* GetClass() noexcept
 {
     return TypeLocator<AType>::GetClass();
 }
 
 template<typename TType>
-inline CClass* GetClass()
+inline CClass* GetClass() noexcept
 {
     constexpr auto name = GetTypeName<TType>();
 
@@ -413,13 +416,13 @@ inline CClass* GetClass(CName aTypeName)
 }
 
 template<CName AType>
-inline CEnum* GetEnum()
+inline CEnum* GetEnum() noexcept
 {
     return TypeLocator<AType>::GetEnum();
 }
 
 template<typename TType>
-inline CEnum* GetEnum()
+inline CEnum* GetEnum() noexcept
 {
     constexpr auto name = GetTypeName<TType>();
 
@@ -504,29 +507,29 @@ inline bool IsCompatible(CBaseRTTIType* aLhsType, CBaseRTTIType* aRhsType, void*
     return true;
 }
 
-RTTI_TYPE_NAME(int8_t, "Int8");
-RTTI_TYPE_NAME(uint8_t, "Uint8");
-RTTI_TYPE_NAME(int16_t, "Int16");
-RTTI_TYPE_NAME(uint16_t, "Uint16");
-RTTI_TYPE_NAME(int32_t, "Int32");
-RTTI_TYPE_NAME(uint32_t, "Uint32");
-RTTI_TYPE_NAME(int64_t, "Int64");
-RTTI_TYPE_NAME(uint64_t, "Uint64");
-RTTI_TYPE_NAME(float, "Float");
-RTTI_TYPE_NAME(double, "Double");
-RTTI_TYPE_NAME(bool, "Bool");
-RTTI_TYPE_NAME(CString, "String");
-RTTI_TYPE_NAME(CName, "CName");
-RTTI_TYPE_NAME(TweakDBID, "TweakDBID");
-RTTI_TYPE_NAME(ItemID, "gameItemID");
-RTTI_TYPE_NAME(NodeRef, "NodeRef");
-RTTI_TYPE_NAME(Variant, "Variant");
+RTTI_MAP_TYPE_NAME(int8_t, "Int8");
+RTTI_MAP_TYPE_NAME(uint8_t, "Uint8");
+RTTI_MAP_TYPE_NAME(int16_t, "Int16");
+RTTI_MAP_TYPE_NAME(uint16_t, "Uint16");
+RTTI_MAP_TYPE_NAME(int32_t, "Int32");
+RTTI_MAP_TYPE_NAME(uint32_t, "Uint32");
+RTTI_MAP_TYPE_NAME(int64_t, "Int64");
+RTTI_MAP_TYPE_NAME(uint64_t, "Uint64");
+RTTI_MAP_TYPE_NAME(float, "Float");
+RTTI_MAP_TYPE_NAME(double, "Double");
+RTTI_MAP_TYPE_NAME(bool, "Bool");
+RTTI_MAP_TYPE_NAME(CString, "String");
+RTTI_MAP_TYPE_NAME(CName, "CName");
+RTTI_MAP_TYPE_NAME(TweakDBID, "TweakDBID");
+RTTI_MAP_TYPE_NAME(ItemID, "gameItemID");
+RTTI_MAP_TYPE_NAME(NodeRef, "NodeRef");
+RTTI_MAP_TYPE_NAME(Variant, "Variant");
 
-RTTI_TYPE_PREFIX(DynArray, "array:");
-RTTI_TYPE_PREFIX(Handle, "handle:");
-RTTI_TYPE_PREFIX(WeakHandle, "whandle:");
-RTTI_TYPE_PREFIX(ResourceReference, "rRef:");
-RTTI_TYPE_PREFIX(ResourceAsyncReference, "raRef:");
+RTTI_MAP_TYPE_PREFIX(DynArray, "array:");
+RTTI_MAP_TYPE_PREFIX(Handle, "handle:");
+RTTI_MAP_TYPE_PREFIX(WeakHandle, "whandle:");
+RTTI_MAP_TYPE_PREFIX(ResourceReference, "rRef:");
+RTTI_MAP_TYPE_PREFIX(ResourceAsyncReference, "raRef:");
 
-RTTI_TYPE_NAME(char, "Uint8");
+RTTI_MAP_TYPE_NAME(char, "Uint8");
 }
