@@ -102,7 +102,7 @@ Red::TweakDBReflection::ExtraFlatMap Red::TweakDBReflection::s_extraFlats = {
         {"Float", "None", ".rampDownDistanceEnd"},
         {"Bool", "None", ".randomizePhase"},
         {"Vector3", "None", ".gravitySimulation"},
-        {"Int32", "None", ".interpolationTimeRatio"},
+        {"Float", "None", ".interpolationTimeRatio"},
         {"Float", "None", ".angle"},
         {"Float", "None", ".returnTimeMargin"},
         {"Float", "None", ".rampDownDistanceStart"},
