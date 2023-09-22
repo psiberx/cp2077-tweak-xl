@@ -8,29 +8,29 @@ def patterns():
         Output(filename="src/Red/Addresses.hpp", namespace="Red::Addresses", groups=[
             Group(functions=[
                 Item(name="Main",
-                     pattern="40 53 48 81 EC ? ? ? ? FF 15 ? ? ? ? E8 ? ? ? ? E8 ? ? ? ?"),
+                     pattern="40 55 53 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? FF 15 ? ? ? ? E8"),
             ]),
             Group(name="TweakDB", functions=[
                 Item(name="Load",
-                     pattern="48 89 5C 24 18 55 57 41 56 48 8B EC 48 83 EC 70 48 8B D9 45 33 F6 48 8D"),
+                     pattern="48 89 5C 24 10 48 89 7C 24 18 55 48 8B EC 48 83 EC ? 48 8B F9 48 8B DA 48 8B 0D ? ? ? ? 48 8B 01 FF 90"),
                 Item(name="CreateRecord",
-                     pattern="48 89 5C 24 08 ? 89 ? 24 18 57 48 83 EC 30 8B C2"),
+                     pattern="48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 30 8B C2 49 8B D8 83 E0 1F"),
             ]),
             Group(name="TweakDBID", functions=[
                 Item(name="Derive",
-                     pattern="40 53 48 83 EC 30 33 C0 4C 89 44 24 20 48 8B DA"),
+                     pattern="48 89 5C 24 10 48 89 6C 24 18 48 89 74 24 20 57 45 33 C9 48 8B FA"),
             ]),
             Group(name="StatsDataSystem", functions=[
                 Item(name="InitializeRecords",
-                     pattern="48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 83 EC ? 48 8B F9 E8 ? ? ? ? 48 BA"),
+                     pattern="48 89 5C 24 ? 55 56 57 41 56 41 57 48 8B EC 48 83 EC ? 48 8B F9 E8 ? ? ? ? 48 8B C8 48 8B 10 4C 8B 42 ? 48 BA 8D 46 27 9F 31 66 30 74"),
                 Item(name="InitializeParams",
-                     pattern="48 8B C4 41 54 41 56 48 81 EC ? ? ? ? 8B 91 ? ? ? ? 4C 8D B1 ? ? ? ? 45 33 E4 48 89 58 ? 48 89 78"),
+                     pattern="40 55 53 56 57 41 56 48 8B EC 48 83 EC ? 8B 91 ? ? ? ? 48 8D B1 ? ? ? ? 48 8B F9 39 56 ? 73 ? 48 83 64 24"),
                 Item(name="GetStatRange",
                      pattern="48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC ? 41 8B F0 48 8B FA 48 8B E9 41 81 F8 ? ? ? ? 73"),
                 Item(name="GetStatFlags",
-                     pattern="48 89 74 24 ? 57 48 83 EC ? 8B FA 48 8B F1 81 FA ? ? ? ? 73 ? 48 81 C1 ? ? ? ? 48 89 5C 24"),
+                     pattern="48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 8B FA 48 8B F1 81 FA ? ? ? ? 73"),
                 Item(name="CheckStatFlag",
-                     pattern="48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC ? 8B FA 41 8B F0 48 8B E9 81 FA ? ? ? ? 73 ? 48 81 C1"),
+                     pattern="40 53 48 83 EC 20 41 8B D8 E8 ? ? ? ? 85 C3 0F 95 C0 48 83 C4 20 5B C3"),
             ]),
         ]),
     ]
