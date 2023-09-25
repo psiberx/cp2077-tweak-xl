@@ -273,7 +273,7 @@ inline ScriptingFunction_t<void*> MakeNativeGetter()
 template<typename T>
 inline void DescribeParameter(CBaseFunction* aFunc)
 {
-    using U = std::remove_cvref_t<T>;
+    using U = std::remove_cvref_t<std::remove_pointer_t<T>>;
 
     if constexpr (!std::is_same_v<U, CStackFrame*>)
     {
@@ -284,7 +284,7 @@ inline void DescribeParameter(CBaseFunction* aFunc)
 template<typename T>
 inline void DescribeReturnValue(CBaseFunction* aFunc)
 {
-    using U = std::remove_cvref_t<T>;
+    using U = std::remove_cvref_t<std::remove_pointer_t<T>>;
 
     if constexpr (!std::is_void_v<U>)
     {
@@ -971,8 +971,9 @@ struct SystemBuilder
         systemInstance->gameInstance = gameInstance;
         systemInstance->OnInitialize(job);
 
-        gameInstance->systemInstances.PushBack(systemInstance);
         gameInstance->systemMap.Insert(systemType, systemInstance);
+        gameInstance->systemImplementations.Insert(systemType, systemType);
+        gameInstance->systemInstances.EmplaceBack(systemInstance);
     }
 
     static inline Handle<TSystem> BuildSystem()
