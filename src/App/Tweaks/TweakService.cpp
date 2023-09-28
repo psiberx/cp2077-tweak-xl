@@ -15,6 +15,8 @@ void App::TweakService::OnBootstrap()
     CreateTweaksDir();
 
     HookAfter<Raw::LoadTweakDB>([&]() {
+        Red::TweakDB::Get()->unk160 = 0;
+
         m_reflection = Core::MakeShared<Red::TweakDBReflection>();
         m_manager = Core::MakeShared<Red::TweakDBManager>(m_reflection);
 

@@ -18,7 +18,7 @@ constexpr auto ResRefTokenArrayTypeName = Red::CName("array:redResourceReference
 constexpr auto SchemaPackage = "RTDB.";
 constexpr auto PropSeparator = ".";
 
-constexpr auto DataOffsetSize = 3;
+constexpr auto DataOffsetSize = 12;
 }
 
 Red::TweakDBReflection::TweakDBReflection()
