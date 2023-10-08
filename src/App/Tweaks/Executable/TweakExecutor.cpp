@@ -1,7 +1,7 @@
 #include "TweakExecutor.hpp"
+#include "App/Tweaks/Executable/Scriptable/ScriptInterface.hpp"
+#include "App/Tweaks/Executable/Scriptable/ScriptManager.hpp"
 #include "App/Tweaks/Executable/Scriptable/ScriptableTweak.hpp"
-#include "App/Tweaks/Executable/Scriptable/ScriptedInterface.hpp"
-#include "App/Tweaks/Executable/Scriptable/ScriptedManager.hpp"
 
 namespace
 {
@@ -19,8 +19,8 @@ App::TweakExecutor::TweakExecutor(Core::SharedPtr<Red::TweakDBManager> aManager)
 
 void App::TweakExecutor::InitializeRuntime()
 {
-    ScriptedManager::SetManager(m_manager);
-    ScriptedInterface::SetReflection(m_manager->GetReflection());
+    ScriptManager::SetManager(m_manager);
+    ScriptInterface::SetReflection(m_manager->GetReflection());
 }
 
 void App::TweakExecutor::ExecuteTweaks()

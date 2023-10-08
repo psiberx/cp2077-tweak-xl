@@ -14,6 +14,7 @@ public:
         Core::Map<Red::TweakDBID, Red::Value<>> flats;
         Core::Map<Red::TweakDBID, const Red::TweakDBRecordInfo*> records;
         Core::Map<Red::TweakDBID, const std::string> names;
+        Core::Vector<Red::ValuePtr<>> values;
         std::shared_mutex mutex;
         friend TweakDBManager;
     };
@@ -35,7 +36,6 @@ public:
     bool IsRecordExists(Red::TweakDBID aRecordId);
     bool SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, Red::Instance aInstance);
     bool SetFlat(Red::TweakDBID aFlatId, const Red::Value<>& aData);
-    bool SetDefault(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType);
     bool CreateRecord(Red::TweakDBID aRecordId, const Red::CClass* aType);
     bool CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool InheritProps(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
@@ -57,6 +57,7 @@ public:
     bool InheritProps(const BatchPtr& aBatch, Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool UpdateRecord(const BatchPtr& aBatch, Red::TweakDBID aRecordId);
     void RegisterName(const BatchPtr& aBatch, Red::TweakDBID aId, const std::string& aName);
+    const Red::ValuePtr<>& AllocateValue(const BatchPtr& aBatch, const Red::CBaseRTTIType* aType, Red::Instance aValue);
     void CommitBatch(const BatchPtr& aBatch);
 
     void Invalidate();

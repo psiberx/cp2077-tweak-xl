@@ -1,4 +1,3 @@
-
 @addMethod(TweakDBInterface)
 public final static native func GetFlat(path: TweakDBID) -> Variant
 

@@ -4,7 +4,7 @@
 
 namespace App
 {
-class ScriptedInterface : public Red::TweakDBInterface
+class ScriptInterface : public Red::TweakDBInterface
 {
 public:
     static void SetReflection(Core::SharedPtr<Red::TweakDBReflection> aReflection);
@@ -29,17 +29,11 @@ private:
 
     inline static Core::SharedPtr<Red::TweakDBReflection> s_reflection;
 
-    RTTI_MEMBER_ACCESS(App::ScriptedInterface);
+    RTTI_MEMBER_ACCESS(App::ScriptInterface);
 };
 }
 
-RTTI_EXPAND_CLASS(Red::TweakDBInterface, App::ScriptedInterface, {
-    // RTTI_METHOD(GetRecords, [](Red::CName type) -> App::ScriptedInterface::RecordArray {});
-    // RTTI_METHOD(GetRecordCount);
-    // RTTI_METHOD(GetRecordByIndex);
-    // RTTI_METHOD(GetRecord);
-    // RTTI_METHOD(GetFlat);
-
+RTTI_EXPAND_CLASS(Red::TweakDBInterface, App::ScriptInterface, {
     {
         auto func = type->AddFunction(&Type::GetRecords, "GetRecords", { .isFinal = true });
         func->AddParam("CName", "type");

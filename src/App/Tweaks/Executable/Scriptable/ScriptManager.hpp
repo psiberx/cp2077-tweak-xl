@@ -1,13 +1,16 @@
 #pragma once
 
+#include "App/Tweaks/Executable/Scriptable/ScriptBatch.hpp"
 #include "Red/TweakDB/Manager.hpp"
 
 namespace App
 {
-class ScriptedManager : public Red::IScriptable
+class ScriptManager : public Red::IScriptable
 {
 public:
     static void SetManager(Core::SharedPtr<Red::TweakDBManager> aManager);
+
+    static Red::Handle<ScriptBatch> StartBatch();
 
 private:
     static void SetFlat(Red::IScriptable* aContext, Red::CStackFrame* aFrame, bool* aRet, void*);
@@ -19,13 +22,14 @@ private:
     inline static Core::SharedPtr<Red::TweakDBManager> s_manager;
     inline static Core::SharedPtr<Red::TweakDBReflection> s_reflection;
 
-    RTTI_IMPL_TYPEINFO(App::ScriptedManager);
-    RTTI_MEMBER_ACCESS(App::ScriptedManager);
+    RTTI_IMPL_TYPEINFO(App::ScriptManager);
+    RTTI_MEMBER_ACCESS(App::ScriptManager);
 };
 }
 
-RTTI_DEFINE_CLASS(App::ScriptedManager, "TweakDBManager", {
-    type->MarkAbstract();
+RTTI_DEFINE_CLASS(App::ScriptManager, "TweakDBManager", {
+    RTTI_ABSTRACT();
+    RTTI_METHOD(StartBatch);
     {
         auto func = type->AddFunction(&Type::SetFlat, "SetFlat", { .isFinal = true });
         func->AddParam("TweakDBID", "path");
@@ -54,4 +58,4 @@ RTTI_DEFINE_CLASS(App::ScriptedManager, "TweakDBManager", {
         func->AddParam("TweakDBID", "path");
         func->SetReturnType("Bool");
     }
-})
+});

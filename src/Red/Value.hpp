@@ -22,7 +22,7 @@ struct Value
     {
     }
 
-    Value(const CBaseRTTIType* aType, T* aInstance)
+    Value(const CBaseRTTIType* aType, T* aInstance = nullptr)
         : type(const_cast<CBaseRTTIType*>(aType))
         , instance(aInstance)
     {
@@ -82,7 +82,12 @@ struct ManagedValue : Value<T>
 {
     using Data = Value<T>;
 
-    ManagedValue(CBaseRTTIType* aType, void* aInstance = nullptr)
+    ManagedValue()
+        : Data(nullptr, nullptr)
+    {
+    }
+
+    ManagedValue(const CBaseRTTIType* aType, void* aInstance = nullptr)
         : Data(aType)
     {
         Data::instance = Data::type->GetAllocator()->AllocAligned(Data::type->GetSize(), Data::type->GetAlignment()).memory;
@@ -125,13 +130,13 @@ using ValuePtr = Core::SharedPtr<const ManagedValue<T>>;
 
 template<typename T, typename... Args>
 requires (!std::is_void_v<T>)
-ValuePtr<T> MakeValue(CBaseRTTIType* aType, Args&&... aArgs)
+ValuePtr<T> MakeValue(const CBaseRTTIType* aType, Args&&... aArgs)
 {
     return Core::MakeShared<ManagedValue<T>>(aType, std::forward<Args>(aArgs)...);
 }
 
 template<typename T = void>
-ValuePtr<T> MakeValue(CBaseRTTIType* aType, void* aInstance = nullptr)
+ValuePtr<T> MakeValue(const CBaseRTTIType* aType, void* aInstance = nullptr)
 {
     return Core::MakeShared<ManagedValue<T>>(aType, aInstance);
 }

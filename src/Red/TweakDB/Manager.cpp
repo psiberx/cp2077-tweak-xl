@@ -280,7 +280,7 @@ bool Red::TweakDBManager::SetFlat(const Red::TweakDBManager::BatchPtr& aBatch, R
 bool Red::TweakDBManager::CreateRecord(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId,
                                        const Red::CClass* aType)
 {
-    if (!aRecordId.IsValid() || IsRecordExists(aBatch, aRecordId))
+    if (!aRecordId.IsValid() || !aType || IsRecordExists(aBatch, aRecordId))
         return false;
 
     const auto recordInfo = m_reflection->GetRecordInfo(aType);
@@ -365,6 +365,13 @@ void Red::TweakDBManager::RegisterName(const Red::TweakDBManager::BatchPtr& aBat
     aBatch->names.emplace(aId, aName);
 }
 
+const Red::ValuePtr<>& Red::TweakDBManager::AllocateValue(const Red::TweakDBManager::BatchPtr& aBatch,
+                                                         const Red::CBaseRTTIType* aType, Red::Instance aValue)
+{
+    std::unique_lock batchLockRW(aBatch->mutex);
+    return aBatch->values.emplace_back(Red::MakeValue(aType, aValue));
+}
+
 void Red::TweakDBManager::CommitBatch(const BatchPtr& aBatch)
 {
     std::unique_lock batchLockRW(aBatch->mutex);
@@ -429,6 +436,7 @@ void Red::TweakDBManager::CommitBatch(const BatchPtr& aBatch)
     aBatch->flats.clear();
     aBatch->records.clear();
     aBatch->names.clear();
+    aBatch->values.clear();
 }
 
 void Red::TweakDBManager::Invalidate()
