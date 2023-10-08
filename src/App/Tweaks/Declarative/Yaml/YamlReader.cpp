@@ -242,7 +242,10 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
             const auto elementType = ResolveFlatType(m_reflection->GetElementTypeName(flatType));
 
             if (HandleMutations(aChangeset, aName, aName, aNode, elementType))
+            {
+                UpdateFlatOwner(aChangeset, aName);
                 return;
+            }
         }
 
         flatValue = MakeValue(aType, aNode);
@@ -270,7 +273,10 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
             const auto elementType = ResolveFlatType(m_reflection->GetElementTypeName(flatType));
 
             if (HandleMutations(aChangeset, aName, aName, aNode, elementType))
+            {
+                UpdateFlatOwner(aChangeset, aName);
                 return;
+            }
         }
 
         flatValue = x.second;
@@ -278,18 +284,21 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
 
     aChangeset.SetFlat(flatId, flatType, flatValue);
 
+    UpdateFlatOwner(aChangeset, aName);
+}
+
+void App::YamlReader::UpdateFlatOwner(App::TweakChangeset& aChangeset, const std::string& aName)
+{
+    const auto separatorPos = aName.find_last_of(PropSeparator);
+
+    if (separatorPos != std::string::npos)
     {
-        const auto separatorPos = aName.find_last_of(PropSeparator);
+        const auto recordName = aName.substr(0, separatorPos);
+        const auto recordId = Red::TweakDBID(recordName);
 
-        if (separatorPos != std::string::npos)
+        if (ResolveRecordInstanceType(aChangeset, recordId))
         {
-            const auto recordName = aName.substr(0, separatorPos);
-            const auto recordId = Red::TweakDBID(recordName);
-
-            if (ResolveRecordInstanceType(aChangeset, recordId))
-            {
-                aChangeset.UpdateRecord(recordId);
-            }
+            aChangeset.UpdateRecord(recordId);
         }
     }
 }

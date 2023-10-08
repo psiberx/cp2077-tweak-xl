@@ -37,6 +37,7 @@ private:
                            const Red::CClass*& aForeignType, Red::TweakDBID& aSourceId);
     bool HandleMutations(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
                          const YAML::Node& aNode, const Red::CBaseRTTIType* aElementType);
+    void UpdateFlatOwner(TweakChangeset& aChangeset, const std::string& aName);
 
     static PropertyMode ResolvePropertyMode(const YAML::Node& aNode, PropertyMode aDefault = PropertyMode::Strict);
     const Red::CBaseRTTIType* ResolveFlatType(const YAML::Node& aNode);
