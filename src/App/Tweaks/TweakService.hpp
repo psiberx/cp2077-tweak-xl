@@ -22,10 +22,11 @@ public:
     bool RegisterTweak(std::filesystem::path aPath);
     bool RegisterDirectory(std::filesystem::path aPath);
 
-    void LoadTweaks();
+    void LoadTweaks(bool aCheckForIssues);
     void ImportTweaks();
     void ExecuteTweaks();
     void ExecuteTweak(Red::CName aName);
+    void CheckForIssues();
 
     Red::TweakDBManager& GetManager();
     Red::TweakDBReflection& GetReflection();
@@ -34,6 +35,7 @@ public:
 protected:
     void OnBootstrap() override;
     void CreateTweaksDir();
+    void ApplyPatches();
 
     std::filesystem::path m_gameDir;
     std::filesystem::path m_tweaksDir;

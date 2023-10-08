@@ -190,6 +190,11 @@ bool Red::TweakDBManager::UpdateRecord(Red::TweakDBID aRecordId)
     return m_tweakDb->UpdateRecord(record);
 }
 
+void Red::TweakDBManager::RegisterName(const std::string& aName, const Red::CClass* aType)
+{
+    RegisterName(aName.data(), aName);
+}
+
 void Red::TweakDBManager::RegisterName(Red::TweakDBID aId, const std::string& aName, const Red::CClass* aType)
 {
     CreateBaseName(aId, aName);

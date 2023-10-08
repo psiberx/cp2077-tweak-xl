@@ -6,6 +6,10 @@
 
 namespace Raw
 {
+constexpr auto InitTweakDB = Core::RawFunc<
+    /* addr = */ Red::Addresses::TweakDB_Init,
+    /* type = */ void (*)(void*, void*)>();
+
 constexpr auto LoadTweakDB = Core::RawFunc<
     /* addr = */ Red::Addresses::TweakDB_Load,
     /* type = */ void (*)(Red::TweakDB*, Red::CString&)>();

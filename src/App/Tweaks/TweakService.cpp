@@ -24,17 +24,26 @@ void App::TweakService::OnBootstrap()
         m_importer = Core::MakeShared<App::TweakImporter>(m_manager);
         m_executor = Core::MakeShared<App::TweakExecutor>(m_manager);
 
-        LoadTweaks();
+        ApplyPatches();
+        LoadTweaks(false);
+    });
+
+    HookAfter<Raw::InitTweakDB>([&]() {
+        CheckForIssues();
     });
 }
 
-void App::TweakService::LoadTweaks()
+void App::TweakService::LoadTweaks(bool aCheckForIssues)
 {
     if (m_manager)
     {
         m_importer->ImportTweaks(m_importPaths, m_changelog);
         m_executor->ExecuteTweaks();
-        m_changelog->CheckForIssues(m_manager);
+
+        if (aCheckForIssues)
+        {
+            m_changelog->CheckForIssues(m_manager);
+        }
     }
 }
 
@@ -59,6 +68,23 @@ void App::TweakService::ExecuteTweak(Red::CName aName)
     if (m_manager)
     {
         m_executor->ExecuteTweak(aName);
+    }
+}
+
+void App::TweakService::ApplyPatches()
+{
+    if (m_manager)
+    {
+        m_manager->CloneRecord("Vendors.IsPresent", "Vendors.Always_Present");
+        m_manager->RegisterName("Vendors.IsPresent");
+    }
+}
+
+void App::TweakService::CheckForIssues()
+{
+    if (m_manager)
+    {
+        m_changelog->CheckForIssues(m_manager);
     }
 }
 

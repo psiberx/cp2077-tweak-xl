@@ -11,6 +11,8 @@ def patterns():
                      pattern="40 55 53 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? FF 15 ? ? ? ? E8"),
             ]),
             Group(name="TweakDB", functions=[
+                Item(name="Init",
+                     pattern="48 89 5C 24 ? 57 48 83 EC ? 4C 8B 42 ? 48 8B D9 BF ? ? ? ? 4D 85 C0 74 ? 65 48 8B 04 25 ? ? ? ? 4D 8B 00 48 8B 10 41 8A 40 ? 88 04 17 48 8B 41 08 8B 08 85 C9 74 ? E8 ? ? ? ? E8"),
                 Item(name="Load",
                      pattern="48 89 5C 24 10 48 89 7C 24 18 55 48 8B EC 48 83 EC ? 48 8B F9 48 8B DA 48 8B 0D ? ? ? ? 48 8B 01 FF 90"),
                 Item(name="CreateRecord",

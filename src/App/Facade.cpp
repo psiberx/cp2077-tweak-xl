@@ -42,7 +42,7 @@ void App::Facade::ExecuteTweak(Red::CName aName)
 
 void App::Facade::Reload()
 {
-    Core::Resolve<TweakService>()->LoadTweaks();
+    Core::Resolve<TweakService>()->LoadTweaks(true);
 }
 
 bool App::Facade::Require(Red::CString& aVersion)

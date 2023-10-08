@@ -40,6 +40,7 @@ public:
     bool CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool InheritProps(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool UpdateRecord(Red::TweakDBID aRecordId);
+    void RegisterName(const std::string& aName, const Red::CClass* aType = nullptr);
     void RegisterName(Red::TweakDBID aId, const std::string& aName, const Red::CClass* aType = nullptr);
     const std::string& GetName(Red::TweakDBID aId);
 
