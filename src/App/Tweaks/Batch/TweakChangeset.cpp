@@ -1,10 +1,5 @@
 #include "TweakChangeset.hpp"
 
-namespace
-{
-constexpr auto OptimizedFlatChunkSize = 12000;
-}
-
 bool App::TweakChangeset::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
                                   const Red::InstancePtr<>& aValue)
 {
@@ -190,6 +185,8 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
     }
 
     {
+        LogDebug("Preparing records...");
+
         const auto batch = aManager->StartBatch();
 
         for (const auto& recordId : m_orderedRecords)
@@ -209,19 +206,17 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 {
                     aChangelog->RegisterRecord(recordId);
                 }
-
-                if (batch->GetFlatBufferSize() >= OptimizedFlatChunkSize)
-                {
-                    aManager->CommitFlats(batch, true);
-                }
             }
         }
 
-        aManager->CommitFlats(batch, true);
-        aManager->CommitRecords(batch);
+        LogDebug("Committing changes...");
+
+        aManager->CommitBatch(batch);
     }
 
     {
+        LogDebug("Preparing flats...");
+
         const auto batch = aManager->StartBatch();
 
         for (const auto& item : m_pendingFlats)
@@ -267,14 +262,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                     }
                 }
             }
-
-            if (batch->GetFlatBufferSize() >= OptimizedFlatChunkSize)
-            {
-                aManager->CommitFlats(batch, true);
-            }
         }
-
-        aManager->CommitFlats(batch, true);
 
         for (const auto& recordId : m_orderedRecords)
         {
@@ -289,22 +277,15 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                     LogError("Cannot clone record {} from {}.", aManager->GetName(recordId), aManager->GetName(entry.sourceId));
                     continue;
                 }
-
-                if (batch->GetFlatBufferSize() >= OptimizedFlatChunkSize)
-                {
-                    aManager->CommitFlats(batch, true);
-                }
             }
         }
 
-        aManager->CommitFlats(batch, true);
-
         if (aChangelog)
         {
-            for (const auto& flatId : aManager->GetTrackedFlats(batch))
+            for (const auto& [flatId, _] : aManager->GetFlats(batch))
             {
-                auto flatOld = aManager->GetFlat(flatId, false);
-                auto flatNew = aManager->GetFlat(flatId, true);
+                auto flatOld = aManager->GetFlat(flatId);
+                auto flatNew = aManager->GetFlat(batch, flatId);
 
                 if (!flatOld.instance)
                 {
@@ -319,7 +300,13 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 aChangelog->RegisterAssignment(flatId, flatOld.instance, flatNew.instance);
             }
         }
+
+        LogDebug("Committing changes...");
+
+        aManager->CommitBatch(batch);
     }
+
+    LogDebug("Applying mutations...");
 
     for (const auto& [flatId, mutation] : m_pendingMutations)
     {
@@ -519,6 +506,8 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
             }
         }
     }
+
+    LogDebug("Updating records...");
 
     for (const auto& recordId : m_orderedRecords)
     {

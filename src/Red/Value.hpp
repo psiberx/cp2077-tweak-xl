@@ -22,6 +22,12 @@ struct Value
     {
     }
 
+    Value(const CBaseRTTIType* aType, T* aInstance)
+        : type(const_cast<CBaseRTTIType*>(aType))
+        , instance(aInstance)
+    {
+    }
+
     Value(const CStackType& aData)
         : type(aData.type)
         , instance(aData.value)
