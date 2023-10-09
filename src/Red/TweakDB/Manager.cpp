@@ -552,11 +552,14 @@ bool Red::TweakDBManager::AssignFlat(Core::Map<Red::TweakDBID, Red::Value<>>& aF
         {
             const auto& value = flat->second;
 
-            if (value.type != aValue.type)
-                return false;
+            if (value.instance)
+            {
+                if (value.type != aValue.type)
+                    return false;
 
-            if (value.type->IsEqual(value.instance, aValue.instance))
-                return true;
+                if (value.type->IsEqual(value.instance, aValue.instance))
+                    return true;
+            }
         }
     }
 
