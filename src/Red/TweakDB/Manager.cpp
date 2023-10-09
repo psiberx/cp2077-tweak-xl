@@ -206,7 +206,7 @@ Red::TweakDBManager::BatchPtr Red::TweakDBManager::StartBatch()
     return Core::MakeShared<Batch>();
 }
 
-const Core::Map<Red::TweakDBID, Red::Value<>>& Red::TweakDBManager::GetFlats(const Red::TweakDBManager::BatchPtr& aBatch)
+const Core::Set<Red::TweakDBID>& Red::TweakDBManager::GetFlats(const Red::TweakDBManager::BatchPtr& aBatch)
 {
     return aBatch->flats;
 }
@@ -219,10 +219,7 @@ Red::Value<> Red::TweakDBManager::GetFlat(const Red::TweakDBManager::BatchPtr& a
     if (flat == aBatch->flats.end())
         return {};
 
-    if (flat->second.instance)
-        return flat->second;
-
-    return m_buffer->GetValue(flat->first.ToTDBOffset());
+    return m_buffer->GetValue(flat->ToTDBOffset());
 }
 
 const Red::CClass* Red::TweakDBManager::GetRecordType(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId)
@@ -265,7 +262,7 @@ bool Red::TweakDBManager::SetFlat(const Red::TweakDBManager::BatchPtr& aBatch, R
     if (!aFlatId.IsValid() || !aInstance || !m_reflection->IsFlatType(aType))
         return false;
 
-    return AssignFlat(aBatch->flats, aFlatId, {aType, aInstance}, aBatch->mutex);
+    return AssignFlat(aBatch, aFlatId, {aType, aInstance});
 }
 
 bool Red::TweakDBManager::SetFlat(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aFlatId,
@@ -274,7 +271,7 @@ bool Red::TweakDBManager::SetFlat(const Red::TweakDBManager::BatchPtr& aBatch, R
     if (!aFlatId.IsValid() || !aValue.instance || !m_reflection->IsFlatType(aValue.type))
         return false;
 
-    return AssignFlat(aBatch->flats, aFlatId, aValue, aBatch->mutex);
+    return AssignFlat(aBatch, aFlatId, aValue);
 }
 
 bool Red::TweakDBManager::CreateRecord(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId,
@@ -289,7 +286,7 @@ bool Red::TweakDBManager::CreateRecord(const Red::TweakDBManager::BatchPtr& aBat
         return false;
 
     std::unique_lock batchLockRW(aBatch->mutex);
-    InheritFlats(aBatch->flats, aRecordId, recordInfo);
+    InheritFlats(aBatch, aRecordId, recordInfo);
     aBatch->records.emplace(aRecordId, recordInfo);
 
     return true;
@@ -311,7 +308,7 @@ bool Red::TweakDBManager::CloneRecord(const Red::TweakDBManager::BatchPtr& aBatc
         return false;
 
     std::unique_lock batchLockRW(aBatch->mutex);
-    InheritFlats(aBatch->flats, aRecordId, recordInfo, aSourceId);
+    InheritFlats(aBatch, aRecordId, recordInfo, aSourceId);
     aBatch->records.emplace(aRecordId, recordInfo);
 
     return true;
@@ -338,7 +335,7 @@ bool Red::TweakDBManager::InheritProps(const Red::TweakDBManager::BatchPtr& aBat
         return false;
 
     std::unique_lock batchLockRW(aBatch->mutex);
-    InheritFlats(aBatch->flats, aRecordId, recordInfo, aSourceId);
+    InheritFlats(aBatch, aRecordId, recordInfo, aSourceId);
 
     return true;
 }
@@ -365,13 +362,6 @@ void Red::TweakDBManager::RegisterName(const Red::TweakDBManager::BatchPtr& aBat
     aBatch->names.emplace(aId, aName);
 }
 
-const Red::ValuePtr<>& Red::TweakDBManager::AllocateValue(const Red::TweakDBManager::BatchPtr& aBatch,
-                                                         const Red::CBaseRTTIType* aType, Red::Instance aValue)
-{
-    std::unique_lock batchLockRW(aBatch->mutex);
-    return aBatch->values.emplace_back(Red::MakeValue(aType, aValue));
-}
-
 void Red::TweakDBManager::CommitBatch(const BatchPtr& aBatch)
 {
     std::unique_lock batchLockRW(aBatch->mutex);
@@ -384,18 +374,8 @@ void Red::TweakDBManager::CommitBatch(const BatchPtr& aBatch)
     {
         Red::SortedUniqueArray<Red::TweakDBID> flatsChunk;
 
-        for (const auto& [flatId, flatData] : aBatch->flats)
+        for (const auto& flatId : aBatch->flats)
         {
-            if (flatData.instance)
-            {
-                auto offset = m_buffer->AllocateValue(flatData);
-
-                if (offset < 0)
-                    continue;
-
-                const_cast<Red::TweakDBID&>(flatId).SetTDBOffset(offset);
-            }
-
             flatsChunk.InsertOrAssign(flatId);
 
             if (flatsChunk.size >= OptimizedFlatChunkSize)
@@ -436,7 +416,6 @@ void Red::TweakDBManager::CommitBatch(const BatchPtr& aBatch)
     aBatch->flats.clear();
     aBatch->records.clear();
     aBatch->names.clear();
-    aBatch->values.clear();
 }
 
 void Red::TweakDBManager::Invalidate()
@@ -541,37 +520,47 @@ void Red::TweakDBManager::InheritFlats(RED4ext::SortedUniqueArray<Red::TweakDBID
     }
 }
 
-template<class SharedLockable>
-bool Red::TweakDBManager::AssignFlat(Core::Map<Red::TweakDBID, Red::Value<>>& aFlats, Red::TweakDBID aFlatId,
-                                     const Red::Value<>& aValue, SharedLockable& aMutex)
+bool Red::TweakDBManager::AssignFlat(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aFlatId,
+                                     const Red::Value<>& aValue)
 {
+    std::unique_lock batchLockRW(aBatch->mutex);
+
+    const auto& flat = aBatch->flats.find(aFlatId);
+    int32_t offset = -1;
+
+    if (flat != aBatch->flats.end())
     {
-        std::shared_lock flatLockR(aMutex);
-        const auto& flat = aFlats.find(aFlatId);
-        if (flat != aFlats.end())
-        {
-            const auto& value = flat->second;
+        offset = flat->ToTDBOffset();
 
-            if (value.instance)
-            {
-                if (value.type != aValue.type)
-                    return false;
+        const auto value = m_buffer->GetValue(offset);
 
-                if (value.type->IsEqual(value.instance, aValue.instance))
-                    return true;
-            }
-        }
+        if (value.type != aValue.type)
+            return false;
+
+        if (value.type->IsEqual(value.instance, aValue.instance))
+            return true;
     }
 
+    offset = m_buffer->AllocateValue(aValue);
+
+    if (offset < 0)
+        return false;
+
+    aFlatId.SetTDBOffset(offset);
+
+    if (flat != aBatch->flats.end())
     {
-        std::unique_lock flatLockRW(aMutex);
-        aFlats.insert_or_assign(aFlatId, aValue);
+        const_cast<Red::TweakDBID&>(*flat) = aFlatId;
+    }
+    else
+    {
+        aBatch->flats.insert(aFlatId);
     }
 
     return true;
 }
 
-void Red::TweakDBManager::InheritFlats(Core::Map<Red::TweakDBID, Red::Value<>>& aFlats, Red::TweakDBID aRecordId,
+void Red::TweakDBManager::InheritFlats(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId,
                                        const Red::TweakDBRecordInfo* aRecordInfo)
 {
     for (const auto& [_, propInfo] : aRecordInfo->props)
@@ -581,7 +570,7 @@ void Red::TweakDBManager::InheritFlats(Core::Map<Red::TweakDBID, Red::Value<>>& 
 
         auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);
 
-        if (!aFlats.contains(propFlat))
+        if (!aBatch->flats.contains(propFlat))
         {
             auto propDefault = propInfo->defaultValue;
 
@@ -592,12 +581,12 @@ void Red::TweakDBManager::InheritFlats(Core::Map<Red::TweakDBID, Red::Value<>>& 
 
             propFlat.SetTDBOffset(propDefault);
 
-            aFlats.insert({propFlat, {}});
+            aBatch->flats.insert(propFlat);
         }
     }
 }
 
-void Red::TweakDBManager::InheritFlats(Core::Map<Red::TweakDBID, Red::Value<>>& aFlats, Red::TweakDBID aRecordId,
+void Red::TweakDBManager::InheritFlats(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId,
                                        const Red::TweakDBRecordInfo* aRecordInfo, Red::TweakDBID aSourceId)
 {
     std::shared_lock flatLockR(m_tweakDb->mutex00);
@@ -605,14 +594,14 @@ void Red::TweakDBManager::InheritFlats(Core::Map<Red::TweakDBID, Red::Value<>>& 
     for (const auto& [_, propInfo] : aRecordInfo->props)
     {
         const auto baseId = aSourceId + propInfo->appendix;
-        const auto baseFlat = aFlats.find(baseId);
+        const auto baseFlat = aBatch->flats.find(baseId);
 
-        if (baseFlat != aFlats.end())
+        if (baseFlat != aBatch->flats.end())
         {
             auto propFlat = aRecordId + propInfo->appendix;
-            propFlat.SetTDBOffset(baseFlat->first.ToTDBOffset());
+            propFlat.SetTDBOffset(baseFlat->ToTDBOffset());
 
-            aFlats.emplace(propFlat, baseFlat->second);
+            aBatch->flats.insert(propFlat);
         }
         else
         {
@@ -622,7 +611,7 @@ void Red::TweakDBManager::InheritFlats(Core::Map<Red::TweakDBID, Red::Value<>>& 
                 auto propFlat = aRecordId + propInfo->appendix;
                 propFlat.SetTDBOffset(commitedFlat->ToTDBOffset());
 
-                aFlats.insert({propFlat, {}});
+                aBatch->flats.insert(propFlat);
             }
         }
     }

@@ -13,8 +13,7 @@ bool App::ScriptBatch::SetFlat(Red::TweakDBID aFlatID, Red::Variant& aVariant) c
     if (m_batch && !aVariant.IsEmpty())
     {
         ConvertScriptValueForFlatValue(aVariant, m_reflection);
-        auto& value = m_manager->AllocateValue(m_batch, aVariant.GetType(), aVariant.GetDataPtr());
-        return m_manager->SetFlat(m_batch, aFlatID, *value);
+        return m_manager->SetFlat(m_batch, aFlatID, aVariant.GetType(), aVariant.GetDataPtr());
     }
 
     return false;

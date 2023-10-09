@@ -124,7 +124,7 @@ uint64_t Red::TweakDBBuffer::GetValueHash(int32_t aOffset)
     return ComputeHash(data.type, data.instance);
 }
 
-uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance)
+uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance, uint64_t aSeed)
 {
     // Case 1: Everything is processed as a sequence of bytes and passed to the hash function,
     //         except for an array of strings.
@@ -144,31 +144,31 @@ uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::I
         if (innerType->GetName() == "String")
         {
             const auto* array = reinterpret_cast<Red::DynArray<Red::CString>*>(aInstance);
-            hash = Red::FNV1a64(reinterpret_cast<uint8_t*>(0), 0); // Initial seed
+            hash = aSeed;
             for (uint32_t i = 0; i != array->size; ++i)
             {
                 const auto* str = array->entries + i;
                 const auto length = str->Length();
-                hash = Red::FNV1a64(reinterpret_cast<const uint8_t*>(&length), sizeof(length), hash);
-                hash = Red::FNV1a64(reinterpret_cast<const uint8_t*>(str->c_str()), length, hash);
+                hash = FNV1a64(reinterpret_cast<const uint8_t*>(&length), sizeof(length), hash);
+                hash = FNV1a64(reinterpret_cast<const uint8_t*>(str->c_str()), length, hash);
             }
         }
         else
         {
             const auto* array = reinterpret_cast<Red::DynArray<uint8_t>*>(aInstance);
-            hash = Red::FNV1a64(array->entries, array->size * innerType->GetSize());
+            hash = FNV1a64(array->entries, array->size * innerType->GetSize(), aSeed);
         }
     }
     else if (aType->GetName() == "String")
     {
         const auto* str = reinterpret_cast<Red::CString*>(aInstance);
         const auto* data = reinterpret_cast<const uint8_t*>(str->c_str());
-        hash = Red::FNV1a64(data, str->Length());
+        hash = FNV1a64(data, str->Length(), aSeed);
     }
     else
     {
         const auto* data = reinterpret_cast<const uint8_t*>(aInstance);
-        hash = Red::FNV1a64(data, aType->GetSize());
+        hash = FNV1a64(data, aType->GetSize(), aSeed);
     }
 
     return hash;

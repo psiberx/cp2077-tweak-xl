@@ -282,7 +282,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
         if (aChangelog)
         {
-            for (const auto& [flatId, _] : aManager->GetFlats(batch))
+            for (const auto& flatId : aManager->GetFlats(batch))
             {
                 auto flatOld = aManager->GetFlat(flatId);
                 auto flatNew = aManager->GetFlat(batch, flatId);

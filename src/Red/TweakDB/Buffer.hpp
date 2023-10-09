@@ -34,6 +34,9 @@ public:
 
     void Invalidate();
 
+    inline static uint64_t ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance,
+                                       uint64_t aSeed = 0xCBF29CE484222325);
+
 private:
     struct FlatTypeInfo
     {
@@ -46,7 +49,6 @@ private:
     using FlatDefaultMap = Core::Map<Red::CName, int32_t>; // TypeName -> BufferOffset
     using FlatTypeMap = Core::Map<uintptr_t, FlatTypeInfo>; // VFT -> FlatTypeInfo
 
-    inline static uint64_t ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance);
     inline Red::Value<> ResolveOffset(int32_t aOffset);
 
     void CreatePools();
