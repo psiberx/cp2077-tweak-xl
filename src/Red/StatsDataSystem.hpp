@@ -47,3 +47,8 @@ constexpr auto CheckStatFlag = Core::RawFunc<
     /* addr = */ Red::Addresses::StatsDataSystem_CheckStatFlag,
     /* type = */ bool (*)(void* aSystem, uint32_t aStat, uint32_t aFlag)>();
 }
+
+namespace Raw::StatRecord
+{
+using EnumValue = Core::OffsetPtr<0xD8, uint32_t>;
+}

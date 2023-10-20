@@ -61,9 +61,7 @@ void App::StatService::OnInitializeStats(void* aSystem)
 
                 {
                     const auto record = tweakManager.GetRecord(recordId);
-                    const auto recordSize = record->GetType()->GetSize();
-                    const auto enumPropAddr = reinterpret_cast<uintptr_t>(record.instance) + recordSize - 8;
-                    *reinterpret_cast<uint32_t*>(enumPropAddr) = enumValue;
+                    Raw::StatRecord::EnumValue::Ref(record) = enumValue;
                 }
             }
         }
