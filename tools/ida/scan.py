@@ -14,7 +14,7 @@ def patterns():
                 Item(name="Init",
                      pattern="48 89 5C 24 ? 57 48 83 EC ? 4C 8B 42 ? 48 8B D9 BF ? ? ? ? 4D 85 C0 74 ? 65 48 8B 04 25 ? ? ? ? 4D 8B 00 48 8B 10 41 8A 40 ? 88 04 17 48 8B 41 08 8B 08 85 C9 74 ? E8 ? ? ? ? E8"),
                 Item(name="Load",
-                     pattern="48 89 5C 24 10 48 89 7C 24 18 55 48 8B EC 48 83 EC ? 48 8B F9 48 8B DA 48 8B 0D ? ? ? ? 48 8B 01 FF 90"),
+                     pattern="48 89 5C 24 ? 48 89 7C 24 ? 55 48 8B EC 48 ? EC ? ? ? ? 48 8B F9 48 8B DA 48 8B 0D"),
                 Item(name="CreateRecord",
                      pattern="48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 30 8B C2 49 8B D8 83 E0 1F"),
             ]),
