@@ -13,11 +13,11 @@ containing essential information about game entities and behavior.
 
 ### Prerequisites
 
-- [RED4ext](https://docs.red4ext.com/getting-started/installing-red4ext) 1.17.0+
+- [RED4ext](https://docs.red4ext.com/getting-started/installing-red4ext) 1.18.0+
 
 ### Compatibility
 
-- Cyberpunk 2077 2.01
+- Cyberpunk 2077 2.02
 
 ### Installation
 
