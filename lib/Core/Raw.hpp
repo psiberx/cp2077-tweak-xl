@@ -94,7 +94,7 @@ public:
 
     constexpr RawVFunc() = default;
 
-    R operator()(C* aContext, Args&&... aArgs) const
+    R operator()(C* aContext, Args... aArgs) const
     {
         auto vft = *reinterpret_cast<uintptr_t*>(aContext);
         auto callable = *reinterpret_cast<Callable*>(vft + offset);
@@ -270,6 +270,11 @@ public:
     inline static uintptr_t Addr(void* aBase)
     {
         return reinterpret_cast<uintptr_t>(OffsetPtr(aBase).GetValuePtr());
+    }
+
+    inline static void Set(void* aBase, const Type& aValue)
+    {
+        *OffsetPtr(aBase).GetValuePtr() = aValue;
     }
 
     uintptr_t address;
