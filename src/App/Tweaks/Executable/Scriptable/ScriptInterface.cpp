@@ -69,7 +69,7 @@ void App::ScriptInterface::GetRecords(Red::IScriptable*, Red::CStackFrame* aFram
 
     auto records = FetchRecords(s_reflection->GetRecordFullName(recordTypeName));
 
-    if (records->size <= 0)
+    if (!records || records->size <= 0)
         return;
 
     aRetType->Assign(aRet, records);
@@ -87,7 +87,7 @@ void App::ScriptInterface::GetRecordCount(Red::IScriptable*, Red::CStackFrame* a
 
     auto records = FetchRecords(recordTypeName);
 
-    *aRet = records->size;
+    *aRet = records ? records->size : 0;
 }
 
 void App::ScriptInterface::GetRecordByIndex(Red::IScriptable*, Red::CStackFrame* aFrame,
@@ -108,7 +108,7 @@ void App::ScriptInterface::GetRecordByIndex(Red::IScriptable*, Red::CStackFrame*
 
     auto records = FetchRecords(recordTypeName);
 
-    if (records->size <= 0 || recordIndex >= records->size)
+    if (!records || records->size <= 0 || recordIndex >= records->size)
         return;
 
     aRetType->Assign(aRet, &records->entries[recordIndex]);
