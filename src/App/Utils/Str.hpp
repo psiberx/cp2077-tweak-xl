@@ -72,6 +72,11 @@ inline bool IsNumeric(const std::string& aIn, size_t aStart = 0)
     return aIn.find_first_not_of("0123456789", aStart) == std::string::npos;
 }
 
+inline bool IsNumeric(const std::string_view& aIn, size_t aStart = 0)
+{
+    return aIn.find_first_not_of("0123456789", aStart) == std::string::npos;
+}
+
 template<typename T>
 requires std::is_integral_v<T>
 inline std::string ToHex(T aValue)
