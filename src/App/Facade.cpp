@@ -3,7 +3,6 @@
 #include "App/Project.hpp"
 #include "App/Tweaks/TweakService.hpp"
 #include "Core/Facades/Container.hpp"
-#include "Red/LogChannel.hpp"
 
 bool App::Facade::RegisterDir(Red::CString& aPath)
 {
