@@ -143,7 +143,9 @@ YAML::Node FormatNode(const YAML::Node& aNode, const InstanceData& aData)
                 }
             }
 
-            return YAML::Node(FormatString(value, aData));
+            auto node = YAML::Node(FormatString(value, aData));
+            node.SetTag(aNode.Tag());
+            return node;
         }
         else
         {
@@ -153,6 +155,7 @@ YAML::Node FormatNode(const YAML::Node& aNode, const InstanceData& aData)
     case YAML::NodeType::Map:
     {
         YAML::Node node;
+        node.SetTag(aNode.Tag());
         for (auto& nodeIt : aNode)
         {
             node[nodeIt.first] = FormatNode(nodeIt.second, aData);
@@ -162,6 +165,7 @@ YAML::Node FormatNode(const YAML::Node& aNode, const InstanceData& aData)
     case YAML::NodeType::Sequence:
     {
         YAML::Node node;
+        node.SetTag(aNode.Tag());
         for (std::size_t i = 0; i < aNode.size(); ++i)
         {
             node[i] = FormatNode(aNode[i], aData);
