@@ -15,17 +15,13 @@ private:
     using RecordHandle = Red::Handle<Red::TweakDBRecord>;
     using RecordArray = Red::DynArray<RecordHandle>;
 
-    static void GetFlat(Red::IScriptable*, Red::CStackFrame* aFrame, Red::Variant* aRet,
-                        Red::CBaseRTTIType* aRetType);
-    static void GetRecord(Red::IScriptable*, Red::CStackFrame* aFrame, RecordHandle* aRet,
-                          Red::CRTTIHandleType* aRetType);
-    static void GetRecords(Red::IScriptable*, Red::CStackFrame* aFrame, RecordArray* aRet,
-                           Red::CRTTIBaseArrayType* aRetType);
+    static void GetFlat(Red::IScriptable*, Red::CStackFrame* aFrame, Red::Variant* aRet, void*);
+    static void GetRecord(Red::IScriptable*, Red::CStackFrame* aFrame, RecordHandle* aRet, void*);
+    static void GetRecords(Red::IScriptable*, Red::CStackFrame* aFrame, RecordArray* aRet, void*);
     static void GetRecordCount(Red::IScriptable*, Red::CStackFrame* aFrame, uint32_t* aRet, void*);
-    static void GetRecordByIndex(Red::IScriptable*, Red::CStackFrame* aFrame, RecordHandle* aRet,
-                                 Red::CRTTIHandleType* aRetType);
+    static void GetRecordByIndex(Red::IScriptable*, Red::CStackFrame* aFrame, RecordHandle* aRet, void*);
 
-    static ScriptableArray* FetchRecords(Red::CName aTypeName);
+    static RecordArray* FetchRecords(Red::CName aTypeName);
 
     inline static Core::SharedPtr<Red::TweakDBReflection> s_reflection;
 

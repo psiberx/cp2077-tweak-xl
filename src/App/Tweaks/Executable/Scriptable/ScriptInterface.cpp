@@ -5,8 +5,7 @@ void App::ScriptInterface::SetReflection(Core::SharedPtr<Red::TweakDBReflection>
     s_reflection = std::move(aReflection);
 }
 
-void App::ScriptInterface::GetFlat(Red::IScriptable*, Red::CStackFrame* aFrame,
-                                     Red::Variant* aRet, Red::CBaseRTTIType*)
+void App::ScriptInterface::GetFlat(Red::IScriptable*, Red::CStackFrame* aFrame, Red::Variant* aRet, void*)
 {
     Red::TweakDBID flatID;
 
@@ -32,8 +31,7 @@ void App::ScriptInterface::GetFlat(Red::IScriptable*, Red::CStackFrame* aFrame,
     aRet->Fill(data.type, data.value);
 }
 
-void App::ScriptInterface::GetRecord(Red::IScriptable*, Red::CStackFrame* aFrame,
-                                       RecordHandle* aRet, Red::CRTTIHandleType* aRetType)
+void App::ScriptInterface::GetRecord(Red::IScriptable*, Red::CStackFrame* aFrame, RecordHandle* aRet, void*)
 {
     Red::TweakDBID recordID;
 
@@ -47,17 +45,16 @@ void App::ScriptInterface::GetRecord(Red::IScriptable*, Red::CStackFrame* aFrame
     if (!tdb)
         return;
 
-    ScriptableHandle record;
+    RecordHandle record;
     tdb->TryGetRecord(recordID, record);
 
     if (!record)
         return;
 
-    aRetType->Assign(aRet, &record);
+    *aRet = record;
 }
 
-void App::ScriptInterface::GetRecords(Red::IScriptable*, Red::CStackFrame* aFrame,
-                                        RecordArray* aRet, Red::CRTTIBaseArrayType* aRetType)
+void App::ScriptInterface::GetRecords(Red::IScriptable*, Red::CStackFrame* aFrame, RecordArray* aRet, void*)
 {
     Red::CName recordTypeName;
 
@@ -72,7 +69,7 @@ void App::ScriptInterface::GetRecords(Red::IScriptable*, Red::CStackFrame* aFram
     if (!records || records->size <= 0)
         return;
 
-    aRetType->Assign(aRet, records);
+    *aRet = *records;
 }
 
 void App::ScriptInterface::GetRecordCount(Red::IScriptable*, Red::CStackFrame* aFrame, uint32_t* aRet, void*)
@@ -90,8 +87,7 @@ void App::ScriptInterface::GetRecordCount(Red::IScriptable*, Red::CStackFrame* a
     *aRet = records ? records->size : 0;
 }
 
-void App::ScriptInterface::GetRecordByIndex(Red::IScriptable*, Red::CStackFrame* aFrame,
-                                              RecordHandle* aRet, Red::CRTTIHandleType* aRetType)
+void App::ScriptInterface::GetRecordByIndex(Red::IScriptable*, Red::CStackFrame* aFrame, RecordHandle* aRet, void*)
 {
     Red::CName recordTypeName;
     uint32_t recordIndex;
@@ -111,10 +107,10 @@ void App::ScriptInterface::GetRecordByIndex(Red::IScriptable*, Red::CStackFrame*
     if (!records || records->size <= 0 || recordIndex >= records->size)
         return;
 
-    aRetType->Assign(aRet, &records->entries[recordIndex]);
+    *aRet = records->entries[recordIndex];
 }
 
-App::ScriptInterface::ScriptableArray* App::ScriptInterface::FetchRecords(Red::CName aTypeName)
+App::ScriptInterface::RecordArray* App::ScriptInterface::FetchRecords(Red::CName aTypeName)
 {
     auto* rtti = Red::CRTTISystem::Get();
     if (!rtti)
@@ -129,6 +125,5 @@ App::ScriptInterface::ScriptableArray* App::ScriptInterface::FetchRecords(Red::C
         return nullptr;
 
     std::shared_lock<Red::SharedMutex> _(tdb->mutex01);
-
-    return tdb->recordsByType.Get(recordType);
+    return reinterpret_cast<RecordArray*>(tdb->recordsByType.Get(recordType));
 }
