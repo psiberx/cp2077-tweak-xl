@@ -120,7 +120,7 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 
                     if (!sourceType)
                     {
-                        LogWarning("{}: Cannot clone {}, the record doesn't exists.", aName, cloneAttr.Scalar());
+                        LogWarning("{}: Cannot clone {}, the record doesn't exist.", aName, cloneAttr.Scalar());
                         break;
                     }
 
@@ -161,7 +161,7 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 
                 if (!sourceType)
                 {
-                    LogWarning("{}: Cannot clone {}, the record doesn't exists.", aName, cloneAttr.Scalar());
+                    LogWarning("{}: Cannot clone {}, the record doesn't exist.", aName, cloneAttr.Scalar());
                     break;
                 }
 
@@ -481,7 +481,7 @@ bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const s
             }
             else
             {
-                LogError("{}: Cannot clone from {}, the record doesn't exists.",
+                LogError("{}: Cannot clone from {}, the record doesn't exist.",
                          aPath, cloneAttr.Scalar());
             }
 
