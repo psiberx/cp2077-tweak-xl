@@ -28,42 +28,49 @@ void App::StatService::OnInitializeStats(void* aSystem)
     for (const auto& recordId : tweakChangelog.GetAffectedRecords())
     {
         const auto& recordName = tweakManager.GetName(recordId);
-        if (recordName.starts_with(BaseStatPrefix))
+
+        if (!recordName.starts_with(BaseStatPrefix))
+            continue;
+
+        auto enumNameProp = tweakManager.GetFlat({recordId, ".enumName"});
+
+        if (!enumNameProp)
+            continue;
+
+        auto enumName = enumNameProp.As<Red::CString>().c_str();
+
+        if (statTypeEnum->HasOption(enumName))
+            continue;
+
+        if (recordName.substr(BaseStatPrefixLength) != enumName)
         {
-            auto enumName = tweakManager.GetFlat({recordId, ".enumName"}).As<Red::CString>().c_str();
-            if (!statTypeEnum->HasOption(enumName))
-            {
-                if (recordName.substr(BaseStatPrefixLength) != enumName)
-                {
-                    LogError("{}: Enum name must match the record name.", recordName);
-                    continue;
-                }
+            LogError("{}: Enum name must match the record name.", recordName);
+            continue;
+        }
 
-                if (statRecords->size == BaseStatCount)
-                {
-                    // Add dummy entries for "Count" and "Invalid"
-                    statRecords->EmplaceBack();
-                    statRecords->EmplaceBack();
-                }
+        if (statRecords->size == BaseStatCount)
+        {
+            // Add dummy entries for "Count" and "Invalid"
+            statRecords->EmplaceBack();
+            statRecords->EmplaceBack();
+        }
 
-                const auto enumValue = statRecords->size;
+        const auto enumValue = statRecords->size;
 
-                statTypeEnum->AddOption(enumValue, enumName);
-                statRecords->PushBack(recordId);
+        statTypeEnum->AddOption(enumValue, enumName);
+        statRecords->PushBack(recordId);
 
-                if (!s_statTypesModified)
-                {
-                    s_statTypesModified = true;
-                    Hook<Raw::StatsDataSystem::GetStatRange>(&OnGetStatRange);
-                    Hook<Raw::StatsDataSystem::GetStatFlags>(&OnGetStatFlags);
-                    Hook<Raw::StatsDataSystem::CheckStatFlag>(&OnCheckStatFlag);
-                }
+        if (!s_statTypesModified)
+        {
+            s_statTypesModified = true;
+            Hook<Raw::StatsDataSystem::GetStatRange>(&OnGetStatRange);
+            Hook<Raw::StatsDataSystem::GetStatFlags>(&OnGetStatFlags);
+            Hook<Raw::StatsDataSystem::CheckStatFlag>(&OnCheckStatFlag);
+        }
 
-                {
-                    const auto record = tweakManager.GetRecord(recordId);
-                    Raw::StatRecord::EnumValue::Ref(record) = enumValue;
-                }
-            }
+        {
+            const auto record = tweakManager.GetRecord(recordId);
+            Raw::StatRecord::EnumValue::Ref(record) = enumValue;
         }
     }
 }
