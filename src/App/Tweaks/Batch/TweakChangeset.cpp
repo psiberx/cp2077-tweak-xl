@@ -22,10 +22,12 @@ bool App::TweakChangeset::MakeRecord(Red::TweakDBID aRecordId, const Red::CClass
     auto& entry = m_pendingRecords[aRecordId];
 
     if (!entry.type)
-        m_orderedRecords.push_back(aRecordId);
+    {
+        entry.type = aType;
+        entry.sourceId = aSourceId;
 
-    entry.type = aType;
-    entry.sourceId = aSourceId;
+        m_orderedRecords.push_back(aRecordId);
+    }
 
     return true;
 }
