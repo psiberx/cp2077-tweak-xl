@@ -39,6 +39,14 @@ using package_id = sor<hash, name>;
 using group_id = sor<hash, path>;
 using group_path = seq<package_id, one<'.'>, group_id>;
 
+/* Tags expression */
+
+struct tag_pfx : one<'['> {};
+struct tag_sfx : one<']'> {};
+struct tag_name : name {};
+struct tag : seq<tag_pfx, _, tag_name, _, tag_sfx> {};
+struct tags : star<tag, _> {};
+
 /* Package statement */
 
 using package_keyword = string<'p', 'a', 'c', 'k', 'a', 'g', 'e'>;
@@ -56,17 +64,12 @@ struct using_stmt : seq<using_keyword, space, using_name, star<using_sep, using_
 
 struct flat_stmt;
 
-struct group_tag_pfx : one<'['> {};
-struct group_tag_sfx : one<']'> {};
-struct group_tag_name : name {};
-struct group_tag : seq<group_tag_pfx, _, group_tag_name, _, group_tag_sfx> {};
-struct group_tags : star<group_tag, _> {};
 struct group_name : group_id {};
 struct group_base : sor<group_path, group_id> {};
 struct group_inherit : seq<one<':'>, _, group_base> {};
 struct group_begin : one<'{'> {};
 struct group_end : one<'}'> {};
-struct group_stmt : seq<group_tags, group_name, opt<_, group_inherit>, _, group_begin, star<_, flat_stmt>, _, group_end> {};
+struct group_stmt : seq<tags, group_name, opt<_, group_inherit>, _, group_begin, star<_, flat_stmt>, _, group_end> {};
 
 /* Inline expression */
 
@@ -131,7 +134,7 @@ struct flat_name : name {};
 struct flat_op : sor<op_assign, op_append, op_remove> {};
 struct flat_value : sor<scalar_expr, struct_expr, array_expr, inline_expr> {};
 struct flat_end : one<';'> {};
-struct flat_stmt : seq<opt<flat_type>, unless<group_end>, flat_name, _, flat_op, _, flat_value, _, flat_end> {};
+struct flat_stmt : seq<tags, opt<flat_type>, unless<group_end>, flat_name, _, flat_op, _, flat_value, _, flat_end> {};
 struct flat_decl_start : seq<flat_type> {};
 struct flat_decl_continue : seq<flat_name, _, flat_op, _, flat_value, _, flat_end> {};
 

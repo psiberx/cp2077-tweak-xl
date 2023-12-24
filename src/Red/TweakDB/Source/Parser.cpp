@@ -22,10 +22,10 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::using_name>
     }
 };
 
-/* Groups */
+/* Tags */
 
 template<>
-struct Red::TweakParser::ParseAction<Red::TweakGrammar::group_tag_name>
+struct Red::TweakParser::ParseAction<Red::TweakGrammar::tag_name>
 {
     template<typename ParseInput>
     static void apply(const ParseInput& in, ParseState& state, TweakSource& package)
@@ -33,6 +33,8 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::group_tag_name>
         state.tags.push_back(in.string());
     }
 };
+
+/* Groups */
 
 template<>
 struct Red::TweakParser::ParseAction<Red::TweakGrammar::group_name>
@@ -122,6 +124,7 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::flat_name>
     {
         auto flat = Core::MakeShared<TweakFlat>();
         flat->name = in.string();
+        flat->tags.swap(state.tags);
 
         if (state.hasType)
         {

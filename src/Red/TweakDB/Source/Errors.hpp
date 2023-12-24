@@ -14,8 +14,9 @@ struct TweakError
     RED_TWEAK_ERROR(TweakGrammar::package_name, "Expected package name");
     RED_TWEAK_ERROR(TweakGrammar::using_name, "Expected package name");
 
-    RED_TWEAK_ERROR(TweakGrammar::group_tag_name, "Expected tag name");
-    RED_TWEAK_ERROR(TweakGrammar::group_tag_sfx, "Expected ']'");
+    RED_TWEAK_ERROR(TweakGrammar::tag_name, "Expected tag name");
+    RED_TWEAK_ERROR(TweakGrammar::tag_sfx, "Expected ']'");
+
     RED_TWEAK_ERROR(TweakGrammar::group_name, "Expected group name");
     RED_TWEAK_ERROR(TweakGrammar::group_base, "Expected group name");
     RED_TWEAK_ERROR(TweakGrammar::group_begin, "Expected '{'"); // if pos == operator, then missing flat type

@@ -58,14 +58,15 @@ struct TweakFlat
     bool isArray;
     ETweakFlatOp operation;
     Core::Vector<Core::SharedPtr<TweakValue>> values;
+    Core::Vector<std::string> tags;
 };
 
 struct TweakGroup
 {
     std::string name;
     std::string base;
-    Core::Vector<std::string> tags;
     Core::Vector<Core::SharedPtr<TweakFlat>> flats;
+    Core::Vector<std::string> tags;
 };
 
 struct TweakInline
