@@ -220,20 +220,19 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
                 auto propInfo = Red::MakeInstance<Red::TweakDBPropertyInfo>();
                 propInfo->name = Red::CName(extraFlat.appendix.c_str() + 1);
                 propInfo->appendix = extraFlat.appendix;
-
                 propInfo->type = m_rtti->GetType(extraFlat.typeName);
-                propInfo->isArray = propInfo->type->GetType() == Red::ERTTIType::Array;
-                propInfo->isForeignKey = !extraFlat.foreignTypeName.IsNone();
 
-                if (propInfo->isArray)
+                if (propInfo->type->GetType() == Red::ERTTIType::Array)
                 {
                     const auto arrayType = reinterpret_cast<const Red::CRTTIArrayType*>(propInfo->type);
                     propInfo->elementType = arrayType->innerType;
+                    propInfo->isArray = true;
                 }
 
-                if (propInfo->isArray)
+                if (!extraFlat.foreignTypeName.IsNone())
                 {
                     propInfo->foreignType = m_rtti->GetClass(extraFlat.foreignTypeName);
+                    propInfo->isForeignKey = true;
                 }
 
                 propInfo->dataOffset = 0;
