@@ -13,7 +13,7 @@ App::Application::Application(HMODULE aHandle, const RED4ext::Sdk*)
     Register<Core::RuntimeProvider>(aHandle)->SetBaseImagePathDepth(2);
 
     Register<Support::MinHookProvider>();
-    Register<Support::SpdlogProvider>();
+    Register<Support::SpdlogProvider>()->AppendTimestampToLogName()->CreateRecentLogSymlink();
     Register<Support::RedLibProvider>();
 
     Register<App::TweakService>(Env::GameDir(), Env::TweaksDir());
