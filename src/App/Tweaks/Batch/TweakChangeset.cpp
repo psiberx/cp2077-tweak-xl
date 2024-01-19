@@ -547,7 +547,7 @@ int32_t App::TweakChangeset::FindElement(const Red::CRTTIArrayType* aArrayType, 
 
 bool App::TweakChangeset::InArray(const Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
 {
-    return FindElement(aArrayType, aArray, aValue) > 0;
+    return FindElement(aArrayType, aArray, aValue) >= 0;
 }
 
 bool App::TweakChangeset::IsSkip(const Red::CRTTIArrayType* aArrayType, void* aValue, int32_t aLevel,
