@@ -154,7 +154,7 @@ YAML::Node FormatNode(const YAML::Node& aNode, const InstanceData& aData)
     }
     case YAML::NodeType::Map:
     {
-        YAML::Node node;
+        YAML::Node node{YAML::NodeType::Map};
         node.SetTag(aNode.Tag());
         for (auto& nodeIt : aNode)
         {
@@ -164,7 +164,7 @@ YAML::Node FormatNode(const YAML::Node& aNode, const InstanceData& aData)
     }
     case YAML::NodeType::Sequence:
     {
-        YAML::Node node;
+        YAML::Node node{YAML::NodeType::Sequence};
         node.SetTag(aNode.Tag());
         for (std::size_t i = 0; i < aNode.size(); ++i)
         {
