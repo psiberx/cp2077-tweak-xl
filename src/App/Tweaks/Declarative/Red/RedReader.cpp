@@ -293,7 +293,7 @@ App::RedReader::FlatStatePtr App::RedReader::HandleFlat(App::TweakChangeset& aCh
 
             if (!flatValue)
             {
-                LogError("{}: Invalid value, expected {}.",
+                LogError("{}: Invalid value, expected \"{}\".",
                          ComposePath(flatState->flatPath, index),
                          ToName(flatState->resolvedType));
 
@@ -318,7 +318,7 @@ App::RedReader::FlatStatePtr App::RedReader::HandleFlat(App::TweakChangeset& aCh
 
         if (!flatValue)
         {
-            LogError("{}: Invalid value, expected {}.", flatState->flatPath, ToName(flatState->resolvedType));
+            LogError("{}: Invalid value, expected \"{}\".", flatState->flatPath, ToName(flatState->resolvedType));
 
             return flatState;
         }

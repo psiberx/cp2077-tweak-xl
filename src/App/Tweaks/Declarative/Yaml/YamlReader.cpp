@@ -440,7 +440,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
 
         if (!propValue)
         {
-            LogError("{}.{}: Invalid value, expected {}.", aRecordPath, nodeKey, propInfo->type->GetName().ToString());
+            LogError("{}.{}: Invalid value, expected \"{}\".", aRecordPath, nodeKey, propInfo->type->GetName().ToString());
             continue;
         }
 
@@ -556,7 +556,7 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
 
             if (!itemValue)
             {
-                LogError("{}.{}: Invalid value, expected {}.",
+                LogError("{}.{}: Invalid value, expected \"{}\".",
                          aPath, std::to_string(itemIndex), aElementType->GetName().ToString());
                 continue;
             }
@@ -572,7 +572,7 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
 
             if (!itemValue)
             {
-                LogError("{}.{}: Invalid value, expected {}.",
+                LogError("{}.{}: Invalid value, expected \"{}\".",
                          aPath, std::to_string(itemIndex), aElementType->GetName().ToString());
                 continue;
             }
@@ -588,7 +588,7 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
 
             if (!sourceId.IsValid())
             {
-                LogError("{}.{}: Invalid value, expected [TweakDBID].", aPath, std::to_string(itemIndex));
+                LogError("{}.{}: Invalid value, expected \"TweakDBID\".", aPath, std::to_string(itemIndex));
                 continue;
             }
 
@@ -602,7 +602,7 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
 
             if (!sourceId.IsValid())
             {
-                LogError("{}.{}: Invalid value, expected [TweakDBID].", aPath, std::to_string(itemIndex));
+                LogError("{}.{}: Invalid value, expected \"TweakDBID\".", aPath, std::to_string(itemIndex));
                 continue;
             }
 
@@ -616,7 +616,7 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
 
             if (!itemValue)
             {
-                LogError("{}.{}: Invalid value, expected {}.",
+                LogError("{}.{}: Invalid value, expected \"{}\".",
                          aPath, std::to_string(itemIndex), aElementType->GetName().ToString());
                 continue;
             }
