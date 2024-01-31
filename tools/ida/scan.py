@@ -20,7 +20,7 @@ def patterns():
             ]),
             Group(name="TweakDBID", functions=[
                 Item(name="Derive",
-                     pattern="48 89 5C 24 10 48 89 6C 24 18 48 89 74 24 20 57 45 33 C9 48 8B FA"),
+                     pattern="48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 33 C0 4D 8B C8 48 8B F2 4D 85 C0 74"),
             ]),
             Group(name="StatsDataSystem", functions=[
                 Item(name="InitializeRecords",

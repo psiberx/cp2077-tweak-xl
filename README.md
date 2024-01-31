@@ -13,13 +13,13 @@ containing essential information about game entities and behavior.
 
 ### Compatibility
 
-- Cyberpunk 2077 2.1
+- Cyberpunk 2077 2.11
 - [redscript](https://github.com/jac3km4/redscript) 0.5.16+
 
 ### Installation
 
 1. Install requirements:
-   - [RED4ext](https://docs.red4ext.com/getting-started/installing-red4ext) 1.19.0+
+   - [RED4ext](https://docs.red4ext.com/getting-started/installing-red4ext) 1.22.0+
 2. Extract the release archive `TweakXL-x.x.x.zip` into the Cyberpunk 2077 directory.
 
 ## Documentation
