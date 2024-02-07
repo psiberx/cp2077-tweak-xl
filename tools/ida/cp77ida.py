@@ -123,7 +123,7 @@ def find_ptr(pattern: str, expected: int = 1, index: int = 0, offset: int = 0) -
 
 def scan(patterns: List[Output], output_dir: Path, pattern_file: Path):
     try:
-        addr = find_ptr(pattern='48 8D ? ? ? ? ? 49 8D 4E ? E8 ? ? ? ? 48 8D 4C ? ?', expected=2, index=1, offset=3)
+        addr = find_ptr(pattern='48 8D ? ? ? ? ? 49 8D 4E ? E8 ? ? ? ? 48 8D 4C ? ?', expected=2, index=0, offset=3)
         if addr == ida_idaapi.BADADDR:
             raise Exception('The pattern for game\'s version is not found')
         version = idc.get_strlit_contents(addr)
