@@ -17,16 +17,25 @@ void App::ScriptInterface::GetFlat(Red::IScriptable*, Red::CStackFrame* aFrame, 
 
     auto* tdb = Red::TweakDB::Get();
     if (!tdb)
+    {
+        aRet->Free();
         return;
+    }
 
     auto* flat = tdb->GetFlatValue(flatID);
     if (!flat)
+    {
+        aRet->Free();
         return;
+    }
 
     auto data = flat->GetValue();
 
      if (!data.value)
+    {
+        aRet->Free();
         return;
+    }
 
     aRet->Fill(data.type, data.value);
 }
