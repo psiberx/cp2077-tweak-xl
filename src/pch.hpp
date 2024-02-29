@@ -47,3 +47,6 @@
 #include "Red/Specializations.hpp"
 #include "Red/Utils.hpp"
 #include "Red/Value.hpp"
+
+#include "Red/Addresses/Direct.hpp"
+#include "Red/Addresses/Library.hpp"

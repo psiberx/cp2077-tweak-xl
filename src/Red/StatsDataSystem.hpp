@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Red/Addresses.hpp"
-
 namespace Red
 {
 struct StatParams
@@ -28,23 +26,23 @@ using StatParams = Core::OffsetPtr<0xE8, Red::DynArray<Red::StatParams>>;
 using StatLock = Core::OffsetPtr<0xFC, Red::SharedMutex>;
 
 constexpr auto InitializeRecords = Core::RawFunc<
-    /* addr = */ Red::Addresses::StatsDataSystem_InitializeRecords,
+    /* addr = */ Red::AddressLib::StatsDataSystem_InitializeRecords,
     /* type = */ void (*)(void* aSystem)>();
 
 constexpr auto InitializeParams = Core::RawFunc<
-    /* addr = */ Red::Addresses::StatsDataSystem_InitializeParams,
+    /* addr = */ Red::AddressLib::StatsDataSystem_InitializeParams,
     /* type = */ void (*)(void* aSystem)>();
 
 constexpr auto GetStatRange = Core::RawFunc<
-    /* addr = */ Red::Addresses::StatsDataSystem_GetStatRange,
+    /* addr = */ Red::AddressLib::StatsDataSystem_GetStatRange,
     /* type = */ uint64_t* (*)(void* aSystem, uint64_t*, uint32_t aStat)>();
 
 constexpr auto GetStatFlags = Core::RawFunc<
-    /* addr = */ Red::Addresses::StatsDataSystem_GetStatFlags,
+    /* addr = */ Red::AddressLib::StatsDataSystem_GetStatFlags,
     /* type = */ uint32_t (*)(void* aSystem, uint32_t aStat)>();
 
 constexpr auto CheckStatFlag = Core::RawFunc<
-    /* addr = */ Red::Addresses::StatsDataSystem_CheckStatFlag,
+    /* addr = */ Red::AddressLib::StatsDataSystem_CheckStatFlag,
     /* type = */ bool (*)(void* aSystem, uint32_t aStat, uint32_t aFlag)>();
 }
 

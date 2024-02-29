@@ -5,7 +5,7 @@ from pathlib import Path
 # Defines patterns and output files
 def patterns():
     return [
-        Output(filename="src/Red/Addresses.hpp", namespace="Red::Addresses", groups=[
+        Output(filename="src/Red/Addresses/Direct.hpp", namespace="Red::Addresses", groups=[
             Group(functions=[
                 Item(name="Main",
                      pattern="40 55 53 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? FF 15 ? ? ? ? E8"),
@@ -28,7 +28,7 @@ def patterns():
                 Item(name="InitializeParams",
                      pattern="40 55 53 56 57 41 56 48 8B EC 48 83 EC ? 8B 91 ? ? ? ? 48 8D B1 ? ? ? ? 48 8B F9 39 56 ? 73 ? 48 83 64 24"),
                 Item(name="GetStatRange",
-                     pattern="48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC ? 41 8B F0 48 8B FA 48 8B E9 41 81 F8 ? ? ? ? 73"),
+                     pattern="48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC ? 41 8B F0 48 8B FA 48 8B E9 41 81 F8 ? ? ? ? 73"),
                 Item(name="GetStatFlags",
                      pattern="48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 8B FA 48 8B F1 81 FA ? ? ? ? 73"),
                 Item(name="CheckStatFlag",
