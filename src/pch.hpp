@@ -19,6 +19,7 @@
 
 #include <RED4ext/RED4ext.hpp>
 
+#include <RED4ext/Relocation.hpp>
 #include <RED4ext/ResourceDepot.hpp>
 #include <RED4ext/Scripting/Natives/ScriptGameInstance.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Color.hpp>

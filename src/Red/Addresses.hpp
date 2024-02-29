@@ -17,9 +17,9 @@ constexpr uintptr_t StatsDataSystem_GetStatRange = 0x14015123D - ImageBase; // 4
 constexpr uintptr_t StatsDataSystem_GetStatFlags = 0x1403554C4 - ImageBase; // 48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 8B FA 48 8B F1 81 FA ? ? ? ? 73, expected: 1, index: 0
 constexpr uintptr_t StatsDataSystem_CheckStatFlag = 0x1403554A8 - ImageBase; // 40 53 48 83 EC 20 41 8B D8 E8 ? ? ? ? 85 C3 0F 95 C0 48 83 C4 20 5B C3, expected: 1, index: 0
 
-constexpr uintptr_t TweakDB_Init = 0x140897CE0 - ImageBase; // 48 89 5C 24 ? 57 48 83 EC ? 4C 8B 42 ? 48 8B D9 BF ? ? ? ? 4D 85 C0 74 ? 65 48 8B 04 25 ? ? ? ? 4D 8B 00 48 8B 10 41 8A 40 ? 88 04 17 48 8B 41 08 8B 08 85 C9 74 ? E8 ? ? ? ? E8, expected: 1, index: 0
-constexpr uintptr_t TweakDB_Load = 0x140528F6C - ImageBase; // 48 89 5C 24 ? 48 89 7C 24 ? 55 48 8B EC 48 ? EC ? ? ? ? 48 8B F9 48 8B DA 48 8B 0D, expected: 1, index: 0
-constexpr uintptr_t TweakDB_CreateRecord = 0x14018F0D8 - ImageBase; // 48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 30 8B C2 49 8B D8 83 E0 1F, expected: 1, index: 0
+constexpr uint32_t TweakDB_Init = 3062572522;
+constexpr uint32_t TweakDB_Load = 3602585178; // game::data::TweakDB::LoadOptimized
+constexpr uint32_t TweakDB_CreateRecord = 838931066; // game::data::AddRecord
 
-constexpr uintptr_t TweakDBID_Derive = 0x14018EF44 - ImageBase; // 48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 33 C0 4D 8B C8 48 8B F2 4D 85 C0 74, expected: 1, index: 0
+constexpr uint32_t TweakDBID_Derive = 326438016;
 }
