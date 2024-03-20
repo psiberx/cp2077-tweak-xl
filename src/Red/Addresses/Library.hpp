@@ -4,7 +4,7 @@ namespace Red::AddressLib
 {
 constexpr uint32_t StatsDataSystem_InitializeRecords = 1299190886;
 constexpr uint32_t StatsDataSystem_InitializeParams = 3652194890;
-constexpr uint32_t StatsDataSystem_GetStatRange = 314646980;
+constexpr uint32_t StatsDataSystem_GetStatRange = 1444748215;
 constexpr uint32_t StatsDataSystem_GetStatFlags = 3123320294;
 constexpr uint32_t StatsDataSystem_CheckStatFlag = 2954893634;
 
