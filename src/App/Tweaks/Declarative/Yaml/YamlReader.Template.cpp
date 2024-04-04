@@ -123,7 +123,7 @@ std::string FormatString(const std::string& aInput, const InstanceData& aData)
     return buffer;
 }
 
-YAML::Node FormatNode(const YAML::Node& aNode, const InstanceData& aData)
+void FormatNode(const YAML::Node& aNode, const InstanceData& aData)
 {
     switch (aNode.Type())
     {
@@ -133,47 +133,31 @@ YAML::Node FormatNode(const YAML::Node& aNode, const InstanceData& aData)
         const auto markPos = value.find(AttrMark);
         if (markPos != std::string::npos)
         {
-            if (markPos == 0)
-            {
-                const auto attr = MakeKey(value.data() + 2, value.size() - 3);
-                const auto it = aData.find(attr);
-                if (it != aData.end())
-                {
-                    return it.value().node;
-                }
-            }
-
             auto node = YAML::Node(FormatString(value, aData));
             node.SetTag(aNode.Tag());
-            return node;
+
+            const_cast<YAML::Node&>(aNode) = node;
         }
-        else
-        {
-            return aNode;
-        }
+        break;
     }
     case YAML::NodeType::Map:
     {
-        YAML::Node node{YAML::NodeType::Map};
-        node.SetTag(aNode.Tag());
         for (auto& nodeIt : aNode)
         {
-            node[nodeIt.first] = FormatNode(nodeIt.second, aData);
+            FormatNode(nodeIt.second, aData);
         }
-        return node;
+        break;
     }
     case YAML::NodeType::Sequence:
     {
-        YAML::Node node{YAML::NodeType::Sequence};
-        node.SetTag(aNode.Tag());
         for (std::size_t i = 0; i < aNode.size(); ++i)
         {
-            node[i] = FormatNode(aNode[i], aData);
+            FormatNode(aNode[i], aData);
         }
-        return node;
+        break;
     }
     default:
-        return aNode;
+        break;
     }
 }
 }
@@ -235,7 +219,8 @@ void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
                 continue;
             }
 
-            auto instanceNode = FormatNode(templateNode, instanceData);
+            auto instanceNode = YAML::Clone(templateNode);
+            FormatNode(instanceNode, instanceData);
 
             aRootNode[instanceName] = instanceNode;
         }
