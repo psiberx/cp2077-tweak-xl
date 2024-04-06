@@ -133,6 +133,17 @@ void FormatNode(const YAML::Node& aNode, const InstanceData& aData)
         const auto markPos = value.find(AttrMark);
         if (markPos != std::string::npos)
         {
+            if (markPos == 0)
+            {
+                const auto attr = MakeKey(value.data() + 2, value.size() - 3);
+                const auto it = aData.find(attr);
+                if (it != aData.end())
+                {
+                    const_cast<YAML::Node&>(aNode) = it.value().node;
+                    return;
+                }
+            }
+
             auto node = YAML::Node(FormatString(value, aData));
             node.SetTag(aNode.Tag());
 
