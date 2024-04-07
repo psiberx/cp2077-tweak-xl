@@ -8,13 +8,7 @@ constexpr auto AttrMark = '$';
 constexpr auto AttrOpen = "({";
 constexpr auto AttrClose = ")}";
 
-struct InstanceValue
-{
-    const std::string value;
-    const YAML::Node node;
-};
-
-using InstanceData = Core::Map<uint64_t, InstanceValue>;
+using InstanceData = Core::Map<uint64_t, YAML::Node>;
 
 uint64_t MakeKey(const std::string& aName)
 {
@@ -99,7 +93,10 @@ std::string FormatString(const std::string& aInput, const InstanceData& aData)
         const auto it = aData.find(attr);
         if (it != aData.end())
         {
-            value = it.value().value.c_str();
+            if (it.value().IsScalar())
+            {
+                value = it.value().Scalar().c_str();
+            }
         }
 
         if (value)
@@ -123,7 +120,18 @@ std::string FormatString(const std::string& aInput, const InstanceData& aData)
     return buffer;
 }
 
-void FormatNode(const YAML::Node& aNode, const InstanceData& aData)
+void PrepareInstanceData(InstanceData& aInstanceData, const YAML::Node& aInstanceDataNode)
+{
+    for (const auto& propIt : aInstanceDataNode)
+    {
+        const auto propKey = MakeKey(propIt.first.Scalar());
+        const auto& propValue = propIt.second;
+
+        aInstanceData[propKey] = propValue;
+    }
+}
+
+void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
 {
     switch (aNode.Type())
     {
@@ -136,18 +144,22 @@ void FormatNode(const YAML::Node& aNode, const InstanceData& aData)
             if (markPos == 0)
             {
                 const auto attr = MakeKey(value.data() + 2, value.size() - 3);
-                const auto it = aData.find(attr);
-                if (it != aData.end())
+                const auto it = aInstanceData.find(attr);
+                if (it != aInstanceData.end())
                 {
-                    const_cast<YAML::Node&>(aNode) = it.value().node;
+                    if (it.value().IsScalar())
+                    {
+                        const_cast<YAML::Node&>(aNode) = it.value().Scalar();
+                    }
+                    else
+                    {
+                        const_cast<YAML::Node&>(aNode) = it.value();
+                    }
                     return;
                 }
             }
 
-            auto node = YAML::Node(FormatString(value, aData));
-            node.SetTag(aNode.Tag());
-
-            const_cast<YAML::Node&>(aNode) = node;
+            const_cast<YAML::Node&>(aNode) = FormatString(value, aInstanceData);
         }
         break;
     }
@@ -155,15 +167,66 @@ void FormatNode(const YAML::Node& aNode, const InstanceData& aData)
     {
         for (auto& nodeIt : aNode)
         {
-            FormatNode(nodeIt.second, aData);
+            ProcessNode(nodeIt.second, aInstanceData);
         }
         break;
     }
     case YAML::NodeType::Sequence:
     {
+        YAML::Node expandedNode;
+
         for (std::size_t i = 0; i < aNode.size(); ++i)
         {
-            FormatNode(aNode[i], aData);
+            const auto& subNode = aNode[i];
+
+            if (subNode.IsMap())
+            {
+                const auto& instanceListNode = subNode[InstanceAttrKey];
+
+                if (instanceListNode.IsDefined())
+                {
+                    const_cast<YAML::Node&>(subNode).remove(InstanceAttrKey);
+
+                    if (instanceListNode.IsSequence())
+                    {
+                        if (!expandedNode.IsDefined())
+                        {
+                            expandedNode = YAML::Node{YAML::NodeType::Sequence};
+
+                            for (std::size_t j = 0; j < i; ++j)
+                            {
+                                expandedNode.push_back(aNode[j]);
+                            }
+                        }
+
+                        for (std::size_t j = 0; j < instanceListNode.size(); ++j)
+                        {
+                            InstanceData instanceData{aInstanceData};
+                            PrepareInstanceData(instanceData, instanceListNode[j]);
+
+                            auto instanceNode = YAML::Clone(subNode);
+                            instanceNode.SetTag(subNode.Tag());
+                            ProcessNode(instanceNode, instanceData);
+
+                            expandedNode.push_back(instanceNode);
+                        }
+
+                        continue;
+                    }
+                }
+            }
+
+            ProcessNode(subNode, aInstanceData);
+
+            if (expandedNode.IsDefined())
+            {
+                const_cast<YAML::Node&>(expandedNode).push_back(subNode);
+            }
+        }
+
+        if (expandedNode.IsDefined())
+        {
+            const_cast<YAML::Node&>(aNode) = expandedNode;
         }
         break;
     }
@@ -175,65 +238,72 @@ void FormatNode(const YAML::Node& aNode, const InstanceData& aData)
 
 void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
 {
-    Core::Vector<std::pair<const std::string&, YAML::Node>> templates;
-
-    for (const auto& nodeIt : aRootNode)
     {
-        const auto& subKey = nodeIt.first.Scalar();
-        const auto& subNode = nodeIt.second;
+        auto isTemplate = false;
 
-        if (!subNode.IsMap() || !subNode[InstanceAttrKey].IsDefined())
-            continue;
+        for (const auto& topNodeIt : aRootNode)
+        {
+            const auto& topNode = topNodeIt.second;
 
-        templates.emplace_back(subKey, subNode);
+            if (topNode.IsMap())
+            {
+                if (topNode[InstanceAttrKey].IsDefined())
+                {
+                    isTemplate = true;
+                    break;
+                }
+            }
+        }
+
+        if (!isTemplate)
+            return;
     }
 
-    for (auto& [templateName, templateNode] : templates)
+    YAML::Node expandedNode{YAML::NodeType::Map};
+
+    for (const auto& topNodeIt : aRootNode)
     {
-        aRootNode.remove(templateName);
+        const auto& topKey = topNodeIt.first.Scalar();
+        const auto& topNode = topNodeIt.second;
 
-        const auto& dataNode = templateNode[InstanceAttrKey];
-
-        if (!dataNode.IsSequence())
+        if (!topNode.IsMap())
         {
-            LogError("{}: Template instances must be an array of structs.", templateName);
+            expandedNode.force_insert(topKey, topNode);
             continue;
         }
 
-        templateNode.remove(InstanceAttrKey);
+        const auto& instanceListNode = topNode[InstanceAttrKey];
 
-        for (std::size_t i = 0; i < dataNode.size(); ++i)
+        if (!instanceListNode.IsDefined())
+        {
+            expandedNode.force_insert(topKey, topNode);
+            continue;
+        }
+
+        if (instanceListNode.IsSequence())
+        {
+            const_cast<YAML::Node&>(topNode).remove(InstanceAttrKey);
+
+            for (std::size_t i = 0; i < instanceListNode.size(); ++i)
+            {
+                InstanceData instanceData;
+                PrepareInstanceData(instanceData, instanceListNode[i]);
+
+                auto instanceName = FormatString(topKey, instanceData);
+                auto instanceNode = YAML::Clone(topNode);
+                ProcessNode(instanceNode, instanceData);
+
+                expandedNode.force_insert(instanceName, instanceNode);
+            }
+        }
+        else
         {
             InstanceData instanceData;
+            ProcessNode(topNode, instanceData);
 
-            for (const auto& propIt : dataNode[i])
-            {
-                const auto propKey = MakeKey(propIt.first.Scalar());
-                const auto& propValue = propIt.second;
-
-                if (propValue.IsScalar())
-                {
-                    instanceData.insert({propKey, {propValue.Scalar(), propValue}});
-                }
-                else
-                {
-                    instanceData.insert({propKey, {"", propValue}});
-                }
-            }
-
-            auto instanceName = FormatString(templateName, instanceData);
-
-            if (aRootNode[instanceName].IsDefined())
-            {
-                LogError("{}: Cannot create instance {}, because it already exists.",
-                         templateName, instanceName);
-                continue;
-            }
-
-            auto instanceNode = YAML::Clone(templateNode);
-            FormatNode(instanceNode, instanceData);
-
-            aRootNode[instanceName] = instanceNode;
+            expandedNode.force_insert(topKey, topNode);
         }
     }
+
+    aRootNode = expandedNode;
 }
