@@ -9,6 +9,7 @@ constexpr auto AttrOpen = "({";
 constexpr auto AttrClose = ")}";
 
 using InstanceData = Core::Map<uint64_t, YAML::Node>;
+const InstanceData s_blankInstanceData;
 
 uint64_t MakeKey(const std::string& aName)
 {
@@ -173,6 +174,9 @@ void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
     }
     case YAML::NodeType::Sequence:
     {
+        if (aNode.size() == 0)
+            break;
+
         YAML::Node expandedNode;
 
         for (std::size_t i = 0; i < aNode.size(); ++i)
@@ -220,7 +224,7 @@ void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
 
             if (expandedNode.IsDefined())
             {
-                const_cast<YAML::Node&>(expandedNode).push_back(subNode);
+                expandedNode.push_back(subNode);
             }
         }
 
@@ -230,16 +234,16 @@ void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
         }
         break;
     }
-    default:
-        break;
     }
 }
 }
 
 void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
 {
+    auto processedTopNodes = 0;
+
     {
-        auto isTemplate = false;
+        auto hasTopTemplates = false;
 
         for (const auto& topNodeIt : aRootNode)
         {
@@ -249,13 +253,16 @@ void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
             {
                 if (topNode[InstanceAttrKey].IsDefined())
                 {
-                    isTemplate = true;
+                    hasTopTemplates = true;
                     break;
                 }
             }
+
+            ProcessNode(topNode, s_blankInstanceData);
+            ++processedTopNodes;
         }
 
-        if (!isTemplate)
+        if (!hasTopTemplates)
             return;
     }
 
@@ -265,6 +272,13 @@ void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
     {
         const auto& topKey = topNodeIt.first.Scalar();
         const auto& topNode = topNodeIt.second;
+
+        if (processedTopNodes > 0)
+        {
+            expandedNode.force_insert(topKey, topNode);
+            --processedTopNodes;
+            continue;
+        }
 
         if (!topNode.IsMap())
         {
@@ -298,8 +312,7 @@ void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
         }
         else
         {
-            InstanceData instanceData;
-            ProcessNode(topNode, instanceData);
+            ProcessNode(topNode, s_blankInstanceData);
 
             expandedNode.force_insert(topKey, topNode);
         }
