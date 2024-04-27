@@ -1,5 +1,6 @@
 #include "Application.hpp"
 #include "App/Environment.hpp"
+#include "App/Migration.hpp"
 #include "App/Project.hpp"
 #include "App/Stats/StatService.hpp"
 #include "App/Tweaks/TweakService.hpp"
@@ -11,11 +12,16 @@
 
 App::Application::Application(HMODULE aHandle, const RED4ext::Sdk* aSdk)
 {
-    Register<Core::RuntimeProvider>(aHandle)->SetBaseImagePathDepth(2);
+    Register<Core::RuntimeProvider>(aHandle)
+        ->SetBaseImagePathDepth(2);
 
     Register<Support::MinHookProvider>();
-    Register<Support::SpdlogProvider>()->AppendTimestampToLogName()->CreateRecentLogSymlink();
-    Register<Support::RED4extProvider>(aHandle, aSdk)->EnableAddressLibrary();
+    Register<Support::SpdlogProvider>()
+        ->AppendTimestampToLogName()
+        ->CreateRecentLogSymlink();
+    Register<Support::RED4extProvider>(aHandle, aSdk)
+        ->EnableAddressLibrary()
+        ->RegisterScripts(Env::ScriptsDir());
     Register<Support::RedLibProvider>();
 
     Register<App::TweakService>(Env::GameDir(), Env::TweaksDir());
@@ -25,4 +31,6 @@ App::Application::Application(HMODULE aHandle, const RED4ext::Sdk* aSdk)
 void App::Application::OnStarting()
 {
     LogInfo("{} {} is starting...", Project::Name, Project::Version.to_string());
+
+    Migration::CleanUp(Env::LegacyScriptsDir());
 }
