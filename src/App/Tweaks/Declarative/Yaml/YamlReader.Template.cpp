@@ -166,7 +166,7 @@ void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
     }
     case YAML::NodeType::Map:
     {
-        for (auto& nodeIt : aNode)
+        for (const auto& nodeIt : aNode)
         {
             ProcessNode(nodeIt.second, aInstanceData);
         }
@@ -177,7 +177,7 @@ void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
         if (aNode.size() == 0)
             break;
 
-        YAML::Node expandedNode;
+        YAML::Node expandedNode{YAML::NodeType::Undefined};
 
         for (std::size_t i = 0; i < aNode.size(); ++i)
         {
