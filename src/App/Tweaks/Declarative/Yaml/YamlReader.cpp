@@ -8,6 +8,8 @@ constexpr auto ValueAttrKey = "$value";
 constexpr auto BaseAttrKey = "$base";
 constexpr auto PropModeKey = "$props";
 constexpr auto PropModeAuto = "AutoFlats";
+constexpr auto GameConditionKey = "$game";
+constexpr auto DLCConditionKey = "$dlc";
 
 constexpr auto AppendOp = Red::FNV1a64("!append");
 constexpr auto AppendOnceOp = Red::FNV1a64("!append-once");
@@ -30,8 +32,8 @@ constexpr auto LegacyTypeNodeKey = "type";
 constexpr auto LegacyValueNodeKey = "value";
 }
 
-App::YamlReader::YamlReader(Core::SharedPtr<Red::TweakDBManager> aManager)
-    : BaseTweakReader(std::move(aManager))
+App::YamlReader::YamlReader(Core::SharedPtr<Red::TweakDBManager> aManager, Core::SharedPtr<App::TweakContext> aContext)
+    : BaseTweakReader(std::move(aManager), std::move(aContext))
     , m_path{}
     , m_data{}
 {
@@ -67,6 +69,9 @@ void App::YamlReader::Read(App::TweakChangeset& aChangeset)
         return;
     }
 
+    if (!CheckConditions(m_data))
+        return;
+
     ConvertLegacyNodes();
     ProcessTemplates(m_data);
 
@@ -78,9 +83,38 @@ void App::YamlReader::Read(App::TweakChangeset& aChangeset)
     }
 }
 
+bool App::YamlReader::CheckConditions(const YAML::Node& aNode)
+{
+    {
+        const auto& gameConditionAttr = aNode[GameConditionKey];
+        if (gameConditionAttr.IsDefined())
+        {
+            if (!gameConditionAttr.IsScalar())
+                return false;
+
+            if (!m_context->CheckGameVersion(gameConditionAttr.Scalar()))
+                return false;
+        }
+    }
+
+    {
+        const auto& dlcConditionAttr = aNode[DLCConditionKey];
+        if (dlcConditionAttr.IsDefined())
+        {
+            if (!dlcConditionAttr.IsScalar())
+                return false;
+
+            if (!m_context->CheckInstalledDLC(dlcConditionAttr.Scalar()))
+                return false;
+        }
+    }
+
+    return true;
+}
+
 App::YamlReader::PropertyMode App::YamlReader::ResolvePropertyMode(const YAML::Node& aNode, PropertyMode aDefault)
 {
-    const auto modeAttr = aNode[PropModeKey];
+    const auto& modeAttr = aNode[PropModeKey];
 
     if (modeAttr.IsDefined() && modeAttr.Scalar() == PropModeAuto)
     {
@@ -320,6 +354,9 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
         return;
     }
 
+    if (!CheckConditions(aNode))
+        return;
+
     aChangeset.MakeRecord(recordId, aRecordType, aSourceId);
     aChangeset.RegisterName(recordId, aRecordName);
 
@@ -457,6 +494,9 @@ bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const s
                                         const YAML::Node& aNode, const Red::CClass*& aForeignType,
                                         Red::TweakDBID& aSourceId)
 {
+    if (!CheckConditions(aNode))
+        return false;
+
     {
         const auto cloneAttr = aNode[BaseAttrKey];
 

@@ -23,4 +23,9 @@ inline std::filesystem::path LegacyScriptsDir()
 {
     return Core::Runtime::GetRootDir() / L"r6" / L"scripts" / L"TweakXL";
 }
+
+inline const auto& GameVer()
+{
+    return Core::Runtime::GetHost()->GetProductVer();
+}
 }

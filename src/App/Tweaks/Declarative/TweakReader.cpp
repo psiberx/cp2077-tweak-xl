@@ -17,9 +17,11 @@ constexpr auto ForeignKeyOpen = "<";
 constexpr auto ForeignKeyClose = ">";
 }
 
-App::BaseTweakReader::BaseTweakReader(Core::SharedPtr<Red::TweakDBManager> aManager)
+App::BaseTweakReader::BaseTweakReader(Core::SharedPtr<Red::TweakDBManager> aManager,
+                                      Core::SharedPtr<App::TweakContext> aContext)
     : m_manager(std::move(aManager))
     , m_reflection(m_manager->GetReflection())
+    , m_context(std::move(aContext))
 {
 }
 

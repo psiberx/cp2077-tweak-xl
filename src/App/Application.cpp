@@ -24,7 +24,7 @@ App::Application::Application(HMODULE aHandle, const RED4ext::Sdk* aSdk)
         ->RegisterScripts(Env::ScriptsDir());
     Register<Support::RedLibProvider>();
 
-    Register<App::TweakService>(Env::GameDir(), Env::TweaksDir());
+    Register<App::TweakService>(Env::GameDir(), Env::TweaksDir(), Env::GameVer());
     Register<App::StatService>();
 }
 

@@ -7,8 +7,8 @@ constexpr auto SchemaPackage = "RTDB";
 constexpr auto QueryPackage = "Query";
 }
 
-App::RedReader::RedReader(Core::SharedPtr<Red::TweakDBManager> aManager)
-    : BaseTweakReader(std::move(aManager))
+App::RedReader::RedReader(Core::SharedPtr<Red::TweakDBManager> aManager, Core::SharedPtr<App::TweakContext> aContext)
+    : BaseTweakReader(std::move(aManager), std::move(aContext))
     , m_path{}
 {
 }
@@ -73,6 +73,9 @@ App::RedReader::GroupStatePtr App::RedReader::HandleGroup(App::TweakChangeset& a
                                                           const std::string& aParentName,
                                                           const std::string& aParentPath)
 {
+    if (!CheckConditions(aGroup->tags))
+        return {};
+
     auto groupState = ResolveGroupState(aChangeset, aGroup, aParentName, aParentPath);
 
     if (!groupState->isResolved)
@@ -208,6 +211,9 @@ App::RedReader::GroupStatePtr App::RedReader::HandleInline(App::TweakChangeset& 
                 flatState = HandleFlat(aChangeset, flat, inlineState->groupName, inlineState->groupPath);
             }
 
+            if (!flatState)
+                continue;
+
             if (!flatState->isProcessed)
                 return inlineState;
         }
@@ -230,6 +236,9 @@ App::RedReader::FlatStatePtr App::RedReader::HandleFlat(App::TweakChangeset& aCh
                                                         const Red::CBaseRTTIType* aRequiredType,
                                                         const Red::CClass* aForeignType)
 {
+    if (!CheckConditions(aFlat->tags))
+        return {};
+
     auto flatState = ResolveFlatState(aChangeset, aFlat, aParentName, aParentPath, aRequiredType, aForeignType);
 
     if (!flatState->isResolved)
@@ -542,4 +551,20 @@ App::RedReader::FlatStatePtr App::RedReader::ResolveFlatState(App::TweakChangese
     }
 
     return state;
+}
+
+bool App::RedReader::CheckConditions(const Core::Vector<std::string>& aTags)
+{
+    if (!aTags.empty())
+    {
+        for (const auto& tag : aTags)
+        {
+            if (tag == "EP1")
+            {
+                return m_context->CheckInstalledDLC(tag);
+            }
+        }
+    }
+
+    return true;
 }

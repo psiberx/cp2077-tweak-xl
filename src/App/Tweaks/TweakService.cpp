@@ -3,9 +3,11 @@
 #include "App/Tweaks/Executable/TweakExecutor.hpp"
 #include "Red/TweakDB/Raws.hpp"
 
-App::TweakService::TweakService(std::filesystem::path aGameDir, std::filesystem::path aTweaksDir)
+App::TweakService::TweakService(std::filesystem::path aGameDir, std::filesystem::path aTweaksDir,
+                                const Core::SemvVer& aProductVer)
     : m_gameDir(std::move(aGameDir))
     , m_tweaksDir(std::move(aTweaksDir))
+    , m_productVer(aProductVer)
 {
     m_importPaths.push_back(m_tweaksDir);
 }
@@ -20,9 +22,10 @@ void App::TweakService::OnBootstrap()
         m_reflection = Core::MakeShared<Red::TweakDBReflection>();
         m_manager = Core::MakeShared<Red::TweakDBManager>(m_reflection);
 
-        m_changelog = Core::MakeShared<App::TweakChangelog>();
-        m_importer = Core::MakeShared<App::TweakImporter>(m_manager);
+        m_context = Core::MakeShared<App::TweakContext>(m_productVer);
+        m_importer = Core::MakeShared<App::TweakImporter>(m_manager, m_context);
         m_executor = Core::MakeShared<App::TweakExecutor>(m_manager);
+        m_changelog = Core::MakeShared<App::TweakChangelog>();
 
         ApplyPatches();
         LoadTweaks(false);

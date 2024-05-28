@@ -11,7 +11,7 @@ class YamlReader
     , public Core::LoggingAgent
 {
 public:
-    YamlReader(Core::SharedPtr<Red::TweakDBManager> aManager);
+    YamlReader(Core::SharedPtr<Red::TweakDBManager> aManager, Core::SharedPtr<App::TweakContext> aContext);
     ~YamlReader() override = default;
 
     bool Load(const std::filesystem::path& aPath) override;
@@ -39,6 +39,7 @@ private:
                          const YAML::Node& aNode, const Red::CBaseRTTIType* aElementType);
     void UpdateFlatOwner(TweakChangeset& aChangeset, const std::string& aName);
 
+    bool CheckConditions(const YAML::Node& aNode);
     static PropertyMode ResolvePropertyMode(const YAML::Node& aNode, PropertyMode aDefault = PropertyMode::Strict);
     const Red::CBaseRTTIType* ResolveFlatType(const YAML::Node& aNode);
     const Red::CBaseRTTIType* ResolveFlatType(Red::CName aName);

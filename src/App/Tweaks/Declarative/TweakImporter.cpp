@@ -3,8 +3,10 @@
 #include "App/Tweaks/Declarative/Yaml/YamlReader.hpp"
 #include "App/Tweaks/Declarative/Red/RedReader.hpp"
 
-App::TweakImporter::TweakImporter(Core::SharedPtr<Red::TweakDBManager> aManager)
+App::TweakImporter::TweakImporter(Core::SharedPtr<Red::TweakDBManager> aManager,
+                                  Core::SharedPtr<App::TweakContext> aContext)
     : m_manager(std::move(aManager))
+    , m_context(std::move(aContext))
 {
 }
 
@@ -71,11 +73,11 @@ bool App::TweakImporter::Read(App::TweakChangeset& aChangeset, const std::filesy
 
         if (ext == L".yaml" || ext == L".yml")
         {
-            reader = Core::MakeShared<YamlReader>(m_manager);
+            reader = Core::MakeShared<YamlReader>(m_manager, m_context);
         }
         else if (ext == L".tweak")
         {
-            reader = Core::MakeShared<RedReader>(m_manager);
+            reader = Core::MakeShared<RedReader>(m_manager, m_context);
         }
     }
 

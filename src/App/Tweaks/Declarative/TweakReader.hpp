@@ -1,6 +1,7 @@
 #pragma once
 
 #include "App/Tweaks/Batch/TweakChangeset.hpp"
+#include "App/Tweaks/TweakContext.hpp"
 
 namespace App
 {
@@ -17,7 +18,7 @@ public:
 class BaseTweakReader : public ITweakReader
 {
 public:
-    BaseTweakReader(Core::SharedPtr<Red::TweakDBManager> aManager);
+    BaseTweakReader(Core::SharedPtr<Red::TweakDBManager> aManager, Core::SharedPtr<App::TweakContext> aContext);
 
 protected:
     static std::string ComposePath(const std::string& aParentPath, const std::string& aItemName);
@@ -38,5 +39,6 @@ protected:
 
     Core::SharedPtr<Red::TweakDBManager> m_manager;
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;
+    Core::SharedPtr<App::TweakContext> m_context;
 };
 }

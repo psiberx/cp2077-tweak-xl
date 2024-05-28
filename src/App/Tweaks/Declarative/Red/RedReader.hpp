@@ -12,7 +12,7 @@ class RedReader
     , public Core::LoggingAgent
 {
 public:
-    RedReader(Core::SharedPtr<Red::TweakDBManager> aManager);
+    RedReader(Core::SharedPtr<Red::TweakDBManager> aManager, Core::SharedPtr<App::TweakContext> aContext);
     ~RedReader() override = default;
 
     bool Load(const std::filesystem::path& aPath) override;
@@ -86,6 +86,8 @@ private:
 
     Red::InstancePtr<> MakeValue(const FlatStatePtr& aState, const Red::TweakValuePtr& aValue);
     Red::InstancePtr<> MakeValue(const FlatStatePtr& aState, const Core::Vector<Red::TweakValuePtr>& aValues = {});
+
+    bool CheckConditions(const Core::Vector<std::string>& aTags);
 
     std::filesystem::path m_path;
     Red::TweakSourcePtr m_source;
