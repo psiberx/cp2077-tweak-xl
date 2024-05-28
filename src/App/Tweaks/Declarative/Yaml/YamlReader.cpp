@@ -133,6 +133,10 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
         return;
     }
 
+    // Skip attributes
+    if (aName[0] == AttrSymbol)
+        return;
+
     const auto targetId = Red::TweakDBID(aName);
 
     switch (aNode.Type())
