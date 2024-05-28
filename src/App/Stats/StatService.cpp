@@ -14,7 +14,7 @@ bool s_statTypesModified = false;
 
 void App::StatService::OnBootstrap()
 {
-    HookAfter<Raw::StatsDataSystem::InitializeRecords>(&OnInitializeStats);
+    HookAfter<Raw::StatsDataSystem::InitializeRecords>(&OnInitializeStats).OrThrow();
 }
 
 void App::StatService::OnInitializeStats(void* aSystem)
@@ -63,9 +63,9 @@ void App::StatService::OnInitializeStats(void* aSystem)
         if (!s_statTypesModified)
         {
             s_statTypesModified = true;
-            Hook<Raw::StatsDataSystem::GetStatRange>(&OnGetStatRange);
-            Hook<Raw::StatsDataSystem::GetStatFlags>(&OnGetStatFlags);
-            Hook<Raw::StatsDataSystem::CheckStatFlag>(&OnCheckStatFlag);
+            Hook<Raw::StatsDataSystem::GetStatRange>(&OnGetStatRange).OrThrow();
+            Hook<Raw::StatsDataSystem::GetStatFlags>(&OnGetStatFlags).OrThrow();
+            Hook<Raw::StatsDataSystem::CheckStatFlag>(&OnCheckStatFlag).OrThrow();
         }
 
         {
