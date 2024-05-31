@@ -31,6 +31,7 @@ private:
 RTTI_DEFINE_CLASS(App::ScriptManager, "TweakDBManager", {
     RTTI_ABSTRACT();
     RTTI_METHOD(StartBatch);
+    RTTI_METHOD(RegisterEnum);
     {
         auto func = type->AddFunction(&Type::SetFlat, "SetFlat", { .isFinal = true });
         func->AddParam("TweakDBID", "path");
