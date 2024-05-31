@@ -19,20 +19,25 @@ void App::StatService::OnBootstrap()
 
 void App::StatService::OnInitializeStats(void* aSystem)
 {
-    auto statRecords = Raw::StatsDataSystem::StatRecords::Ptr(aSystem);
+    RegisterStats(aSystem, Core::Resolve<TweakService>()->GetChangelog().GetAffectedRecords());
+    RegisterStats(aSystem, Core::Resolve<TweakService>()->GetManager().GetEnums());
+}
+
+void App::StatService::RegisterStats(void* aStatSystem, const Core::Set<Red::TweakDBID>& aRecordIDs)
+{
+    auto statRecords = Raw::StatsDataSystem::StatRecords::Ptr(aStatSystem);
     auto statTypeEnum = Red::GetDescriptor<Red::game::data::StatType>();
 
     auto& tweakManager = Core::Resolve<TweakService>()->GetManager();
-    auto& tweakChangelog = Core::Resolve<TweakService>()->GetChangelog();
 
-    for (const auto& recordId : tweakChangelog.GetAffectedRecords())
+    for (const auto& recordID : aRecordIDs)
     {
-        const auto& recordName = tweakManager.GetName(recordId);
+        const auto& recordName = tweakManager.GetName(recordID);
 
         if (!recordName.starts_with(BaseStatPrefix))
             continue;
 
-        auto enumNameProp = tweakManager.GetFlat({recordId, ".enumName"});
+        auto enumNameProp = tweakManager.GetFlat({recordID, ".enumName"});
 
         if (!enumNameProp)
             continue;
@@ -58,7 +63,7 @@ void App::StatService::OnInitializeStats(void* aSystem)
         const auto enumValue = statRecords->size;
 
         statTypeEnum->AddOption(enumValue, enumName);
-        statRecords->PushBack(recordId);
+        statRecords->PushBack(recordID);
 
         if (!s_statTypesModified)
         {
@@ -69,7 +74,7 @@ void App::StatService::OnInitializeStats(void* aSystem)
         }
 
         {
-            const auto record = tweakManager.GetRecord(recordId);
+            const auto record = tweakManager.GetRecord(recordID);
             Raw::StatRecord::EnumValue::Ref(record) = enumValue;
         }
     }

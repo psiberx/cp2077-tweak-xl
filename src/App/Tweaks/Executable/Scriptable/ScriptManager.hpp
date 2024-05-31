@@ -10,6 +10,7 @@ class ScriptManager : public Red::IScriptable
 public:
     static void SetManager(Core::SharedPtr<Red::TweakDBManager> aManager);
 
+    static void RegisterEnum(Red::TweakDBID aRecordID);
     static Red::Handle<ScriptBatch> StartBatch();
 
 private:

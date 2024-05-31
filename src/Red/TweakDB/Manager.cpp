@@ -190,6 +190,11 @@ bool Red::TweakDBManager::UpdateRecord(Red::TweakDBID aRecordId)
     return m_tweakDb->UpdateRecord(record);
 }
 
+void Red::TweakDBManager::RegisterEnum(Red::TweakDBID aRecordId)
+{
+    m_knownEnums.insert(aRecordId);
+}
+
 void Red::TweakDBManager::RegisterName(const std::string& aName, const Red::CClass* aType)
 {
     RegisterName(aName.data(), aName);
@@ -353,6 +358,11 @@ bool Red::TweakDBManager::UpdateRecord(const Red::TweakDBManager::BatchPtr& aBat
     aBatch->records.emplace(aRecordId, nullptr);
 
     return true;
+}
+
+void Red::TweakDBManager::RegisterEnum(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId)
+{
+    RegisterEnum(aRecordId);
 }
 
 void Red::TweakDBManager::RegisterName(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aId,
@@ -662,4 +672,9 @@ const std::string& Red::TweakDBManager::GetName(Red::TweakDBID aId)
     }
 
     return it->second;
+}
+
+const Core::Set<Red::TweakDBID>& Red::TweakDBManager::GetEnums()
+{
+    return m_knownEnums;
 }

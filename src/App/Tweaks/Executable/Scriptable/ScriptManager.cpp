@@ -113,6 +113,14 @@ void App::ScriptManager::RegisterName(Red::IScriptable*, Red::CStackFrame* aFram
     }
 }
 
+void App::ScriptManager::RegisterEnum(Red::TweakDBID aRecordID)
+{
+    if (s_manager)
+    {
+        s_manager->RegisterEnum(aRecordID);
+    }
+}
+
 Red::Handle<App::ScriptBatch> App::ScriptManager::StartBatch()
 {
     return Red::MakeHandle<ScriptBatch>(s_manager);

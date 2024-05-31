@@ -3,6 +3,7 @@ public native class TweakDBBatch {
     public native func CreateRecord(id: TweakDBID, type: CName) -> Bool
     public native func CloneRecord(id: TweakDBID, base: TweakDBID) -> Bool
     public native func UpdateRecord(id: TweakDBID) -> Bool
+    public native func RegisterEnum(id: TweakDBID)
     public native func RegisterName(name: CName) -> Bool
     public native func Commit()
 

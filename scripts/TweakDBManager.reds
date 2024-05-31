@@ -3,6 +3,7 @@ public abstract native class TweakDBManager {
     public final static native func CreateRecord(id: TweakDBID, type: CName) -> Bool
     public final static native func CloneRecord(id: TweakDBID, base: TweakDBID) -> Bool
     public final static native func UpdateRecord(id: TweakDBID) -> Bool
+    public final static native func RegisterEnum(id: TweakDBID)
     public final static native func RegisterName(name: CName) -> Bool
     public final static native func StartBatch() -> ref<TweakDBBatch>
 

@@ -13,6 +13,7 @@ struct ScriptBatch : Red::IScriptable
     bool CreateRecord(Red::TweakDBID aRecordID, Red::CName aTypeName) const;
     bool CloneRecord(Red::TweakDBID aRecordID, Red::TweakDBID aSourceID) const;
     bool UpdateRecord(Red::TweakDBID aRecordID) const;
+    bool RegisterEnum(Red::TweakDBID aRecordID) const;
     bool RegisterName(Red::CName aName) const;
     void Commit() const;
 
@@ -30,6 +31,7 @@ RTTI_DEFINE_CLASS(App::ScriptBatch, "TweakDBBatch", {
     RTTI_METHOD(CreateRecord);
     RTTI_METHOD(CloneRecord);
     RTTI_METHOD(UpdateRecord);
+    RTTI_METHOD(RegisterEnum);
     RTTI_METHOD(RegisterName);
     RTTI_METHOD(Commit);
 });

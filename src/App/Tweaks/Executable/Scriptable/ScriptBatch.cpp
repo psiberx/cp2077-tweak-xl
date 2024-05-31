@@ -49,6 +49,17 @@ bool App::ScriptBatch::UpdateRecord(Red::TweakDBID aRecordID) const
     return false;
 }
 
+bool App::ScriptBatch::RegisterEnum(Red::TweakDBID aRecordID) const
+{
+    if (m_batch && aRecordID)
+    {
+        m_manager->RegisterEnum(m_batch, aRecordID);
+        return true;
+    }
+
+    return false;
+}
+
 bool App::ScriptBatch::RegisterName(Red::CName aName) const
 {
     if (m_batch && aName)

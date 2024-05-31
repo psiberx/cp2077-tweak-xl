@@ -39,8 +39,10 @@ public:
     bool CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool InheritProps(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool UpdateRecord(Red::TweakDBID aRecordId);
+    void RegisterEnum(Red::TweakDBID aRecordId);
     void RegisterName(const std::string& aName, const Red::CClass* aType = nullptr);
     void RegisterName(Red::TweakDBID aId, const std::string& aName, const Red::CClass* aType = nullptr);
+    const Core::Set<Red::TweakDBID>& GetEnums();
     const std::string& GetName(Red::TweakDBID aId);
 
     BatchPtr StartBatch();
@@ -55,6 +57,7 @@ public:
     bool CloneRecord(const BatchPtr& aBatch, Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool InheritProps(const BatchPtr& aBatch, Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool UpdateRecord(const BatchPtr& aBatch, Red::TweakDBID aRecordId);
+    void RegisterEnum(const BatchPtr& aBatch, Red::TweakDBID aRecordId);
     void RegisterName(const BatchPtr& aBatch, Red::TweakDBID aId, const std::string& aName);
     void CommitBatch(const BatchPtr& aBatch);
 
@@ -87,5 +90,6 @@ private:
     Core::SharedPtr<Red::TweakDBBuffer> m_buffer;
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;
     Core::Map<Red::TweakDBID, std::string> m_knownNames;
+    Core::Set<Red::TweakDBID> m_knownEnums;
 };
 }
