@@ -118,6 +118,12 @@ App::RedReader::GroupStatePtr App::RedReader::HandleGroup(App::TweakChangeset& a
         return groupState;
     }
 
+    if (groupState->recordId == groupState->sourceId)
+    {
+        LogError("{}: Cannot clone {} from itself.", groupState->groupPath, groupState->groupName);
+        return groupState;
+    }
+
     aChangeset.MakeRecord(groupState->recordId, groupState->resolvedType, groupState->sourceId);
     aChangeset.RegisterName(groupState->recordId, groupState->groupName);
 
