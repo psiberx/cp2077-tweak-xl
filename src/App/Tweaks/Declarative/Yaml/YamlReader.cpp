@@ -72,7 +72,7 @@ void App::YamlReader::Read(App::TweakChangeset& aChangeset)
     if (!CheckConditions(m_data))
         return;
 
-    ConvertLegacyNodes();
+    // ConvertLegacyNodes();
     ProcessTemplates(m_data);
 
     auto propMode = ResolvePropertyMode(m_data);
@@ -150,7 +150,6 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
             {
                 auto cloneAttr = aNode[BaseAttrKey];
 
-                // TODO: Ignore cloning?
                 if (cloneAttr.IsDefined())
                 {
                     const auto sourceId = ResolveTweakDBID(cloneAttr);
@@ -158,13 +157,13 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 
                     if (!sourceType)
                     {
-                        LogWarning("{}: Cannot clone {}, the record doesn't exist.", aName, cloneAttr.Scalar());
+                        LogError("{}: Cannot clone {}, the record doesn't exist.", aName, cloneAttr.Scalar());
                         break;
                     }
 
                     if (sourceType != recordType)
                     {
-                        LogWarning("{}: Cannot clone {}, the record has incompatible type.", aName, cloneAttr.Scalar());
+                        LogError("{}: Cannot clone {}, the record has incompatible type.", aName, cloneAttr.Scalar());
                         break;
                     }
 
@@ -199,7 +198,7 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 
                 if (!sourceType)
                 {
-                    LogWarning("{}: Cannot clone {}, the record doesn't exist.", aName, cloneAttr.Scalar());
+                    LogError("{}: Cannot clone {}, the record doesn't exist.", aName, cloneAttr.Scalar());
                     break;
                 }
 
@@ -355,6 +354,12 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
             LogError("{}: Cannot create record, the record type {} is abstract.", aRecordPath, m_reflection->GetRecordShortName(aRecordType->GetName()));
         else
             LogError("{}: Cannot create record, {} is not a record type.", aRecordPath, aRecordType->GetName().ToString());
+        return;
+    }
+
+    if (recordId == aSourceId)
+    {
+        LogError("{}: Cannot clone {} from itself.", aRecordPath, aRecordName);
         return;
     }
 
