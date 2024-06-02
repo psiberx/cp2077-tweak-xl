@@ -181,10 +181,16 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         aChangelog->ForgetResourcePaths();
     }
 
-    for (const auto& [id, name] : m_pendingNames)
-    {
-        aManager->RegisterName(id, name, GetRecordType(id));
-    }
+    Red::JobQueue jobQueue;
+
+    LogDebug("Registering names...");
+
+    jobQueue.Dispatch([&]() {
+        for (const auto& [id, name] : m_pendingNames)
+        {
+            aManager->RegisterName(id, name, GetRecordType(id));
+        }
+    });
 
     {
         LogDebug("Preparing records...");
@@ -520,6 +526,8 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
             LogError("Cannot update record {}.", aManager->GetName(recordId));
         }
     }
+
+    Red::WaitForQueue(jobQueue, std::chrono::seconds(10));
 
     m_pendingFlats.clear();
     m_pendingRecords.clear();
