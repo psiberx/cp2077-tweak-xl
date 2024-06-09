@@ -20,6 +20,8 @@ public:
     void Unload() override;
     void Read(TweakChangeset& aChangeset) override;
 
+    static Red::CName GetFlatTypeName(const Red::TweakFlatPtr& aFlat);
+
 private:
     struct GroupState
     {
@@ -81,8 +83,6 @@ private:
                                   const std::string& aParentName, const std::string& aParentPath,
                                   const Red::CBaseRTTIType* aRequiredType = nullptr,
                                   const Red::CClass* aForeignType = nullptr);
-
-    Red::CName GetFlatTypeName(const Red::TweakFlatPtr& aFlat);
 
     Red::InstancePtr<> MakeValue(const FlatStatePtr& aState, const Red::TweakValuePtr& aValue);
     Red::InstancePtr<> MakeValue(const FlatStatePtr& aState, const Core::Vector<Red::TweakValuePtr>& aValues = {});

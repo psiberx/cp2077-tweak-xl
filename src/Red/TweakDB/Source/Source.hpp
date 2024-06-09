@@ -2,6 +2,9 @@
 
 namespace Red
 {
+constexpr auto TweakSchemaPackage = "RTDB";
+constexpr auto TweakQueryPackage = "Query";
+
 struct TweakGroup;
 struct TweakFlat;
 struct TweakValue;
@@ -66,7 +69,10 @@ struct TweakGroup
     std::string name;
     std::string base;
     Core::Vector<Core::SharedPtr<TweakFlat>> flats;
+    Core::Vector<Core::SharedPtr<TweakInline>> inlines;
     Core::Vector<std::string> tags;
+    bool isSchema;
+    bool isQuery;
 };
 
 struct TweakInline
@@ -83,8 +89,10 @@ struct TweakSource
     Core::Vector<Core::SharedPtr<TweakGroup>> groups;
     Core::Vector<Core::SharedPtr<TweakFlat>> flats;
     Core::Vector<Core::SharedPtr<TweakInline>> inlines;
+    bool isPackage;
+    bool isSchema;
+    bool isQuery;
 };
-
 
 using TweakGroupPtr = Core::SharedPtr<TweakGroup>;
 using TweakFlatPtr = Core::SharedPtr<TweakFlat>;

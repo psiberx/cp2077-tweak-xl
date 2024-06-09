@@ -164,6 +164,11 @@ namespace internal
     };
 }
 
+namespace Name
+{
+constexpr auto Separator = ".";
+}
+
 namespace Type
 {
 constexpr auto Int = internal::to_const<type_int>::value;

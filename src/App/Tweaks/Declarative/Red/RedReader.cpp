@@ -1,12 +1,6 @@
 #include "RedReader.hpp"
 #include "Red/TweakDB/Source/Parser.hpp"
 
-namespace
-{
-constexpr auto SchemaPackage = "RTDB";
-constexpr auto QueryPackage = "Query";
-}
-
 App::RedReader::RedReader(Core::SharedPtr<Red::TweakDBManager> aManager, Core::SharedPtr<App::TweakContext> aContext)
     : BaseTweakReader(std::move(aManager), std::move(aContext))
     , m_path{}
@@ -37,15 +31,15 @@ void App::RedReader::Read(App::TweakChangeset& aChangeset)
     if (!IsLoaded())
         return;
 
-    if (m_source->package == SchemaPackage)
+    if (m_source->isSchema)
     {
-        LogError("RTDB package editing is not allowed.");
+        LogError("Schema package editing is not supported.");
         return;
     }
 
-    if (m_source->package == QueryPackage)
+    if (m_source->isQuery)
     {
-        LogError("Queries editing is not supported.");
+        LogError("Query package editing is not supported.");
         return;
     }
 
@@ -415,7 +409,7 @@ App::RedReader::GroupStatePtr App::RedReader::ResolveGroupState(App::TweakChange
             {
                 for (const auto& package : m_source->usings)
                 {
-                    if (package == SchemaPackage)
+                    if (package == Red::TweakSchemaPackage)
                         continue;
 
                     state->sourceId = ComposeGroupName(package, aGroup->base);

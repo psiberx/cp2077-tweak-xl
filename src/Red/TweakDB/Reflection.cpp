@@ -1,4 +1,6 @@
 #include "Reflection.hpp"
+#include "Red/TweakDB/Source/Grammar.hpp"
+#include "Red/TweakDB/Source/Source.hpp"
 
 namespace
 {
@@ -7,18 +9,18 @@ constexpr auto RecordTypePrefixLength = std::char_traits<char>::length(RecordTyp
 constexpr auto RecordTypeSuffix = "_Record";
 constexpr auto RecordTypeSuffixLength = std::char_traits<char>::length(RecordTypeSuffix);
 
-constexpr auto BaseRecordTypeName = Red::CName("gamedataTweakDBRecord");
+constexpr auto BaseRecordTypeName = Red::GetTypeName<Red::TweakDBRecord>();
 
-constexpr auto ResRefTypeName = Red::CName("raRef:CResource");
-constexpr auto ResRefArrayTypeName = Red::CName("array:raRef:CResource");
+constexpr auto ResRefTypeName = Red::GetTypeName<Red::RaRef<Red::CResource>>();
+constexpr auto ResRefArrayTypeName = Red::GetTypeName<Red::DynArray<Red::RaRef<Red::CResource>>>();
 
-constexpr auto ResRefTokenTypeName = Red::CName("redResourceReferenceScriptToken");
-constexpr auto ResRefTokenArrayTypeName = Red::CName("array:redResourceReferenceScriptToken");
+constexpr auto ScriptResRefTypeName = Red::GetTypeName<Red::ResRef>();
+constexpr auto ScriptResRefArrayTypeName = Red::GetTypeName<Red::DynArray<Red::ResRef>>();
 
-constexpr auto SchemaPackage = "RTDB.";
-constexpr auto PropSeparator = ".";
-
+constexpr auto NameSeparator = Red::TweakGrammar::Name::Separator;
 constexpr auto DataOffsetSize = 12;
+
+const std::string s_nameSep = NameSeparator;
 }
 
 Red::TweakDBReflection::TweakDBReflection()
@@ -189,8 +191,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
                     // the actual property type from the flat value.
                     if (returnType->GetType() == Red::ERTTIType::Name)
                     {
-                        static std::string dot = ".";
-                        auto propId = sampleId + dot + propName;
+                        auto propId = sampleId + s_nameSep + propName;
                         auto flat = m_tweakDb->GetFlatValue(propId);
                         returnType = flat->GetValue().type;
                     }
@@ -203,7 +204,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
 
         assert(propInfo->type);
 
-        propInfo->appendix = ".";
+        propInfo->appendix = s_nameSep;
         propInfo->appendix.append(propName);
 
         recordInfo->props[propInfo->name] = propInfo;
@@ -283,12 +284,10 @@ uint32_t Red::TweakDBReflection::GetRecordTypeHash(const Red::CClass* aType)
 
 std::string Red::TweakDBReflection::ResolvePropertyName(Red::TweakDBID aSampleId, Red::CName aGetterName)
 {
-    static const std::string dot = ".";
-
     std::string propName = aGetterName.ToString();
     propName[0] = static_cast<char>(std::tolower(propName[0]));
 
-    auto propId = aSampleId + dot + propName;
+    auto propId = aSampleId + s_nameSep + propName;
 
     std::shared_lock<Red::SharedMutex> flatLockR(m_tweakDb->mutex00);
 
@@ -301,13 +300,13 @@ std::string Red::TweakDBReflection::ResolvePropertyName(Red::TweakDBID aSampleId
 
 int32_t Red::TweakDBReflection::ResolveDefaultValue(const Red::CClass* aType, const std::string& aPropName)
 {
-    std::string defaultFlatName = SchemaPackage;
-
+    std::string defaultFlatName = TweakSchemaPackage;
+    defaultFlatName.append(NameSeparator);
     defaultFlatName.append(GetRecordShortName(aType->GetName()));
 
-    if (!aPropName.starts_with(PropSeparator))
+    if (!aPropName.starts_with(NameSeparator))
     {
-        defaultFlatName.append(PropSeparator);
+        defaultFlatName.append(NameSeparator);
     }
 
     defaultFlatName.append(aPropName);
@@ -477,7 +476,7 @@ bool Red::TweakDBReflection::IsForeignKeyArray(const Red::CBaseRTTIType* aType)
 
 bool Red::TweakDBReflection::IsResRefToken(Red::CName aTypeName)
 {
-    return aTypeName == ResRefTokenTypeName || aTypeName == ResRefTypeName;
+    return aTypeName == ScriptResRefTypeName || aTypeName == ResRefTypeName;
 }
 
 bool Red::TweakDBReflection::IsResRefToken(const Red::CBaseRTTIType* aType)
@@ -487,7 +486,7 @@ bool Red::TweakDBReflection::IsResRefToken(const Red::CBaseRTTIType* aType)
 
 bool Red::TweakDBReflection::IsResRefTokenArray(Red::CName aTypeName)
 {
-    return aTypeName == ResRefTokenArrayTypeName || aTypeName == ResRefArrayTypeName;
+    return aTypeName == ScriptResRefArrayTypeName || aTypeName == ResRefArrayTypeName;
 }
 
 bool Red::TweakDBReflection::IsResRefTokenArray(const Red::CBaseRTTIType* aType)

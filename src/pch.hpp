@@ -31,6 +31,7 @@
 #include <RED4ext/Scripting/Natives/Generated/game/IGameSystem.hpp>
 #include <RED4ext/Scripting/Natives/Generated/game/ScriptableSystem.hpp>
 #include <RED4ext/Scripting/Natives/Generated/game/data/StatType.hpp>
+#include <RED4ext/Scripting/Natives/Generated/red/ResourceReferenceScriptToken.hpp>
 #include <RED4ext/Scripting/Natives/Generated/world/IRuntimeSystem.hpp>
 
 #include <nameof.hpp>

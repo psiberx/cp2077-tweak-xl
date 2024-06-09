@@ -9,6 +9,9 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::package_name>
     static void apply(const ParseInput& in, ParseState& state, TweakSource& package)
     {
         package.package = in.string();
+        package.isPackage = !package.package.empty();
+        package.isSchema = (package.package == TweakSchemaPackage);
+        package.isQuery = (package.package == TweakQueryPackage);
     }
 };
 
@@ -45,6 +48,8 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::group_name>
         auto group = Core::MakeShared<TweakGroup>();
         group->name = in.string();
         group->tags.swap(state.tags);
+        group->isSchema = package.isSchema;
+        group->isQuery = package.isQuery;
 
         package.groups.push_back(group);
 
@@ -267,6 +272,8 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::inline_begin>
     static void apply(const ParseInput& in, ParseState& state, TweakSource& package)
     {
         auto group = Core::MakeShared<TweakGroup>();
+        group->isSchema = false;
+        group->isQuery = false;
 
         auto inlined = Core::MakeShared<TweakInline>();
         inlined->owner = state.nested.empty() ? state.group : state.nested.front().first;
@@ -274,6 +281,11 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::inline_begin>
         inlined->group = group;
 
         package.inlines.push_back(inlined);
+        inlined->owner->inlines.push_back(inlined);
+        if (inlined->owner != inlined->parent)
+        {
+            inlined->parent->inlines.push_back(inlined);
+        }
 
         auto value = Core::MakeShared<TweakValue>();
         value->type = ETweakValueType::Inline;
@@ -281,7 +293,7 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::inline_begin>
 
         state.flat->values.push_back(value);
 
-        state.nested.push_back({state.group, state.flat});
+        state.nested.emplace_back(state.group, state.flat);
         state.group = group;
         state.flat.reset();
     }
