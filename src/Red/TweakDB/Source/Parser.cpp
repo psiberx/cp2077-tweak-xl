@@ -10,8 +10,8 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::package_name>
     {
         package.package = in.string();
         package.isPackage = !package.package.empty();
-        package.isSchema = (package.package == TweakSchemaPackage);
-        package.isQuery = (package.package == TweakQueryPackage);
+        package.isSchema = (package.package == TweakSource::SchemaPackage);
+        package.isQuery = (package.package == TweakSource::QueryPackage);
     }
 };
 

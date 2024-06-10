@@ -299,7 +299,7 @@ std::string Red::TweakDBReflection::ResolvePropertyName(Red::TweakDBID aSampleId
 
 int32_t Red::TweakDBReflection::ResolveDefaultValue(const Red::CClass* aType, const std::string& aPropName)
 {
-    std::string defaultFlatName = TweakSchemaPackage;
+    std::string defaultFlatName = TweakSource::SchemaPackage;
     defaultFlatName.append(NameSeparator);
     defaultFlatName.append(GetRecordShortName(aType->GetName()));
 

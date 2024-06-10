@@ -5,8 +5,8 @@
 
 namespace
 {
-constexpr auto TweakExtension = L".tweak";
-constexpr auto SchemaPackage = Red::TweakSchemaPackage;
+constexpr auto TweakExtension = Red::TweakSource::Extension;
+constexpr auto SchemaPackage = Red::TweakSource::SchemaPackage;
 constexpr auto NameSeparator = Red::TweakGrammar::Name::Separator;
 constexpr auto InlineSuffix = "_inline";
 }

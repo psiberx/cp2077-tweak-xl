@@ -409,7 +409,7 @@ App::RedReader::GroupStatePtr App::RedReader::ResolveGroupState(App::TweakChange
             {
                 for (const auto& package : m_source->usings)
                 {
-                    if (package == Red::TweakSchemaPackage)
+                    if (package == Red::TweakSource::SchemaPackage)
                         continue;
 
                     state->sourceId = ComposeGroupName(package, aGroup->base);
