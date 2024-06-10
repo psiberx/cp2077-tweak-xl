@@ -18,9 +18,8 @@ constexpr auto ScriptResRefTypeName = Red::GetTypeName<Red::ResRef>();
 constexpr auto ScriptResRefArrayTypeName = Red::GetTypeName<Red::DynArray<Red::ResRef>>();
 
 constexpr auto NameSeparator = Red::TweakGrammar::Name::Separator;
+constexpr auto PropSeparator = std::string_view(NameSeparator);
 constexpr auto DataOffsetSize = 12;
-
-const std::string s_nameSep = NameSeparator;
 }
 
 Red::TweakDBReflection::TweakDBReflection()
@@ -191,7 +190,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
                     // the actual property type from the flat value.
                     if (returnType->GetType() == Red::ERTTIType::Name)
                     {
-                        auto propId = sampleId + s_nameSep + propName;
+                        auto propId = sampleId + PropSeparator + propName;
                         auto flat = m_tweakDb->GetFlatValue(propId);
                         returnType = flat->GetValue().type;
                     }
@@ -204,7 +203,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
 
         assert(propInfo->type);
 
-        propInfo->appendix = s_nameSep;
+        propInfo->appendix = PropSeparator;
         propInfo->appendix.append(propName);
 
         recordInfo->props[propInfo->name] = propInfo;
@@ -287,7 +286,7 @@ std::string Red::TweakDBReflection::ResolvePropertyName(Red::TweakDBID aSampleId
     std::string propName = aGetterName.ToString();
     propName[0] = static_cast<char>(std::tolower(propName[0]));
 
-    auto propId = aSampleId + s_nameSep + propName;
+    auto propId = aSampleId + PropSeparator + propName;
 
     std::shared_lock<Red::SharedMutex> flatLockR(m_tweakDb->mutex00);
 

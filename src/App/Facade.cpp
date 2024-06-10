@@ -39,6 +39,11 @@ void App::Facade::ExecuteTweak(Red::CName aName)
     Core::Resolve<TweakService>()->ExecuteTweak(aName);
 }
 
+void App::Facade::ExportMetadata()
+{
+    Core::Resolve<TweakService>()->ExportMetadata();
+}
+
 void App::Facade::Reload()
 {
     Core::Resolve<TweakService>()->LoadTweaks(true);

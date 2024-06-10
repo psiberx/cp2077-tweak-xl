@@ -1,12 +1,17 @@
 #include "TweakService.hpp"
 #include "App/Tweaks/Declarative/TweakImporter.hpp"
 #include "App/Tweaks/Executable/TweakExecutor.hpp"
+#include "App/Tweaks/Metadata/MetadataExporter.hpp"
 #include "Red/TweakDB/Raws.hpp"
 
-App::TweakService::TweakService(std::filesystem::path aGameDir, std::filesystem::path aTweaksDir,
-                                const Core::SemvVer& aProductVer)
+App::TweakService::TweakService(const Core::SemvVer& aProductVer, std::filesystem::path aGameDir,
+                                std::filesystem::path aTweaksDir, std::filesystem::path aInheritanceMapPath,
+                                std::filesystem::path aExtraFlatsPath, std::filesystem::path aSourcesDir)
     : m_gameDir(std::move(aGameDir))
     , m_tweaksDir(std::move(aTweaksDir))
+    , m_sourcesDir(std::move(aSourcesDir))
+    , m_inheritanceMapPath(std::move(aInheritanceMapPath))
+    , m_extraFlatsPath(std::move(aExtraFlatsPath))
     , m_productVer(aProductVer)
 {
     m_importPaths.push_back(m_tweaksDir);
@@ -21,6 +26,8 @@ void App::TweakService::OnBootstrap()
 
         m_reflection = Core::MakeShared<Red::TweakDBReflection>();
         m_manager = Core::MakeShared<Red::TweakDBManager>(m_reflection);
+
+        ImportMetadata();
 
         m_context = Core::MakeShared<App::TweakContext>(m_productVer);
         m_importer = Core::MakeShared<App::TweakImporter>(m_manager, m_context);
@@ -143,6 +150,25 @@ bool App::TweakService::RegisterDirectory(std::filesystem::path aPath)
     }
 
     m_importPaths.emplace_back(std::move(aPath));
+    return true;
+}
+
+bool App::TweakService::ImportMetadata()
+{
+    return false;
+}
+
+bool App::TweakService::ExportMetadata()
+{
+    std::error_code error;
+    if (!std::filesystem::exists(m_sourcesDir, error))
+        return false;
+
+    MetadataExporter exporter{m_manager};
+    exporter.LoadSource(m_sourcesDir);
+    exporter.WriteInheritanceMap(m_inheritanceMapPath);
+    exporter.WriteExtraFlats(m_extraFlatsPath);
+
     return true;
 }
 

@@ -4,24 +4,49 @@
 
 namespace App::Env
 {
-inline std::filesystem::path GameDir()
+inline auto GameDir()
 {
     return Core::Runtime::GetRootDir();
 }
 
-inline std::filesystem::path TweaksDir()
+inline auto TweaksDir()
 {
-    return Core::Runtime::GetRootDir() / L"r6" / L"tweaks";
+    return GameDir() / L"r6" / L"tweaks";
 }
 
-inline std::filesystem::path ScriptsDir()
+inline auto RedModSourcesDir()
 {
-    return Core::Runtime::GetModuleDir() / L"Scripts";
+    return GameDir() / L"tools" / L"redmod" / L"tweaks";
 }
 
-inline std::filesystem::path LegacyScriptsDir()
+inline auto LegacyScriptsDir()
 {
-    return Core::Runtime::GetRootDir() / L"r6" / L"scripts" / L"TweakXL";
+    return GameDir() / L"r6" / L"scripts" / L"TweakXL";
+}
+
+inline auto PluginDir()
+{
+    return Core::Runtime::GetModuleDir();
+}
+
+inline auto PluginScriptsDir()
+{
+    return PluginDir() / L"Scripts";
+}
+
+inline auto PluginDataDir()
+{
+    return PluginDir() / L"Data";
+}
+
+inline auto ExtraFlatsPath()
+{
+    return PluginDataDir() / L"ExtraFlats.yaml";
+}
+
+inline auto InheritanceMapPath()
+{
+    return PluginDataDir() / L"InheritanceMap.yaml";
 }
 
 inline const auto& GameVer()

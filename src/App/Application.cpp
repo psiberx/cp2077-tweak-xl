@@ -21,10 +21,12 @@ App::Application::Application(HMODULE aHandle, const RED4ext::Sdk* aSdk)
         ->CreateRecentLogSymlink();
     Register<Support::RED4extProvider>(aHandle, aSdk)
         ->EnableAddressLibrary()
-        ->RegisterScripts(Env::ScriptsDir());
+        ->RegisterScripts(Env::PluginScriptsDir());
     Register<Support::RedLibProvider>();
 
-    Register<App::TweakService>(Env::GameDir(), Env::TweaksDir(), Env::GameVer());
+    Register<App::TweakService>(Env::GameVer(), Env::GameDir(), Env::TweaksDir(),
+                                Env::InheritanceMapPath(), Env::ExtraFlatsPath(),
+                                Env::RedModSourcesDir());
     Register<App::StatService>();
 }
 

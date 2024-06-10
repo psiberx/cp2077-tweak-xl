@@ -19,7 +19,9 @@ class TweakService
     , public Core::LoggingAgent
 {
 public:
-    TweakService(std::filesystem::path aGameDir, std::filesystem::path aTweaksDir, const Core::SemvVer& aProductVer);
+    TweakService(const Core::SemvVer& aProductVer, std::filesystem::path aGameDir, std::filesystem::path aTweaksDir,
+                 std::filesystem::path aInheritanceMapPath, std::filesystem::path aExtraFlatsPath,
+                 std::filesystem::path aSourcesDir);
 
     bool RegisterTweak(std::filesystem::path aPath);
     bool RegisterDirectory(std::filesystem::path aPath);
@@ -29,6 +31,9 @@ public:
     void ExecuteTweaks();
     void ExecuteTweak(Red::CName aName);
     void CheckForIssues();
+
+    bool ImportMetadata();
+    bool ExportMetadata();
 
     Red::TweakDBManager& GetManager();
     Red::TweakDBReflection& GetReflection();
@@ -41,6 +46,9 @@ protected:
 
     std::filesystem::path m_gameDir;
     std::filesystem::path m_tweaksDir;
+    std::filesystem::path m_sourcesDir;
+    std::filesystem::path m_inheritanceMapPath;
+    std::filesystem::path m_extraFlatsPath;
     const Core::SemvVer& m_productVer;
     Core::Vector<std::filesystem::path> m_importPaths;
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;
