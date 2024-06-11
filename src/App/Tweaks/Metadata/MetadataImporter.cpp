@@ -12,43 +12,81 @@ bool App::MetadataImporter::ImportInheritanceMap(const std::filesystem::path& aP
     if (!std::filesystem::exists(aPath, error))
         return false;
 
-    auto data = YAML::LoadFile(aPath.string());
-    if (!data.IsDefined() || !data.IsMap())
-        return false;
-
-    Core::Set<Red::TweakDBID> descendantIDs;
-
-    for (const auto& topNodeIt : data)
+    if (aPath.extension() == ".dat")
     {
-        const auto recordID = Red::TweakDBID(topNodeIt.first.Scalar());
+        std::ifstream in(aPath, std::ios::binary);
 
-        if (!recordID)
-            return false;
+        size_t numberOfEntries;
+        in.read(reinterpret_cast<char*>(&numberOfEntries), sizeof(numberOfEntries));
 
-        const auto& descendantNames = topNodeIt.second;
-
-        if (!descendantNames.IsSequence())
-            return false;
-
-        descendantIDs.clear();
-
-        for (const auto& descendantName : descendantNames)
+        while (numberOfEntries > 0)
         {
-            const auto descendantID = Red::TweakDBID(descendantName.Scalar());
+            Red::TweakDBID recordID;
+            size_t numberOfChildren;
 
-            if (!descendantID)
-                return false;
+            in.read(reinterpret_cast<char*>(&recordID), sizeof(recordID));
+            in.read(reinterpret_cast<char*>(&numberOfChildren), sizeof(numberOfChildren));
 
-            descendantIDs.insert(descendantID);
+            Core::Set<Red::TweakDBID> descendantIDs;
+
+            while (numberOfChildren > 0)
+            {
+                Red::TweakDBID descendantID;
+                in.read(reinterpret_cast<char*>(&descendantID), sizeof(descendantID));
+                descendantIDs.insert(descendantID);
+
+                --numberOfChildren;
+            }
+
+            m_reflection->RegisterDescendants(recordID, descendantIDs);
+
+            --numberOfEntries;
         }
 
-        if (descendantIDs.empty())
+        return true;
+    }
+    else if (aPath.extension() == ".yaml")
+    {
+        auto data = YAML::LoadFile(aPath.string());
+        if (!data.IsDefined() || !data.IsMap())
             return false;
 
-        m_reflection->RegisterDescendants(recordID, descendantIDs);
+        Core::Set<Red::TweakDBID> descendantIDs;
+
+        for (const auto& topNodeIt : data)
+        {
+            const auto recordID = Red::TweakDBID(topNodeIt.first.Scalar());
+
+            if (!recordID)
+                return false;
+
+            const auto& descendantNames = topNodeIt.second;
+
+            if (!descendantNames.IsSequence())
+                return false;
+
+            descendantIDs.clear();
+
+            for (const auto& descendantName : descendantNames)
+            {
+                const auto descendantID = Red::TweakDBID(descendantName.Scalar());
+
+                if (!descendantID)
+                    return false;
+
+                descendantIDs.insert(descendantID);
+            }
+
+            if (descendantIDs.empty())
+                return false;
+
+            m_reflection->RegisterDescendants(recordID, descendantIDs);
+        }
+
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 bool App::MetadataImporter::ImportExtraFlats(const std::filesystem::path& aPath)
@@ -57,58 +95,63 @@ bool App::MetadataImporter::ImportExtraFlats(const std::filesystem::path& aPath)
     if (!std::filesystem::exists(aPath, error))
         return false;
 
-    auto data = YAML::LoadFile(aPath.string());
-    if (!data.IsDefined() || !data.IsMap())
-        return false;
-
-    for (const auto& topNodeIt : data)
+    if (aPath.extension() == ".yaml")
     {
-        const auto recordType = m_reflection->GetRecordFullName(topNodeIt.first.Scalar().data());
-
-        if (!m_reflection->IsRecordType(recordType))
+        auto data = YAML::LoadFile(aPath.string());
+        if (!data.IsDefined() || !data.IsMap())
             return false;
 
-        const auto& extraFlats = topNodeIt.second;
-
-        if (!extraFlats.IsMap())
-            return false;
-
-        for (const auto& extraFlatIt : extraFlats)
+        for (const auto& topNodeIt : data)
         {
-            const auto& propName = extraFlatIt.first.Scalar();
-            const auto& propDataNode = extraFlatIt.second;
+            const auto recordType = m_reflection->GetRecordFullName(topNodeIt.first.Scalar().data());
 
-            if (!propDataNode.IsMap())
+            if (!m_reflection->IsRecordType(recordType))
                 return false;
 
-            const auto& propTypeNode = propDataNode["flatType"];
+            const auto& extraFlats = topNodeIt.second;
 
-            if (!propTypeNode.IsScalar())
+            if (!extraFlats.IsMap())
                 return false;
 
-            const auto propType = Red::CName(propTypeNode.Scalar().data());
-
-            if (!m_reflection->IsFlatType(propType))
-                return false;
-
-            const auto& foreignTypeNode = propDataNode["foreignType"];
-
-            auto foreignType = Red::CName();
-
-            if (foreignTypeNode.IsDefined())
+            for (const auto& extraFlatIt : extraFlats)
             {
-                if (!foreignTypeNode.IsScalar())
+                const auto& propName = extraFlatIt.first.Scalar();
+                const auto& propDataNode = extraFlatIt.second;
+
+                if (!propDataNode.IsMap())
                     return false;
 
-                foreignType = m_reflection->GetRecordFullName(foreignTypeNode.Scalar().data());
+                const auto& propTypeNode = propDataNode["flatType"];
 
-                if (!m_reflection->IsRecordType(foreignType))
+                if (!propTypeNode.IsScalar())
                     return false;
+
+                const auto propType = Red::CName(propTypeNode.Scalar().data());
+
+                if (!m_reflection->IsFlatType(propType))
+                    return false;
+
+                const auto& foreignTypeNode = propDataNode["foreignType"];
+
+                auto foreignType = Red::CName();
+
+                if (foreignTypeNode.IsDefined())
+                {
+                    if (!foreignTypeNode.IsScalar())
+                        return false;
+
+                    foreignType = m_reflection->GetRecordFullName(foreignTypeNode.Scalar().data());
+
+                    if (!m_reflection->IsRecordType(foreignType))
+                        return false;
+                }
+
+                m_reflection->RegisterExtraFlat(recordType, propName, propType, foreignType);
             }
-
-            m_reflection->RegisterExtraFlat(recordType, propName, propType, foreignType);
         }
+
+        return true;
     }
 
-    return true;
+    return false;
 }

@@ -46,7 +46,7 @@ inline auto ExtraFlatsPath()
 
 inline auto InheritanceMapPath()
 {
-    return PluginDataDir() / L"InheritanceMap.yaml";
+    return PluginDataDir() / L"InheritanceMap.dat";
 }
 
 inline const auto& GameVer()

@@ -141,11 +141,32 @@ bool App::MetadataExporter::ExportInheritanceMap(const std::filesystem::path& aO
         }
     }
 
+    if (aOutPath.extension() == ".dat")
     {
-        auto outPath = aOutPath;
-        outPath.replace_extension(".yaml");
+        std::ofstream out(aOutPath, std::ios::binary);
 
-        std::ofstream out(outPath, std::ios::out);
+        auto numberOfEntries = map.size();
+        out.write(reinterpret_cast<char*>(&numberOfEntries), sizeof(numberOfEntries));
+
+        for (const auto& [recordName, childNames] : map)
+        {
+            auto recordID = Red::TweakDBID(recordName);
+            auto numberOfChildren = childNames.size();
+
+            out.write(reinterpret_cast<char*>(&recordID), sizeof(recordID));
+            out.write(reinterpret_cast<char*>(&numberOfChildren), sizeof(numberOfChildren));
+
+            for (const auto& childName : childNames)
+            {
+                auto childID = Red::TweakDBID(childName);
+
+                out.write(reinterpret_cast<char*>(&childID), sizeof(childID));
+            }
+        }
+    }
+    else if (aOutPath.extension() == ".yaml")
+    {
+        std::ofstream out(aOutPath, std::ios::out);
 
         if (aGeneratedComment)
         {
@@ -153,9 +174,9 @@ bool App::MetadataExporter::ExportInheritanceMap(const std::filesystem::path& aO
             out << "# DO NOT EDIT BY HAND" << std::endl;
         }
 
-        for (const auto& [groupName, childNames] : map)
+        for (const auto& [recordName, childNames] : map)
         {
-            out << groupName << ":" << std::endl;
+            out << recordName << ":" << std::endl;
 
             for (const auto& childName : childNames)
             {
@@ -208,11 +229,9 @@ bool App::MetadataExporter::ExportExtraFlats(const std::filesystem::path& aOutPa
         }
     }
 
+    if (aOutPath.extension() == ".yaml")
     {
-        auto outPath = aOutPath;
-        outPath.replace_extension(".yaml");
-
-        std::ofstream out(outPath, std::ios::out);
+        std::ofstream out(aOutPath, std::ios::out);
 
         if (aGeneratedComment)
         {
