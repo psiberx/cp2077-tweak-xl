@@ -415,7 +415,7 @@ bool Red::TweakDBReflection::IsFlatType(const Red::CBaseRTTIType* aType)
 
 bool Red::TweakDBReflection::IsRecordType(Red::CName aTypeName)
 {
-    return IsRecordType(Red::CRTTISystem::Get()->GetClass(aTypeName));
+    return aTypeName && IsRecordType(Red::CRTTISystem::Get()->GetClass(aTypeName));
 }
 
 bool Red::TweakDBReflection::IsRecordType(const Red::CClass* aType)
@@ -562,6 +562,9 @@ Red::CName Red::TweakDBReflection::GetRecordFullName(const char* aName)
 {
     std::string finalName = aName;
 
+    if (finalName.empty())
+        return {};
+
     if (!finalName.starts_with(RecordTypePrefix))
         finalName.insert(0, RecordTypePrefix);
 
@@ -632,8 +635,8 @@ Red::InstancePtr<> Red::TweakDBReflection::Construct(const Red::CBaseRTTIType* a
     return Construct(aType->GetName());
 }
 
-void Red::TweakDBReflection::RegisterExtraFlat(Red::CName aRecordType, const std::string& aPropName, Red::CName aPropType,
-                                          Red::CName aForeignType)
+void Red::TweakDBReflection::RegisterExtraFlat(Red::CName aRecordType, const std::string& aPropName,
+                                               Red::CName aPropType, Red::CName aForeignType)
 {
     s_extraFlats[aRecordType].push_back({aPropType, aForeignType, NameSeparator + aPropName});
 }

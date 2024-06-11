@@ -2,6 +2,7 @@
 #include "App/Tweaks/Declarative/TweakImporter.hpp"
 #include "App/Tweaks/Executable/TweakExecutor.hpp"
 #include "App/Tweaks/Metadata/MetadataExporter.hpp"
+#include "App/Tweaks/Metadata/MetadataImporter.hpp"
 #include "Red/TweakDB/Raws.hpp"
 
 App::TweakService::TweakService(const Core::SemvVer& aProductVer, std::filesystem::path aGameDir,
@@ -22,12 +23,13 @@ void App::TweakService::OnBootstrap()
     CreateTweaksDir();
 
     HookAfter<Raw::LoadTweakDB>([&]() {
-        Red::TweakDB::Get()->unk160 = 0;
-
         m_reflection = Core::MakeShared<Red::TweakDBReflection>();
         m_manager = Core::MakeShared<Red::TweakDBManager>(m_reflection);
 
-        ImportMetadata();
+        if (!ImportMetadata())
+            return;
+
+        Red::TweakDB::Get()->unk160 = 0;
 
         m_context = Core::MakeShared<App::TweakContext>(m_productVer);
         m_importer = Core::MakeShared<App::TweakImporter>(m_manager, m_context);
@@ -92,7 +94,7 @@ void App::TweakService::ApplyPatches()
 
 void App::TweakService::CheckForIssues()
 {
-    if (m_manager)
+    if (m_manager && m_changelog)
     {
         m_changelog->CheckForIssues(m_manager);
     }
@@ -155,17 +157,29 @@ bool App::TweakService::RegisterDirectory(std::filesystem::path aPath)
 
 bool App::TweakService::ImportMetadata()
 {
-    return false;
+    MetadataImporter importer{m_manager};
+
+    if (!importer.ImportInheritanceMap(m_inheritanceMapPath))
+    {
+        LogError("Can't load inheritance metadata from \"{}\".", m_inheritanceMapPath.string());
+        return false;
+    }
+
+    if (!importer.ImportExtraFlats(m_extraFlatsPath))
+    {
+        LogError("Can't load extra flats metadata from \"{}\".", m_extraFlatsPath.string());
+        return false;
+    }
+
+    return true;
 }
 
-bool App::TweakService::ExportMetadata()
+void App::TweakService::ExportMetadata()
 {
     MetadataExporter exporter;
     exporter.LoadSource(m_sourcesDir);
-    exporter.ExportInheritanceMap(m_inheritanceMapPath);
-    exporter.ExportExtraFlats(m_extraFlatsPath);
-
-    return true;
+    exporter.ExportInheritanceMap(m_inheritanceMapPath, true);
+    exporter.ExportExtraFlats(m_extraFlatsPath, true);
 }
 
 Red::TweakDBManager& App::TweakService::GetManager()

@@ -150,6 +150,7 @@ bool App::MetadataExporter::ExportInheritanceMap(const std::filesystem::path& aO
         if (aGeneratedComment)
         {
             out << "# GENERATED FROM REDMOD SOURCES" << std::endl;
+            out << "# DO NOT EDIT BY HAND" << std::endl;
         }
 
         for (const auto& [groupName, childNames] : map)
@@ -216,6 +217,7 @@ bool App::MetadataExporter::ExportExtraFlats(const std::filesystem::path& aOutPa
         if (aGeneratedComment)
         {
             out << "# GENERATED FROM REDMOD SOURCES" << std::endl;
+            out << "# DO NOT EDIT BY HAND" << std::endl;
         }
 
         for (const auto& [schemaName, extraFlats] : extras)

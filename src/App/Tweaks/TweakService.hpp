@@ -33,7 +33,7 @@ public:
     void CheckForIssues();
 
     bool ImportMetadata();
-    bool ExportMetadata();
+    void ExportMetadata();
 
     Red::TweakDBManager& GetManager();
     Red::TweakDBReflection& GetReflection();
