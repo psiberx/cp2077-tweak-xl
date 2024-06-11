@@ -54,6 +54,11 @@ bool App::BaseTweakReader::InheritMutations(App::TweakChangeset& aChangeset, Red
     return inheritedAny;
 }
 
+bool App::BaseTweakReader::IsOriginalBaseRecord(Red::TweakDBID aRecordId)
+{
+    return m_reflection->IsOriginalBaseRecord(aRecordId);
+}
+
 std::string App::BaseTweakReader::ComposeGroupName(const std::string& aParentName, const std::string& aGroupName)
 {
     if (aParentName.empty())

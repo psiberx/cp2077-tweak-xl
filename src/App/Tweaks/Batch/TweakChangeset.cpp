@@ -13,6 +13,18 @@ bool App::TweakChangeset::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTITy
     return true;
 }
 
+bool App::TweakChangeset::ReinheritFlat(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId, const std::string& aAppendix)
+{
+    if (!aFlatId.IsValid() || !aSourceId.IsValid() || aAppendix.empty())
+        return false;
+
+    auto& entry = m_reinheritedProps[aFlatId];
+    entry.sourceId = aSourceId;
+    entry.appendix = aAppendix;
+
+    return true;
+}
+
 bool App::TweakChangeset::MakeRecord(Red::TweakDBID aRecordId, const Red::CClass* aType,
                                      Red::TweakDBID aSourceId)
 {
@@ -220,6 +232,28 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         LogDebug("Committing changes...");
 
         aManager->CommitBatch(batch);
+    }
+
+    for (const auto& item : m_reinheritedProps)
+    {
+        const auto& flatId = item.first;
+        const auto& flatEntry = m_pendingFlats[flatId];
+        const auto& sourceId = item.second.sourceId;
+        const auto& propAppendix = item.second.appendix;
+
+        for (const auto& descendantId : aManager->GetReflection()->GetOriginalDescendants(sourceId))
+        {
+            auto propId = Red::TweakDBID(descendantId, propAppendix);
+
+            if (!m_pendingFlats.contains(propId))
+            {
+                auto propData = aManager->GetFlat(propId);
+                if (propData.type == flatEntry.type && propData.type->IsEqual(propData.instance, flatEntry.value.get()))
+                {
+                    m_pendingFlats[propId] = flatEntry;
+                }
+            }
+        }
     }
 
     {

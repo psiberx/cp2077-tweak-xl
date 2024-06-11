@@ -336,6 +336,11 @@ void App::YamlReader::UpdateFlatOwner(App::TweakChangeset& aChangeset, const std
         if (ResolveRecordInstanceType(aChangeset, recordId))
         {
             aChangeset.UpdateRecord(recordId);
+
+            if (IsOriginalBaseRecord(recordId))
+            {
+                aChangeset.ReinheritFlat(aName.data(), recordId, aName.substr(separatorPos));
+            }
         }
     }
 }
@@ -370,6 +375,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
     aChangeset.RegisterName(recordId, aRecordName);
 
     const auto propMode = ResolvePropertyMode(aNode, aPropMode);
+    const auto isOriginalBase = IsOriginalBaseRecord(recordId);
 
     for (const auto& nodeIt : aNode)
     {
@@ -491,6 +497,11 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
         }
 
         aChangeset.SetFlat(propId, propInfo->type, propValue);
+
+        if (isOriginalBase)
+        {
+            aChangeset.ReinheritFlat(propId, recordId, propInfo->appendix);
+        }
     }
 
     if (aSourceId.IsValid())

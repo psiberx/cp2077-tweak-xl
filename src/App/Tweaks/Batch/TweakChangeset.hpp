@@ -49,11 +49,16 @@ public:
         Red::TweakDBID baseId;
     };
 
-    bool SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
-                 const Red::InstancePtr<>& aValue);
+    struct ReinheritanceEntry
+    {
+        Red::TweakDBID sourceId;
+        std::string appendix;
+    };
 
-    bool MakeRecord(Red::TweakDBID aRecordId, const Red::CClass* aType,
-                    Red::TweakDBID aSourceId = {});
+    bool SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, const Red::InstancePtr<>& aValue);
+    bool ReinheritFlat(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId, const std::string& aAppendix);
+
+    bool MakeRecord(Red::TweakDBID aRecordId, const Red::CClass* aType, Red::TweakDBID aSourceId = {});
     bool UpdateRecord(Red::TweakDBID aRecordId);
 
     bool AppendElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
@@ -90,6 +95,7 @@ private:
     Core::Map<Red::TweakDBID, RecordEntry> m_pendingRecords;
     Core::Map<Red::TweakDBID, MutationEntry> m_pendingMutations;
     Core::Map<Red::TweakDBID, FlatEntry> m_pendingFlats;
+    Core::Map<Red::TweakDBID, ReinheritanceEntry> m_reinheritedProps;
     Core::Map<Red::TweakDBID, std::string> m_pendingNames;
 };
 }

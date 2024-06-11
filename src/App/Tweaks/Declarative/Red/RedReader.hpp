@@ -29,6 +29,7 @@ private:
         bool isCompatible{};
         bool isRedefined{};
         bool isRecord{};
+        bool isOriginalBase{};
         bool isProcessed{};
 
         const Red::CClass* requiredType{};
@@ -70,7 +71,7 @@ private:
                                const std::string& aParentName, const std::string& aParentPath,
                                const Red::CClass* aRequiredType, int32_t aInlineIndex = 0);
 
-    FlatStatePtr HandleFlat(App::TweakChangeset& aChangeset, const Red::TweakFlatPtr & aFlat,
+    FlatStatePtr HandleFlat(App::TweakChangeset& aChangeset, const Red::TweakFlatPtr& aFlat,
                             const std::string& aParentName, const std::string& aParentPath,
                             const Red::CBaseRTTIType* aRequiredType = nullptr,
                             const Red::CClass* aForeignType = nullptr);

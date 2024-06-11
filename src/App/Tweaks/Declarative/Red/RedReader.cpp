@@ -127,8 +127,13 @@ App::RedReader::GroupStatePtr App::RedReader::HandleGroup(App::TweakChangeset& a
 
         if (propInfo)
         {
-            HandleFlat(aChangeset, flat, groupState->groupName, groupState->groupPath,
-                       propInfo->type, propInfo->foreignType);
+            auto flatState = HandleFlat(aChangeset, flat, groupState->groupName, groupState->groupPath,
+                                        propInfo->type, propInfo->foreignType);
+
+            if (flatState && flatState->isProcessed && groupState->isOriginalBase)
+            {
+                aChangeset.ReinheritFlat(flatState->flatId, groupState->recordId, propInfo->appendix);
+            }
         }
         else
         {
@@ -457,6 +462,8 @@ App::RedReader::GroupStatePtr App::RedReader::ResolveGroupState(App::TweakChange
                 state->isCompatible = true;
                 state->requiredType = state->resolvedType;
             }
+
+            state->isOriginalBase = IsOriginalBaseRecord(state->recordId);
         }
     }
 

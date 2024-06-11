@@ -122,6 +122,13 @@ public:
     Red::InstancePtr<> Construct(Red::CName aTypeName);
     Red::InstancePtr<> Construct(const Red::CBaseRTTIType* aType);
 
+    bool IsOriginalBaseRecord(Red::TweakDBID aSourceId);
+    const Core::Set<Red::TweakDBID>& GetOriginalDescendants(Red::TweakDBID aSourceId);
+
+    void RegisterExtraFlat(Red::CName aRecordType, const std::string& aPropName, Red::CName aPropType,
+                           Red::CName aForeignType);
+    void RegisterDescendants(Red::TweakDBID aSourceId, const Core::Set<Red::TweakDBID>& aDescendantIds);
+
     Red::TweakDB* GetTweakDB();
 
 private:
@@ -133,6 +140,7 @@ private:
     };
 
     using ExtraFlatMap = Core::Map<Red::CName, Core::Vector<ExtraFlat>>;
+    using InheritanceMap = Core::Map<Red::TweakDBID, Core::Set<Red::TweakDBID>>;
     using RecordInfoMap = Core::Map<Red::CName, Core::SharedPtr<Red::TweakDBRecordInfo>>;
 
     Core::SharedPtr<Red::TweakDBRecordInfo> CollectRecordInfo(const Red::CClass* aType, Red::TweakDBID aSampleId = {});
@@ -146,6 +154,7 @@ private:
     RecordInfoMap m_resolved;
     std::shared_mutex m_mutex;
 
-    static ExtraFlatMap s_extraFlats;
+    inline static ExtraFlatMap s_extraFlats;
+    inline static InheritanceMap s_inheritanceMap;
 };
 }

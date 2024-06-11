@@ -632,6 +632,28 @@ Red::InstancePtr<> Red::TweakDBReflection::Construct(const Red::CBaseRTTIType* a
     return Construct(aType->GetName());
 }
 
+void Red::TweakDBReflection::RegisterExtraFlat(Red::CName aRecordType, const std::string& aPropName, Red::CName aPropType,
+                                          Red::CName aForeignType)
+{
+    s_extraFlats[aRecordType].push_back({aPropType, aForeignType, NameSeparator + aPropName});
+}
+
+void Red::TweakDBReflection::RegisterDescendants(Red::TweakDBID aSourceId,
+                                                const Core::Set<Red::TweakDBID>& aDescendantIds)
+{
+    s_inheritanceMap[aSourceId].insert(aDescendantIds.begin(), aDescendantIds.end());
+}
+
+bool Red::TweakDBReflection::IsOriginalBaseRecord(Red::TweakDBID aSourceId)
+{
+    return s_inheritanceMap.contains(aSourceId);
+}
+
+const Core::Set<Red::TweakDBID>& Red::TweakDBReflection::GetOriginalDescendants(Red::TweakDBID aSourceId)
+{
+    return s_inheritanceMap[aSourceId];
+}
+
 Red::TweakDB* Red::TweakDBReflection::GetTweakDB()
 {
     return m_tweakDb;
