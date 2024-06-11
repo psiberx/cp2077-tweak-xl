@@ -129,6 +129,8 @@ public:
                            Red::CName aForeignType);
     void RegisterDescendants(Red::TweakDBID aSourceId, const Core::Set<Red::TweakDBID>& aDescendantIds);
 
+    std::string ToString(Red::TweakDBID aID);
+
     Red::TweakDB* GetTweakDB();
 
 private:

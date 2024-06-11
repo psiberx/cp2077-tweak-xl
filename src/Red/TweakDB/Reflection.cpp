@@ -657,6 +657,13 @@ const Core::Set<Red::TweakDBID>& Red::TweakDBReflection::GetOriginalDescendants(
     return s_inheritanceMap[aSourceId];
 }
 
+std::string Red::TweakDBReflection::ToString(Red::TweakDBID aID)
+{
+    Red::CString str;
+    Red::CallStatic("gamedataTDBIDHelper", "ToStringDEBUG", str, aID);
+    return {str.c_str(), str.Length()};
+}
+
 Red::TweakDB* Red::TweakDBReflection::GetTweakDB()
 {
     return m_tweakDb;
