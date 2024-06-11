@@ -235,23 +235,47 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         aManager->CommitBatch(batch);
     }
 
-    for (const auto& item : m_reinheritedProps)
+    if (!m_reinheritedProps.empty())
     {
-        const auto& flatId = item.first;
-        const auto& flatEntry = m_pendingFlats[flatId];
-        const auto& sourceId = item.second.sourceId;
-        const auto& propAppendix = item.second.appendix;
+        LogDebug("Applying inheritance...");
 
-        for (const auto& descendantId : aManager->GetReflection()->GetOriginalDescendants(sourceId))
+        auto reinheritedProps = std::move(m_reinheritedProps);
+        while (!reinheritedProps.empty())
         {
-            auto propId = Red::TweakDBID(descendantId, propAppendix);
-
-            if (!m_pendingFlats.contains(propId))
+            auto items = std::move(reinheritedProps);
+            for (const auto& item : items)
             {
-                auto propData = aManager->GetFlat(propId);
-                if (propData.type == flatEntry.type && propData.type->IsEqual(propData.instance, flatEntry.value.get()))
+                const auto& appendix = item.second.appendix;
+                const auto& sourceId = item.second.sourceId;
+                const auto& sourceFlatId = item.first;
+                const auto& sourceFlatValue = aManager->GetFlat(sourceFlatId);
+#ifndef NDEBUG
+                const auto sourceFlatName = aManager->GetReflection()->ToString(sourceFlatId);
+#endif
+
+                for (const auto& descendantId : aManager->GetReflection()->GetOriginalDescendants(sourceId))
                 {
-                    m_pendingFlats[propId] = flatEntry;
+                    const auto descendantFlatId = Red::TweakDBID(descendantId, appendix);
+#ifndef NDEBUG
+                    const auto descendantFlatName = aManager->GetReflection()->ToString(descendantFlatId);
+#endif
+
+                    if (!m_pendingFlats.contains(descendantFlatId))
+                    {
+                        auto descendantFlatValue = aManager->GetFlat(descendantFlatId);
+                        if (descendantFlatValue == sourceFlatValue)
+                        {
+                            auto flatEntry = m_pendingFlats[sourceFlatId];
+                            m_pendingFlats[descendantFlatId] = std::move(flatEntry);
+
+                            if (aManager->GetReflection()->IsOriginalBaseRecord(descendantId))
+                            {
+                                auto& entry = reinheritedProps[descendantFlatId]; // NOLINT(bugprone-use-after-move)
+                                entry.sourceId = descendantId;
+                                entry.appendix = appendix;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -590,6 +614,7 @@ void App::TweakChangeset::FinishCommitJob()
         if (m_finishedCommitChunks == m_totalCommitChunks)
         {
             m_pendingFlats.clear();
+            m_reinheritedProps.clear();
             m_pendingRecords.clear();
             m_orderedRecords.clear();
             m_pendingNames.clear();
