@@ -73,6 +73,11 @@ struct Value
         return *reinterpret_cast<U*>(instance);
     }
 
+    constexpr bool operator==(const Value& aRhs) const noexcept
+    {
+        return type == aRhs.type && (!type || instance == aRhs.instance || type->IsEqual(instance, aRhs.instance));
+    }
+
     CBaseRTTIType* type;
     T* instance;
 };
