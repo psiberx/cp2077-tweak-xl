@@ -86,6 +86,19 @@ public:
 private:
     using ElementChange = std::pair<int32_t, Core::SharedPtr<void>>;
 
+    bool IsCommitFinished();
+    void StartCommitJob();
+    void FinishCommitJob();
+
+    template<typename J>
+    void StartAsyncCommitJob(J&& aJob)
+    {
+        StartCommitJob();
+        Red::JobQueue jobQueue;
+        jobQueue.Dispatch(std::forward<J>(aJob));
+        jobQueue.Dispatch([&]{ FinishCommitJob(); });
+    }
+
     static int32_t FindElement(const Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue);
     static bool InArray(const Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue);
     static bool IsSkip(const Red::CRTTIArrayType* aArrayType, void* aValue, int32_t aLevel,
@@ -97,5 +110,9 @@ private:
     Core::Map<Red::TweakDBID, FlatEntry> m_pendingFlats;
     Core::Map<Red::TweakDBID, ReinheritanceEntry> m_reinheritedProps;
     Core::Map<Red::TweakDBID, std::string> m_pendingNames;
+
+    std::mutex m_commitMutex;
+    int32_t m_totalCommitChunks{0};
+    int32_t m_finishedCommitChunks{0};
 };
 }

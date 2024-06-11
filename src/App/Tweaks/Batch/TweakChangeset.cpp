@@ -183,8 +183,10 @@ bool App::TweakChangeset::IsEmpty()
 void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aManager,
                                  const Core::SharedPtr<App::TweakChangelog>& aChangelog)
 {
-    if (!aManager)
+    if (!aManager || !IsCommitFinished())
         return;
+
+    StartCommitJob();
 
     if (aChangelog)
     {
@@ -193,16 +195,15 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         aChangelog->ForgetResourcePaths();
     }
 
-    Red::JobQueue jobQueue;
-
-    LogDebug("Registering names...");
-
-    jobQueue.Dispatch([&]() {
-        for (const auto& [id, name] : m_pendingNames)
-        {
-            aManager->RegisterName(id, name, GetRecordType(id));
-        }
-    });
+    if (!m_pendingNames.empty())
+    {
+        StartAsyncCommitJob([&]() {
+            for (const auto& [id, name] : m_pendingNames)
+            {
+                aManager->RegisterName(id, name, GetRecordType(id));
+            }
+        });
+    }
 
     {
         LogDebug("Preparing records...");
@@ -561,13 +562,43 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         }
     }
 
-    Red::WaitForQueue(jobQueue, std::chrono::seconds(10));
+    FinishCommitJob();
+}
 
-    m_pendingFlats.clear();
-    m_pendingRecords.clear();
-    m_orderedRecords.clear();
-    m_pendingNames.clear();
-    m_pendingMutations.clear();
+bool App::TweakChangeset::IsCommitFinished()
+{
+    std::lock_guard _(m_commitMutex);
+
+    return m_finishedCommitChunks == m_totalCommitChunks;
+}
+
+void App::TweakChangeset::StartCommitJob()
+{
+    std::lock_guard _(m_commitMutex);
+
+    ++m_totalCommitChunks;
+}
+
+void App::TweakChangeset::FinishCommitJob()
+{
+    std::lock_guard _(m_commitMutex);
+
+    if (m_finishedCommitChunks < m_totalCommitChunks)
+    {
+        ++m_finishedCommitChunks;
+
+        if (m_finishedCommitChunks == m_totalCommitChunks)
+        {
+            m_pendingFlats.clear();
+            m_pendingRecords.clear();
+            m_orderedRecords.clear();
+            m_pendingNames.clear();
+            m_pendingMutations.clear();
+
+            m_totalCommitChunks = 0;
+            m_finishedCommitChunks = 0;
+        }
+    }
 }
 
 int32_t App::TweakChangeset::FindElement(const Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue)
