@@ -18,7 +18,7 @@ void App::TweakImporter::ImportTweaks(const Core::Vector<std::filesystem::path>&
     {
         LogInfo("Scanning for tweaks...");
 
-        TweakChangeset changeset;
+        auto changeset = Core::MakeShared<TweakChangeset>();
 
         for (const auto& importPath : aImportPaths)
         {
@@ -63,7 +63,8 @@ void App::TweakImporter::ImportTweaks(const Core::Vector<std::filesystem::path>&
     }
 }
 
-bool App::TweakImporter::Read(App::TweakChangeset& aChangeset, const std::filesystem::path& aPath,
+bool App::TweakImporter::Read(const Core::SharedPtr<App::TweakChangeset>& aChangeset,
+                              const std::filesystem::path& aPath,
                               const std::filesystem::path& aDir)
 {
     Core::SharedPtr<ITweakReader> reader;
@@ -100,7 +101,7 @@ bool App::TweakImporter::Read(App::TweakChangeset& aChangeset, const std::filesy
 
         if (reader->Load(aPath))
         {
-            reader->Read(aChangeset);
+            reader->Read(*aChangeset);
         }
     }
     catch (const std::exception& ex)
@@ -117,9 +118,10 @@ bool App::TweakImporter::Read(App::TweakChangeset& aChangeset, const std::filesy
     return true;
 }
 
-bool App::TweakImporter::Apply(App::TweakChangeset& aChangeset, const Core::SharedPtr<App::TweakChangelog>& aChangelog)
+bool App::TweakImporter::Apply(const Core::SharedPtr<App::TweakChangeset>& aChangeset,
+                               const Core::SharedPtr<App::TweakChangelog>& aChangelog)
 {
-    if (aChangeset.IsEmpty())
+    if (aChangeset->IsEmpty())
     {
         LogInfo("Nothing to import.");
         return false;
@@ -127,7 +129,7 @@ bool App::TweakImporter::Apply(App::TweakChangeset& aChangeset, const Core::Shar
 
     LogInfo("Importing tweaks...");
 
-    aChangeset.Commit(m_manager, aChangelog);
+    aChangeset->Commit(m_manager, aChangelog);
 
     LogInfo("Import completed.");
 

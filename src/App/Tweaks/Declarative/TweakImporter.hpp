@@ -19,8 +19,11 @@ public:
                       bool aDryRun = false);
 
 private:
-    bool Read(App::TweakChangeset& aChangeset, const std::filesystem::path& aPath, const std::filesystem::path& aDir);
-    bool Apply(App::TweakChangeset& aChangeset, const Core::SharedPtr<App::TweakChangelog>& aChangelog);
+    bool Read(const Core::SharedPtr<App::TweakChangeset>& aChangeset,
+              const std::filesystem::path& aPath,
+              const std::filesystem::path& aDir);
+    bool Apply(const Core::SharedPtr<App::TweakChangeset>& aChangeset,
+               const Core::SharedPtr<App::TweakChangelog>& aChangelog);
 
     Core::SharedPtr<Red::TweakDBManager> m_manager;
     Core::SharedPtr<App::TweakContext> m_context;

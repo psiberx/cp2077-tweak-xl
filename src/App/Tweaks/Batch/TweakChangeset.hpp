@@ -6,7 +6,9 @@
 
 namespace App
 {
-class TweakChangeset : public Core::LoggingAgent
+class TweakChangeset
+    : public Core::LoggingAgent
+    , public Core::ShareFromThis<TweakChangeset>
 {
 public:
     struct FlatEntry
@@ -96,7 +98,7 @@ private:
         StartCommitJob();
         Red::JobQueue jobQueue;
         jobQueue.Dispatch(std::forward<J>(aJob));
-        jobQueue.Dispatch([&]{ FinishCommitJob(); });
+        jobQueue.Dispatch([self = ToShared()]{ self->FinishCommitJob(); });
     }
 
     static int32_t FindElement(const Red::CRTTIArrayType* aArrayType, void* aArray, void* aValue);
@@ -104,6 +106,7 @@ private:
     static bool IsSkip(const Red::CRTTIArrayType* aArrayType, void* aValue, int32_t aLevel,
                        const Core::Vector<ElementChange>& aChanges);
 
+    Core::WeakPtr<TweakChangeset> m_self;
     Core::Vector<Red::TweakDBID> m_orderedRecords;
     Core::Map<Red::TweakDBID, RecordEntry> m_pendingRecords;
     Core::Map<Red::TweakDBID, MutationEntry> m_pendingMutations;
