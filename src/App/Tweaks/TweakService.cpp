@@ -108,9 +108,8 @@ void App::TweakService::CreateTweaksDir()
     {
         if (!std::filesystem::create_directories(m_tweaksDir, error))
         {
-            LogError("Cannot create tweaks directory \"{}\": {}.",
-                     std::filesystem::relative(m_tweaksDir, m_gameDir).string(), error.message());
-            return;
+            LogWarning("Cannot create tweaks directory \"{}\": {}.",
+                       std::filesystem::relative(m_tweaksDir, m_gameDir).string(), error.message());
         }
     }
 }
@@ -159,11 +158,15 @@ bool App::TweakService::ImportMetadata()
 {
     MetadataImporter importer{m_manager};
 
+    LogInfo("Loading inheritance metadata...");
+
     if (!importer.ImportInheritanceMap(m_inheritanceMapPath))
     {
         LogError("Can't load inheritance metadata from \"{}\".", m_inheritanceMapPath.string());
         return false;
     }
+
+    LogInfo("Loading extra flats metadata...");
 
     if (!importer.ImportExtraFlats(m_extraFlatsPath))
     {
