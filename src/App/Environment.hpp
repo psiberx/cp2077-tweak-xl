@@ -41,7 +41,7 @@ inline auto PluginDataDir()
 
 inline auto ExtraFlatsPath()
 {
-    return PluginDataDir() / L"ExtraFlats.yaml";
+    return PluginDataDir() / L"ExtraFlats.dat";
 }
 
 inline auto InheritanceMapPath()

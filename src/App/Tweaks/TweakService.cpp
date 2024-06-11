@@ -25,19 +25,18 @@ void App::TweakService::OnBootstrap()
     HookAfter<Raw::LoadTweakDB>([&]() {
         m_reflection = Core::MakeShared<Red::TweakDBReflection>();
         m_manager = Core::MakeShared<Red::TweakDBManager>(m_reflection);
-
-        if (!ImportMetadata())
-            return;
-
-        Red::TweakDB::Get()->unk160 = 0;
-
         m_context = Core::MakeShared<App::TweakContext>(m_productVer);
         m_importer = Core::MakeShared<App::TweakImporter>(m_manager, m_context);
         m_executor = Core::MakeShared<App::TweakExecutor>(m_manager);
         m_changelog = Core::MakeShared<App::TweakChangelog>();
 
-        ApplyPatches();
-        LoadTweaks(false);
+        if (ImportMetadata())
+        {
+            m_manager->GetTweakDB()->unk160 = 0;
+
+            ApplyPatches();
+            LoadTweaks(false);
+        }
     });
 
     HookAfter<Raw::InitTweakDB>([&]() {
@@ -179,7 +178,7 @@ bool App::TweakService::ImportMetadata()
 
 void App::TweakService::ExportMetadata()
 {
-    MetadataExporter exporter;
+    MetadataExporter exporter{m_manager};
     exporter.LoadSource(m_sourcesDir);
     exporter.ExportInheritanceMap(m_inheritanceMapPath, true);
     exporter.ExportExtraFlats(m_extraFlatsPath, true);

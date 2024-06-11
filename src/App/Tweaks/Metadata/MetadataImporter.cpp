@@ -45,7 +45,8 @@ bool App::MetadataImporter::ImportInheritanceMap(const std::filesystem::path& aP
 
         return true;
     }
-    else if (aPath.extension() == ".yaml")
+
+    if (aPath.extension() == ".yaml")
     {
         auto data = YAML::LoadFile(aPath.string());
         if (!data.IsDefined() || !data.IsMap())
@@ -94,6 +95,44 @@ bool App::MetadataImporter::ImportExtraFlats(const std::filesystem::path& aPath)
     std::error_code error;
     if (!std::filesystem::exists(aPath, error))
         return false;
+
+    if (aPath.extension() == ".dat")
+    {
+        std::ifstream in(aPath, std::ios::binary);
+
+        size_t numberOfEntries;
+        in.read(reinterpret_cast<char*>(&numberOfEntries), sizeof(numberOfEntries));
+
+        while (numberOfEntries > 0)
+        {
+            Red::CName recordType;
+            size_t numberOfFlats;
+
+            in.read(reinterpret_cast<char*>(&recordType), sizeof(recordType));
+            in.read(reinterpret_cast<char*>(&numberOfFlats), sizeof(numberOfFlats));
+
+            while (numberOfFlats > 0)
+            {
+                uint8_t propNameLen;
+                char propName[254];
+                Red::CName propType;
+                Red::CName foreignType;
+
+                in.read(reinterpret_cast<char*>(&propNameLen), sizeof(propNameLen));
+                in.read(reinterpret_cast<char*>(&propName), propNameLen);
+                in.read(reinterpret_cast<char*>(&propType), sizeof(propType));
+                in.read(reinterpret_cast<char*>(&foreignType), sizeof(foreignType));
+
+                m_reflection->RegisterExtraFlat(recordType, propName, propType, foreignType);
+
+                --numberOfFlats;
+            }
+
+            --numberOfEntries;
+        }
+
+        return true ;
+    }
 
     if (aPath.extension() == ".yaml")
     {

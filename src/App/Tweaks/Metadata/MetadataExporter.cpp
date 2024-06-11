@@ -11,8 +11,9 @@ constexpr auto NameSeparator = Red::TweakGrammar::Name::Separator;
 constexpr auto InlineSuffix = "_inline";
 }
 
-App::MetadataExporter::MetadataExporter()
-    : m_resolved(true)
+App::MetadataExporter::MetadataExporter(Core::SharedPtr<Red::TweakDBManager> aManager)
+    : m_manager(std::move(aManager))
+    , m_resolved(true)
 {
 }
 
@@ -229,7 +230,39 @@ bool App::MetadataExporter::ExportExtraFlats(const std::filesystem::path& aOutPa
         }
     }
 
-    if (aOutPath.extension() == ".yaml")
+    if (aOutPath.extension() == ".dat")
+    {
+        std::ofstream out(aOutPath, std::ios::binary);
+
+        auto numberOfEntries = extras.size();
+        out.write(reinterpret_cast<char*>(&numberOfEntries), sizeof(numberOfEntries));
+
+        for (const auto& [schemaName, extraFlats] : extras)
+        {
+            std::string_view typeName = schemaName;
+            typeName.remove_prefix(std::char_traits<char>::length(SchemaPackage) + 1);
+
+            auto recordType = m_reflection->GetRecordFullName(typeName.data());
+            auto numberOfFlats = extraFlats.size();
+
+            out.write(reinterpret_cast<char*>(&recordType), sizeof(recordType));
+            out.write(reinterpret_cast<char*>(&numberOfFlats), sizeof(numberOfFlats));
+
+            for (const auto& [_, flat] : extraFlats)
+            {
+                uint8_t flatNameLen = flat->name.size();
+                auto flatName = flat->name.data();
+                auto flatType = RedReader::GetFlatTypeName(flat);
+                auto foreignType = m_reflection->GetRecordFullName(flat->foreignType.data());
+
+                out.write(reinterpret_cast<char*>(&flatNameLen), sizeof(flatNameLen));
+                out.write(reinterpret_cast<char*>(&flatName), flatNameLen);
+                out.write(reinterpret_cast<char*>(&flatType), sizeof(flatType));
+                out.write(reinterpret_cast<char*>(&foreignType), sizeof(foreignType));
+            }
+        }
+    }
+    else if (aOutPath.extension() == ".yaml")
     {
         std::ofstream out(aOutPath, std::ios::out);
 
