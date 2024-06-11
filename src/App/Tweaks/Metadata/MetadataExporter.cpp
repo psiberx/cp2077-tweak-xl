@@ -11,22 +11,28 @@ constexpr auto NameSeparator = Red::TweakGrammar::Name::Separator;
 constexpr auto InlineSuffix = "_inline";
 }
 
-App::MetadataExporter::MetadataExporter(Core::SharedPtr<Red::TweakDBManager> aManager)
-    : m_manager(std::move(aManager))
-    , m_resolved(true)
+App::MetadataExporter::MetadataExporter()
+    : m_resolved(true)
 {
 }
 
-void App::MetadataExporter::LoadSource(const std::filesystem::path& aSourceDir)
+bool App::MetadataExporter::LoadSource(const std::filesystem::path& aSourceDir)
 {
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(aSourceDir))
+    std::error_code error;
+
+    if (std::filesystem::exists(aSourceDir, error))
     {
-        if (entry.is_regular_file() && entry.path().extension() == TweakExtension)
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(aSourceDir, error))
         {
-            m_sources.push_back(Red::TweakParser::Parse(entry.path()));
-            m_resolved = false;
+            if (entry.is_regular_file() && entry.path().extension() == TweakExtension)
+            {
+                m_sources.push_back(Red::TweakParser::Parse(entry.path()));
+                m_resolved = false;
+            }
         }
     }
+
+    return !m_sources.empty();
 }
 
 void App::MetadataExporter::ResolveGroups()
@@ -117,9 +123,12 @@ void App::MetadataExporter::ResolveGroups()
     m_resolved = true;
 }
 
-void App::MetadataExporter::WriteInheritanceMap(const std::filesystem::path& aOutPath, bool aGeneratedComment)
+bool App::MetadataExporter::ExportInheritanceMap(const std::filesystem::path& aOutPath, bool aGeneratedComment)
 {
     ResolveGroups();
+
+    if (m_records.empty())
+        return false;
 
     Core::Map<std::string, Core::Set<std::string>> map;
 
@@ -153,11 +162,16 @@ void App::MetadataExporter::WriteInheritanceMap(const std::filesystem::path& aOu
             }
         }
     }
+
+    return true;
 }
 
-void App::MetadataExporter::WriteExtraFlats(const std::filesystem::path& aOutPath, bool aGeneratedComment)
+bool App::MetadataExporter::ExportExtraFlats(const std::filesystem::path& aOutPath, bool aGeneratedComment)
 {
     ResolveGroups();
+
+    if (m_records.empty())
+        return false;
 
     Core::Map<std::string, Core::Map<std::string, Red::TweakFlatPtr>> extras;
 
@@ -223,4 +237,6 @@ void App::MetadataExporter::WriteExtraFlats(const std::filesystem::path& aOutPat
             }
         }
     }
+
+    return true;
 }

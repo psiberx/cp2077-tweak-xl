@@ -160,14 +160,10 @@ bool App::TweakService::ImportMetadata()
 
 bool App::TweakService::ExportMetadata()
 {
-    std::error_code error;
-    if (!std::filesystem::exists(m_sourcesDir, error))
-        return false;
-
-    MetadataExporter exporter{m_manager};
+    MetadataExporter exporter;
     exporter.LoadSource(m_sourcesDir);
-    exporter.WriteInheritanceMap(m_inheritanceMapPath);
-    exporter.WriteExtraFlats(m_extraFlatsPath);
+    exporter.ExportInheritanceMap(m_inheritanceMapPath);
+    exporter.ExportExtraFlats(m_extraFlatsPath);
 
     return true;
 }
