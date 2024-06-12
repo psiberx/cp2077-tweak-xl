@@ -42,6 +42,7 @@ public:
 protected:
     void OnBootstrap() override;
     void CreateTweaksDir();
+    void EnsureRuntimeAccess();
     void ApplyPatches();
 
     std::filesystem::path m_gameDir;
