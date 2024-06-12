@@ -94,6 +94,17 @@ bool App::TweakChangeset::RemoveElement(Red::TweakDBID aFlatId, const Red::CBase
     return true;
 }
 
+bool App::TweakChangeset::RemoveAllElements(Red::TweakDBID aFlatId)
+{
+    if (!aFlatId.IsValid())
+        return false;
+
+    auto& entry = m_pendingMutations[aFlatId];
+    entry.deleteAll = true;
+
+    return true;
+}
+
 bool App::TweakChangeset::AppendFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId)
 {
     if (!aFlatId.IsValid() || !aSourceId.IsValid())
@@ -131,24 +142,6 @@ bool App::TweakChangeset::InheritMutations(Red::TweakDBID aFlatId, Red::TweakDBI
     entry.baseId = aBaseId;
 
     return true;
-}
-
-void App::TweakChangeset::MutationEntry::MergeWith(const App::TweakChangeset::MutationEntry& aOther, bool aPrepend)
-{
-    deletions.insert(aPrepend ? deletions.begin() : deletions.end(),
-                     aOther.deletions.begin(), aOther.deletions.end());
-
-    appendings.insert(aPrepend ? appendings.begin() : appendings.end(),
-                      aOther.appendings.begin(), aOther.appendings.end());
-
-    prependings.insert(aPrepend ? prependings.begin() : prependings.end(),
-                       aOther.prependings.begin(), aOther.prependings.end());
-
-    appendingMerges.insert(aPrepend ? appendingMerges.begin() : appendingMerges.end(),
-                           aOther.appendingMerges.begin(), aOther.appendingMerges.end());
-
-    prependingMerges.insert(aPrepend ? prependingMerges.begin() : prependingMerges.end(),
-                            aOther.prependingMerges.begin(), aOther.prependingMerges.end());
 }
 
 bool App::TweakChangeset::RegisterName(Red::TweakDBID aId, const std::string& aName)
@@ -281,8 +274,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 #endif
                     if (isMutation)
                     {
-                        const auto& sourceEntry = m_pendingMutations[sourceFlatId];
-                        m_pendingMutations[descendantFlatId].MergeWith(sourceEntry, true);
+                        m_pendingMutations[descendantFlatId].baseId = sourceFlatId;
                     }
                     else
                     {
@@ -428,6 +420,36 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
             continue;
         }
 
+        const_cast<MutationEntry&>(mutation).resolved = flatData;
+
+        if (mutation.deleteAll)
+        {
+            auto* targetType = reinterpret_cast<const Red::CRTTIArrayType*>(flatData.type);
+            auto* elementType = targetType->innerType;
+
+            auto* sourceArray = reinterpret_cast<Red::DynArray<void>*>(flatData.instance);
+            auto sourceLength = targetType->GetLength(sourceArray);
+
+            if (sourceLength > 0)
+            {
+                for (uint32_t sourceIndex = 0; sourceIndex < sourceLength; ++sourceIndex)
+                {
+                    auto sourceValuePtr = targetType->GetElement(sourceArray, sourceIndex);
+                    auto clonedValue = aManager->GetReflection()->Construct(elementType);
+                    elementType->Assign(clonedValue.get(), sourceValuePtr);
+
+                    const_cast<MutationEntry&>(mutation).deletions.push_back({elementType, std::move(clonedValue)});
+                }
+            }
+        }
+    }
+
+    for (const auto& [flatId, mutation] : m_pendingMutations)
+    {
+        if (!mutation.resolved)
+            continue;
+
+        auto& flatData = mutation.resolved;
         auto* targetType = reinterpret_cast<const Red::CRTTIArrayType*>(flatData.type);
         auto* elementType = targetType->innerType;
 

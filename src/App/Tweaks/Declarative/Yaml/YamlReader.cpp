@@ -19,6 +19,7 @@ constexpr auto PrependOnceOp = Red::FNV1a64("!prepend-once");
 constexpr auto PrependFromOp = Red::FNV1a64("!prepend-from");
 constexpr auto MergeOp = Red::FNV1a64("!merge");
 constexpr auto RemoveOp = Red::FNV1a64("!remove");
+constexpr auto RemoveAllOp = Red::FNV1a64("!remove-all");
 
 constexpr auto UIIconType = Red::CName("gamedataUIIcon_Record");
 constexpr auto StringType = Red::CName("String");
@@ -688,6 +689,12 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
             }
 
             aChangeset.RemoveElement(flatId, aElementType, itemValue);
+            isMutation = true;
+            break;
+        }
+        case RemoveAllOp:
+        {
+            aChangeset.RemoveAllElements(flatId);
             isMutation = true;
             break;
         }

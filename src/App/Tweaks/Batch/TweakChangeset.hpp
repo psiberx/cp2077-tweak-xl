@@ -43,14 +43,14 @@ public:
 
     struct MutationEntry
     {
-        void MergeWith(const MutationEntry& aOther, bool aPrepend = false);
-
         Core::Vector<DeletionEntry> deletions;
         Core::Vector<InsertionEntry> appendings;
         Core::Vector<InsertionEntry> prependings;
         Core::Vector<MergingEntry> appendingMerges;
         Core::Vector<MergingEntry> prependingMerges;
+        Red::Value<> resolved;
         Red::TweakDBID baseId;
+        bool deleteAll;
     };
 
     struct ReinheritanceEntry
@@ -71,6 +71,7 @@ public:
                         const Red::InstancePtr<>& aValue, bool aUnique = false);
     bool RemoveElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
                        const Red::InstancePtr<>& aValue);
+    bool RemoveAllElements(Red::TweakDBID aFlatId);
     bool AppendFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId);
     bool PrependFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId);
     bool InheritMutations(Red::TweakDBID aFlatId, Red::TweakDBID aBaseId);
