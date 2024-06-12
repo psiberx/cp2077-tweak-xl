@@ -96,13 +96,19 @@ std::string App::BaseTweakReader::ComposeInlineName(const std::string& aParentNa
     inlineHash.append(HashSeparator);
     inlineHash.append(aParentName);
     inlineHash.append(HashSeparator);
-    inlineHash.append(std::to_string(aItemIndex));
-    inlineHash.append(HashSeparator);
     inlineHash.append(aRecordType->name.ToString());
+
+    if (aItemIndex >= 0)
+    {
+        inlineHash.append(HashSeparator);
+        inlineHash.append(std::to_string(aItemIndex));
+        inlineHash.append(HashSeparator);
+        inlineHash.append(std::to_string(++m_inlineIndexSuffix[inlineHash]));
+    }
 
     auto inlineName = aParentName;
     inlineName.append(InlineSeparator);
-    inlineName.append(ToHex(Red::FNV1a32(inlineHash.c_str(), inlineHash.size())));
+    inlineName.append(ToHex(Red::FNV1a32(inlineHash.data(), inlineHash.size())));
 
     return inlineName;
 }

@@ -26,8 +26,8 @@ protected:
 
     static std::string ComposeGroupName(const std::string& aParentName, const std::string& aGroupName);
     static std::string ComposeFlatName(const std::string& aParentName, const std::string& aFlatName);
-    static std::string ComposeInlineName(const std::string& aParentName, const Red::CClass* aRecordType,
-                                         const std::filesystem::path& aSource, int32_t aItemIndex = 0);
+    std::string ComposeInlineName(const std::string& aParentName, const Red::CClass* aRecordType,
+                                  const std::filesystem::path& aSource, int32_t aItemIndex = -1);
 
     const Red::CBaseRTTIType* ResolveFlatInstanceType(TweakChangeset& aChangeset, Red::TweakDBID aFlatId);
     const Red::CClass* ResolveRecordInstanceType(TweakChangeset& aChangeset, Red::TweakDBID aRecordId);
@@ -41,5 +41,6 @@ protected:
     Core::SharedPtr<Red::TweakDBManager> m_manager;
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;
     Core::SharedPtr<App::TweakContext> m_context;
+    Core::Map<std::string, int32_t> m_inlineIndexSuffix;
 };
 }
