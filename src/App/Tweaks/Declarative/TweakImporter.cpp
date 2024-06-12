@@ -20,20 +20,28 @@ void App::TweakImporter::ImportTweaks(const Core::Vector<std::filesystem::path>&
 
         auto changeset = Core::MakeShared<TweakChangeset>();
 
+        Core::Vector<std::pair<std::filesystem::path, std::filesystem::path>> firstPriorityPaths;
+        Core::Vector<std::pair<std::filesystem::path, std::filesystem::path>> secondPriorityPaths;
+        std::error_code error;
+
         for (const auto& importPath : aImportPaths)
         {
-            std::error_code error;
-
             if (std::filesystem::is_directory(importPath, error))
             {
                 const auto dirIt = std::filesystem::recursive_directory_iterator(
                     importPath, std::filesystem::directory_options::follow_directory_symlink);
-
                 for (const auto& entry : dirIt)
                 {
                     if (entry.is_regular_file())
                     {
-                        Read(changeset, entry.path(), importPath);
+                        if (IsFirstPriority(entry.path()))
+                        {
+                            firstPriorityPaths.emplace_back(entry.path(), importPath);
+                        }
+                        else
+                        {
+                            secondPriorityPaths.emplace_back(entry.path(), importPath);
+                        }
                     }
                 }
                 continue;
@@ -41,11 +49,28 @@ void App::TweakImporter::ImportTweaks(const Core::Vector<std::filesystem::path>&
 
             if (std::filesystem::is_regular_file(importPath, error))
             {
-                Read(changeset, importPath, importPath.parent_path());
+                if (IsFirstPriority(importPath))
+                {
+                    firstPriorityPaths.emplace_back(importPath, importPath.parent_path());
+                }
+                else
+                {
+                    secondPriorityPaths.emplace_back(importPath, importPath.parent_path());
+                }
                 continue;
             }
 
             LogWarning("Can't import \"{}\".", importPath.string());
+        }
+
+        for (const auto& [importPath, importDir] : firstPriorityPaths)
+        {
+            Read(changeset, importPath, importDir);
+        }
+
+        for (const auto& [importPath, importDir] : secondPriorityPaths)
+        {
+            Read(changeset, importPath, importDir);
         }
 
         if (!aDryRun)
@@ -134,4 +159,10 @@ bool App::TweakImporter::Apply(const Core::SharedPtr<App::TweakChangeset>& aChan
     LogInfo("Import completed.");
 
     return true;
+}
+
+bool App::TweakImporter::IsFirstPriority(const std::filesystem::path& aPath)
+{
+    const std::string s_firstPriorityMarkers = "_#$!";
+    return s_firstPriorityMarkers.find(aPath.filename().string().front()) != std::string::npos;
 }
