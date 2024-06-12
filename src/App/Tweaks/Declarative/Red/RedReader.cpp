@@ -141,11 +141,6 @@ App::RedReader::GroupStatePtr App::RedReader::HandleGroup(App::TweakChangeset& a
         }
     }
 
-    if (groupState->sourceId.IsValid())
-    {
-        InheritMutations(aChangeset, groupState->recordId, groupState->sourceId);
-    }
-
     groupState->isProcessed = true;
 
     return groupState;
@@ -222,11 +217,6 @@ App::RedReader::GroupStatePtr App::RedReader::HandleInline(App::TweakChangeset& 
             if (!flatState->isProcessed)
                 return inlineState;
         }
-    }
-
-    if (inlineState->sourceId.IsValid())
-    {
-        InheritMutations(aChangeset, inlineState->recordId, inlineState->sourceId);
     }
 
     inlineState->isProcessed = true;

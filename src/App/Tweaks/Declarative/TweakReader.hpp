@@ -32,7 +32,6 @@ protected:
     const Red::CBaseRTTIType* ResolveFlatInstanceType(TweakChangeset& aChangeset, Red::TweakDBID aFlatId);
     const Red::CClass* ResolveRecordInstanceType(TweakChangeset& aChangeset, Red::TweakDBID aRecordId);
 
-    bool InheritMutations(App::TweakChangeset& aChangeset, Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
     bool IsOriginalBaseRecord(Red::TweakDBID aRecordId);
 
     std::string ToName(const Red::CClass* aType);

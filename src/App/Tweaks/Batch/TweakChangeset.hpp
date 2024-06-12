@@ -48,7 +48,6 @@ public:
         Core::Vector<InsertionEntry> prependings;
         Core::Vector<MergingEntry> appendingMerges;
         Core::Vector<MergingEntry> prependingMerges;
-        Red::Value<> resolved;
         Red::TweakDBID baseId;
         bool deleteAll;
     };
@@ -74,7 +73,6 @@ public:
     bool RemoveAllElements(Red::TweakDBID aFlatId);
     bool AppendFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId);
     bool PrependFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId);
-    bool InheritMutations(Red::TweakDBID aFlatId, Red::TweakDBID aBaseId);
 
     bool RegisterName(Red::TweakDBID aId, const std::string& aName);
 

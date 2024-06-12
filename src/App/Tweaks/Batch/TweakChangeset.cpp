@@ -127,23 +127,6 @@ bool App::TweakChangeset::PrependFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSo
     return true;
 }
 
-bool App::TweakChangeset::InheritMutations(Red::TweakDBID aFlatId, Red::TweakDBID aBaseId)
-{
-    if (!aFlatId.IsValid() || !aBaseId.IsValid())
-        return false;
-
-    if (m_pendingFlats.contains(aFlatId))
-        return false;
-
-    if (!m_pendingMutations.contains(aBaseId))
-        return false;
-
-    auto& entry = m_pendingMutations[aFlatId];
-    entry.baseId = aBaseId;
-
-    return true;
-}
-
 bool App::TweakChangeset::RegisterName(Red::TweakDBID aId, const std::string& aName)
 {
     m_pendingNames[aId] = aName;
@@ -216,6 +199,165 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         });
     }
 
+    LogDebug("Resolving inheritance...");
+
+    if (!m_reinheritedProps.empty())
+    {
+        Core::Set<Red::TweakDBID> convertedToMutation;
+
+        auto reinheritedProps = std::move(m_reinheritedProps);
+        while (!reinheritedProps.empty())
+        {
+            auto items = std::move(reinheritedProps);
+            for (const auto& item : items)
+            {
+                const auto& sourceId = item.second.sourceId;
+                const auto& sourceFlatId = item.first;
+                const auto sourceFlatValue = aManager->GetFlat(sourceFlatId);
+#ifndef NDEBUG
+                const auto sourceFlatName = aManager->GetReflection()->ToString(sourceFlatId);
+#endif
+
+                const auto& appendix = item.second.appendix;
+
+                const auto isAssignment = m_pendingFlats.contains(sourceFlatId);
+                const auto isMutation = m_pendingMutations.contains(sourceFlatId);
+                auto isConvertedToMutation = false;
+
+                for (const auto& descendantId : aManager->GetReflection()->GetOriginalDescendants(sourceId))
+                {
+                    const auto descendantFlatId = Red::TweakDBID(descendantId, appendix);
+#ifndef NDEBUG
+                    const auto descendantFlatName = aManager->GetReflection()->ToString(descendantFlatId);
+#endif
+
+                    if (m_pendingFlats.contains(descendantFlatId))
+                        continue;
+
+                    if (isAssignment)
+                    {
+                        auto descendantFlatValue = aManager->GetFlat(descendantFlatId);
+                        if (descendantFlatValue == sourceFlatValue)
+                        {
+                            auto& clonedAssignment = m_pendingFlats[descendantFlatId];
+                            const auto& sourceAssignment = m_pendingFlats[sourceFlatId];
+
+                            clonedAssignment.type = sourceAssignment.type;
+                            clonedAssignment.value = aManager->GetReflection()->Construct(clonedAssignment.type);
+                            clonedAssignment.type->Assign(clonedAssignment.value.get(), sourceAssignment.value.get());
+
+                            UpdateRecord(descendantId);
+                        }
+                        else if (aManager->GetReflection()->IsArrayType(sourceFlatValue.type))
+                        {
+                            if (!isConvertedToMutation)
+                            {
+                                const auto& sourceAssignment = m_pendingFlats[sourceFlatId];
+                                auto& sourceMutation = m_pendingMutations[sourceFlatId];
+
+                                sourceMutation.deleteAll = true;
+
+                                auto* sourceType = reinterpret_cast<const Red::CRTTIArrayType*>(sourceAssignment.type);
+                                auto* elementType = sourceType->innerType;
+                                auto* sourceArray = reinterpret_cast<Red::DynArray<void>*>(sourceAssignment.value.get());
+                                auto sourceLength = sourceType->GetLength(sourceArray);
+
+                                for (uint32_t sourceIndex = 0; sourceIndex < sourceLength; ++sourceIndex)
+                                {
+                                    auto sourceValuePtr = sourceType->GetElement(sourceArray, sourceIndex);
+                                    auto clonedValue = aManager->GetReflection()->Construct(elementType);
+                                    elementType->Assign(clonedValue.get(), sourceValuePtr);
+
+                                    sourceMutation.prependings.push_back({elementType, std::move(clonedValue)});
+                                }
+
+                                convertedToMutation.insert(sourceFlatId);
+                                isConvertedToMutation = true;
+                            }
+
+                            m_pendingMutations[descendantFlatId].baseId = sourceFlatId;
+
+                            UpdateRecord(descendantId);
+                        }
+                    }
+                    else if (isMutation)
+                    {
+                        m_pendingMutations[descendantFlatId].baseId = sourceFlatId;
+
+                        UpdateRecord(descendantId);
+                    }
+
+                    if (aManager->GetReflection()->IsOriginalBaseRecord(descendantId))
+                    {
+                        auto& chainEntry = reinheritedProps[descendantFlatId]; // NOLINT(bugprone-use-after-move)
+                        chainEntry.sourceId = descendantId;
+                        chainEntry.appendix = appendix;
+                    }
+                }
+            }
+        }
+
+        for (const auto& flatId : convertedToMutation)
+        {
+            m_pendingFlats.erase(flatId);
+        }
+    }
+
+    for (const auto& [recordId, recordEntry] : m_pendingRecords)
+    {
+        if (!recordEntry.sourceId)
+            continue;
+
+        const auto recordInfo = aManager->GetReflection()->GetRecordInfo(recordEntry.type);
+
+        for (const auto& [_, propInfo] : recordInfo->props)
+        {
+            if (propInfo->isArray)
+            {
+                auto targetPropId = recordId + propInfo->appendix;
+                if (m_pendingFlats.contains(targetPropId))
+                    continue;
+
+                auto sourcePropId = recordEntry.sourceId + propInfo->appendix;
+                if (!m_pendingMutations.contains(sourcePropId))
+                    continue;
+
+                auto& mutationEntry = m_pendingMutations[targetPropId];
+                mutationEntry.baseId = sourcePropId;
+            }
+        }
+    }
+
+    LogDebug("Resolving mutations...");
+
+    for (const auto& [flatId, mutation] : m_pendingMutations)
+    {
+        if (!mutation.deleteAll)
+            continue;
+
+        auto flatData = aManager->GetFlat(flatId);
+
+        if (!flatData.instance || flatData.type->GetType() != Red::ERTTIType::Array)
+            continue;
+
+        auto* targetType = reinterpret_cast<const Red::CRTTIArrayType*>(flatData.type);
+        auto* elementType = targetType->innerType;
+
+        auto* sourceArray = reinterpret_cast<Red::DynArray<void>*>(flatData.instance);
+        auto sourceLength = targetType->GetLength(sourceArray);
+
+        for (uint32_t sourceIndex = 0; sourceIndex < sourceLength; ++sourceIndex)
+        {
+            auto sourceValuePtr = targetType->GetElement(sourceArray, sourceIndex);
+            auto clonedValue = aManager->GetReflection()->Construct(elementType);
+            elementType->Assign(clonedValue.get(), sourceValuePtr);
+
+            const_cast<MutationEntry&>(mutation).deletions.push_back({elementType, std::move(clonedValue)});
+        }
+
+        const_cast<MutationEntry&>(mutation).deleteAll = false;
+    }
+
     {
         LogDebug("Preparing records...");
 
@@ -244,60 +386,6 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         LogDebug("Committing changes...");
 
         aManager->CommitBatch(batch);
-    }
-
-    if (!m_reinheritedProps.empty())
-    {
-        LogDebug("Applying inheritance...");
-
-        auto reinheritedProps = std::move(m_reinheritedProps);
-        while (!reinheritedProps.empty())
-        {
-            auto items = std::move(reinheritedProps);
-            for (const auto& item : items)
-            {
-                const auto& sourceId = item.second.sourceId;
-                const auto& sourceFlatId = item.first;
-                const auto& sourceFlatValue = aManager->GetFlat(sourceFlatId);
-#ifndef NDEBUG
-                const auto sourceFlatName = aManager->GetReflection()->ToString(sourceFlatId);
-#endif
-
-                const auto isMutation = m_pendingMutations.contains(sourceFlatId);
-                const auto& appendix = item.second.appendix;
-
-                for (const auto& descendantId : aManager->GetReflection()->GetOriginalDescendants(sourceId))
-                {
-                    const auto descendantFlatId = Red::TweakDBID(descendantId, appendix);
-#ifndef NDEBUG
-                    const auto descendantFlatName = aManager->GetReflection()->ToString(descendantFlatId);
-#endif
-                    if (isMutation)
-                    {
-                        m_pendingMutations[descendantFlatId].baseId = sourceFlatId;
-                    }
-                    else
-                    {
-                        if (m_pendingFlats.contains(descendantFlatId))
-                            continue;
-
-                        auto descendantFlatValue = aManager->GetFlat(descendantFlatId);
-                        if (descendantFlatValue != sourceFlatValue)
-                            continue;
-
-                        auto sourceEntry = m_pendingFlats[sourceFlatId];
-                        m_pendingFlats[descendantFlatId] = std::move(sourceEntry);
-                    }
-
-                    if (aManager->GetReflection()->IsOriginalBaseRecord(descendantId))
-                    {
-                        auto& chainEntry = reinheritedProps[descendantFlatId]; // NOLINT(bugprone-use-after-move)
-                        chainEntry.sourceId = descendantId;
-                        chainEntry.appendix = appendix;
-                    }
-                }
-            }
-        }
     }
 
     {
@@ -420,36 +508,6 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
             continue;
         }
 
-        const_cast<MutationEntry&>(mutation).resolved = flatData;
-
-        if (mutation.deleteAll)
-        {
-            auto* targetType = reinterpret_cast<const Red::CRTTIArrayType*>(flatData.type);
-            auto* elementType = targetType->innerType;
-
-            auto* sourceArray = reinterpret_cast<Red::DynArray<void>*>(flatData.instance);
-            auto sourceLength = targetType->GetLength(sourceArray);
-
-            if (sourceLength > 0)
-            {
-                for (uint32_t sourceIndex = 0; sourceIndex < sourceLength; ++sourceIndex)
-                {
-                    auto sourceValuePtr = targetType->GetElement(sourceArray, sourceIndex);
-                    auto clonedValue = aManager->GetReflection()->Construct(elementType);
-                    elementType->Assign(clonedValue.get(), sourceValuePtr);
-
-                    const_cast<MutationEntry&>(mutation).deletions.push_back({elementType, std::move(clonedValue)});
-                }
-            }
-        }
-    }
-
-    for (const auto& [flatId, mutation] : m_pendingMutations)
-    {
-        if (!mutation.resolved)
-            continue;
-
-        auto& flatData = mutation.resolved;
         auto* targetType = reinterpret_cast<const Red::CRTTIArrayType*>(flatData.type);
         auto* elementType = targetType->innerType;
 

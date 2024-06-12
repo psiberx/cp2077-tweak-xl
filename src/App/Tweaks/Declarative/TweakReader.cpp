@@ -25,35 +25,6 @@ App::BaseTweakReader::BaseTweakReader(Core::SharedPtr<Red::TweakDBManager> aMana
 {
 }
 
-bool App::BaseTweakReader::InheritMutations(App::TweakChangeset& aChangeset, Red::TweakDBID aRecordId,
-                                            Red::TweakDBID aSourceId)
-{
-    const auto source = aChangeset.GetRecord(aSourceId);
-
-    if (!source)
-        return false;
-
-    const auto recordInfo = m_reflection->GetRecordInfo(source->type);
-
-    if (!recordInfo)
-        return false;
-
-    bool inheritedAny = false;
-
-    for (const auto& [_, propInfo] : recordInfo->props)
-    {
-        if (propInfo->isArray)
-        {
-            if (aChangeset.InheritMutations(aRecordId + propInfo->appendix, aSourceId + propInfo->appendix))
-            {
-                inheritedAny = true;
-            }
-        }
-    }
-
-    return inheritedAny;
-}
-
 bool App::BaseTweakReader::IsOriginalBaseRecord(Red::TweakDBID aRecordId)
 {
     return m_reflection->IsOriginalBaseRecord(aRecordId);

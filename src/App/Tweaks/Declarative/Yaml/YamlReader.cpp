@@ -510,11 +510,6 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
             aChangeset.ReinheritFlat(propId, recordId, propInfo->appendix);
         }
     }
-
-    if (aSourceId.IsValid())
-    {
-        InheritMutations(aChangeset, recordId, aSourceId);
-    }
 }
 
 bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath,
