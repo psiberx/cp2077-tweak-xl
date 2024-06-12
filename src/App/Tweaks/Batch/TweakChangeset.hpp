@@ -43,6 +43,8 @@ public:
 
     struct MutationEntry
     {
+        void MergeWith(const MutationEntry& aOther, bool aPrepend = false);
+
         Core::Vector<DeletionEntry> deletions;
         Core::Vector<InsertionEntry> appendings;
         Core::Vector<InsertionEntry> prependings;

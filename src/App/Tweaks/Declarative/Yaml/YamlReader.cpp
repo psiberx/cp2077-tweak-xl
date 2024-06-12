@@ -485,7 +485,13 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
         if (propInfo->isArray)
         {
             if (HandleMutations(aChangeset, propPath, propName, nodeData, propInfo->elementType))
+            {
+                if (isOriginalBase)
+                {
+                    aChangeset.ReinheritFlat(propId, recordId, propInfo->appendix);
+                }
                 continue;
+            }
         }
 
         const auto propValue = MakeValue(propInfo->type, nodeData);

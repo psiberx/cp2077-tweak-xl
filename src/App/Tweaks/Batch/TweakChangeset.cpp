@@ -133,6 +133,24 @@ bool App::TweakChangeset::InheritMutations(Red::TweakDBID aFlatId, Red::TweakDBI
     return true;
 }
 
+void App::TweakChangeset::MutationEntry::MergeWith(const App::TweakChangeset::MutationEntry& aOther, bool aPrepend)
+{
+    deletions.insert(aPrepend ? deletions.begin() : deletions.end(),
+                     aOther.deletions.begin(), aOther.deletions.end());
+
+    appendings.insert(aPrepend ? appendings.begin() : appendings.end(),
+                      aOther.appendings.begin(), aOther.appendings.end());
+
+    prependings.insert(aPrepend ? prependings.begin() : prependings.end(),
+                       aOther.prependings.begin(), aOther.prependings.end());
+
+    appendingMerges.insert(aPrepend ? appendingMerges.begin() : appendingMerges.end(),
+                           aOther.appendingMerges.begin(), aOther.appendingMerges.end());
+
+    prependingMerges.insert(aPrepend ? prependingMerges.begin() : prependingMerges.end(),
+                            aOther.prependingMerges.begin(), aOther.prependingMerges.end());
+}
+
 bool App::TweakChangeset::RegisterName(Red::TweakDBID aId, const std::string& aName)
 {
     m_pendingNames[aId] = aName;
@@ -245,7 +263,6 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
             auto items = std::move(reinheritedProps);
             for (const auto& item : items)
             {
-                const auto& appendix = item.second.appendix;
                 const auto& sourceId = item.second.sourceId;
                 const auto& sourceFlatId = item.first;
                 const auto& sourceFlatValue = aManager->GetFlat(sourceFlatId);
@@ -253,28 +270,38 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 const auto sourceFlatName = aManager->GetReflection()->ToString(sourceFlatId);
 #endif
 
+                const auto isMutation = m_pendingMutations.contains(sourceFlatId);
+                const auto& appendix = item.second.appendix;
+
                 for (const auto& descendantId : aManager->GetReflection()->GetOriginalDescendants(sourceId))
                 {
                     const auto descendantFlatId = Red::TweakDBID(descendantId, appendix);
 #ifndef NDEBUG
                     const auto descendantFlatName = aManager->GetReflection()->ToString(descendantFlatId);
 #endif
-
-                    if (!m_pendingFlats.contains(descendantFlatId))
+                    if (isMutation)
                     {
-                        auto descendantFlatValue = aManager->GetFlat(descendantFlatId);
-                        if (descendantFlatValue == sourceFlatValue)
-                        {
-                            auto flatEntry = m_pendingFlats[sourceFlatId];
-                            m_pendingFlats[descendantFlatId] = std::move(flatEntry);
+                        const auto& sourceEntry = m_pendingMutations[sourceFlatId];
+                        m_pendingMutations[descendantFlatId].MergeWith(sourceEntry, true);
+                    }
+                    else
+                    {
+                        if (m_pendingFlats.contains(descendantFlatId))
+                            continue;
 
-                            if (aManager->GetReflection()->IsOriginalBaseRecord(descendantId))
-                            {
-                                auto& entry = reinheritedProps[descendantFlatId]; // NOLINT(bugprone-use-after-move)
-                                entry.sourceId = descendantId;
-                                entry.appendix = appendix;
-                            }
-                        }
+                        auto descendantFlatValue = aManager->GetFlat(descendantFlatId);
+                        if (descendantFlatValue != sourceFlatValue)
+                            continue;
+
+                        auto sourceEntry = m_pendingFlats[sourceFlatId];
+                        m_pendingFlats[descendantFlatId] = std::move(sourceEntry);
+                    }
+
+                    if (aManager->GetReflection()->IsOriginalBaseRecord(descendantId))
+                    {
+                        auto& chainEntry = reinheritedProps[descendantFlatId]; // NOLINT(bugprone-use-after-move)
+                        chainEntry.sourceId = descendantId;
+                        chainEntry.appendix = appendix;
                     }
                 }
             }
