@@ -256,7 +256,7 @@ bool App::MetadataExporter::ExportExtraFlats(const std::filesystem::path& aOutPa
                 auto foreignType = m_reflection->GetRecordFullName(flat->foreignType.data());
 
                 out.write(reinterpret_cast<char*>(&flatNameLen), sizeof(flatNameLen));
-                out.write(reinterpret_cast<char*>(&flatName), flatNameLen);
+                out.write(reinterpret_cast<char*>(flatName), flatNameLen);
                 out.write(reinterpret_cast<char*>(&flatType), sizeof(flatType));
                 out.write(reinterpret_cast<char*>(&foreignType), sizeof(foreignType));
             }

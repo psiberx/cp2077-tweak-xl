@@ -123,7 +123,7 @@ bool App::MetadataImporter::ImportExtraFlats(const std::filesystem::path& aPath)
                 in.read(reinterpret_cast<char*>(&propType), sizeof(propType));
                 in.read(reinterpret_cast<char*>(&foreignType), sizeof(foreignType));
 
-                m_reflection->RegisterExtraFlat(recordType, propName, propType, foreignType);
+                m_reflection->RegisterExtraFlat(recordType, {propName, propNameLen}, propType, foreignType);
 
                 --numberOfFlats;
             }
