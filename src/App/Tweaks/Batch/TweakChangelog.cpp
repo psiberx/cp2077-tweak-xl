@@ -1,4 +1,5 @@
 #include "TweakChangelog.hpp"
+#include "Red/TweakDB/Source/Source.hpp"
 
 bool App::TweakChangelog::RegisterRecord(Red::TweakDBID aRecordId)
 {
@@ -120,7 +121,11 @@ void App::TweakChangelog::CheckForIssues(const Core::SharedPtr<Red::TweakDBManag
 
         for (const auto& flatId : brokenRefIds)
         {
-            LogWarning("{} refers to a non-existent record or flat.", aManager->GetName(flatId));
+            const auto& flatName = aManager->GetName(flatId);
+            if (!flatName.starts_with(Red::TweakSource::SchemaPackage))
+            {
+                LogWarning("{} refers to a non-existent record or flat.", flatName);
+            }
         }
     }
 
