@@ -667,8 +667,16 @@ const std::string& Red::TweakDBManager::GetName(Red::TweakDBID aId)
 
     if (it == m_knownNames.end())
     {
-        const auto name = std::format("<TDBID:{:08X}:{:02X}>", aId.name.hash, aId.name.length);
-        it = m_knownNames.emplace(aId, name).first;
+        auto debugName = m_reflection->ToString(aId);
+        if (!debugName.empty())
+        {
+            it = m_knownNames.emplace(aId, debugName).first;
+        }
+        else
+        {
+            auto hashName = std::format("<TDBID:{:08X}:{:02X}>", aId.name.hash, aId.name.length);
+            it = m_knownNames.emplace(aId, hashName).first;
+        }
     }
 
     return it->second;
