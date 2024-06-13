@@ -3,6 +3,7 @@
 /.vscode
 /.xmake
 /build
+/data/*.yaml
 /dev
 /src/App/Project.hpp
 /src/App/Version.rc

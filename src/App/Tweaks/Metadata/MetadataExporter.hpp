@@ -1,12 +1,13 @@
 #pragma once
 
 #include "App/Tweaks/Declarative/Red/RedReader.hpp"
+#include "Core/Logging/LoggingAgent.hpp"
 #include "Red/TweakDB/Manager.hpp"
 #include "Red/TweakDB/Source/Parser.hpp"
 
 namespace App
 {
-class MetadataExporter
+class MetadataExporter : Core::LoggingAgent
 {
 public:
     MetadataExporter(Core::SharedPtr<Red::TweakDBManager> aManager);
@@ -18,6 +19,7 @@ public:
 
 private:
     void ResolveGroups();
+    void ResolveInlines(const Red::TweakGroupPtr& aOwner, const Red::TweakGroupPtr& aParent, int32_t aCounter = -1);
 
     static bool IsDebugGroup(const Red::TweakGroupPtr& aGroup);
 

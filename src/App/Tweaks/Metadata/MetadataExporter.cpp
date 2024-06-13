@@ -51,13 +51,13 @@ void App::MetadataExporter::ResolveGroups()
 
     m_groups.clear();
 
-    Core::Map<std::string, Core::Map<std::string, Red::TweakGroupPtr>> map;
+    Core::Map<std::string, Core::Map<std::string, Red::TweakGroupPtr>> bases;
 
     for (auto& source : m_sources)
     {
         for (auto& group : source->groups)
         {
-            map[source->package][group->name] = group;
+            bases[source->package][group->name] = group;
 
             if (source->isPackage)
             {
@@ -65,16 +65,6 @@ void App::MetadataExporter::ResolveGroups()
             }
 
             m_groups[group->name] = group;
-
-            auto counter = 0;
-            for (auto& inlined : group->inlines)
-            {
-                map[source->package][inlined->group->name] = inlined->group;
-
-                inlined->group->name = group->name + InlineSuffix + std::to_string(counter++);
-
-                m_groups[inlined->group->name] = inlined->group;
-            }
         }
     }
 
@@ -93,7 +83,7 @@ void App::MetadataExporter::ResolveGroups()
             if (group->base.empty() || m_groups.contains(group->base))
                 continue;
 
-            if (map[source->package].contains(group->base))
+            if (bases[source->package].contains(group->base))
             {
                 group->base = source->package + NameSeparator + group->base;
             }
@@ -101,13 +91,21 @@ void App::MetadataExporter::ResolveGroups()
             {
                 for (auto& package : source->usings)
                 {
-                    if (map[package].contains(group->base))
+                    if (bases[package].contains(group->base))
                     {
                         group->base = package + NameSeparator + group->base;
                         break;
                     }
                 }
             }
+        }
+    }
+
+    for (auto& source : m_sources)
+    {
+        for (auto& group : source->groups)
+        {
+            ResolveInlines(group, group);
         }
     }
 
@@ -130,6 +128,94 @@ void App::MetadataExporter::ResolveGroups()
     }
 
     m_resolved = true;
+}
+
+void App::MetadataExporter::ResolveInlines(const Red::TweakGroupPtr& aOwner, const Red::TweakGroupPtr& aParent,
+                                           int32_t aCounter)
+{
+    auto inlineBaseName = aOwner->name + InlineSuffix;
+
+    for (const auto& flat : aParent->flats)
+    {
+        auto counter = aCounter;
+        auto offset = 0u;
+        Red::Value<> flatValue;
+
+        for (auto i = 0; i < flat->values.size(); ++i)
+        {
+            auto& value = flat->values[i];
+            auto& group = value->group;
+
+            if (value->type != Red::ETweakValueType::Inline)
+                continue;
+
+            if (!flatValue)
+            {
+                auto flatName = aParent->name + NameSeparator + flat->name;
+                auto flatID = Red::TweakDBID(flatName);
+
+                flatValue = m_manager->GetFlat(flatID);
+
+                if (!flatValue)
+                {
+                    LogWarning("Can't resolve inline name for {}: flat doesn't exist.", flatName);
+                    break;
+                }
+
+                if (flat->isArray && flat->operation == Red::ETweakFlatOp::Append && !aParent->base.empty())
+                {
+                    auto inheritedFlatName = aParent->base + NameSeparator + flat->name;
+                    auto inheritedFlatID = Red::TweakDBID(inheritedFlatName);
+                    auto inheritedFlatValue = m_manager->GetFlat(inheritedFlatID);
+
+                    if (!inheritedFlatValue)
+                    {
+                        LogWarning("Can't resolve inline name for {}: inherited flat doesn't exist.", flatName);
+                        break;
+                    }
+
+                    offset = inheritedFlatValue.As<Red::DynArray<Red::TweakDBID>>().size;
+                }
+            }
+
+            auto resolvedID = flat->isArray
+                ? flatValue.As<Red::DynArray<Red::TweakDBID>>()[offset + i]
+                : flatValue.As<Red::TweakDBID>();
+
+#ifndef NDEBUG
+            auto resolvedName = m_reflection->ToString(resolvedID);
+#endif
+
+            while (++counter < 999)
+            {
+                auto inlineName = inlineBaseName + std::to_string(counter);
+                auto inlineID = Red::TweakDBID(inlineName);
+
+                if (inlineID == resolvedID)
+                {
+                    group->name = inlineName;
+                    m_groups[group->name] = group;
+                    break;
+                }
+            }
+
+            if (group->name.empty())
+            {
+                auto flatName = aParent->name + NameSeparator + flat->name;
+                if (flat->isArray)
+                {
+                    flatName += '[';
+                    flatName += std::to_string(i);
+                    flatName += ']';
+                }
+
+                LogWarning("Can't resolve inline name for {}: no matches found.", flatName);
+                break;
+            }
+
+            ResolveInlines(aOwner, group, counter);
+        }
+    }
 }
 
 bool App::MetadataExporter::ExportInheritanceMap(const std::filesystem::path& aOutPath, bool aGeneratedComment)

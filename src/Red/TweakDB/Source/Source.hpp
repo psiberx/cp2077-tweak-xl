@@ -66,7 +66,6 @@ struct TweakGroup
     std::string name;
     std::string base;
     Core::Vector<Core::SharedPtr<TweakFlat>> flats;
-    Core::Vector<Core::SharedPtr<TweakInline>> inlines;
     Core::Vector<std::string> tags;
     bool isSchema;
     bool isQuery;

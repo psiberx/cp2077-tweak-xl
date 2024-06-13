@@ -112,6 +112,19 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::type_array_sfx>
 };
 
 template<>
+struct Red::TweakParser::ParseAction<Red::TweakGrammar::array_begin>
+{
+    template<typename ParseInput>
+    static void apply(const ParseInput& in, ParseState& state, TweakSource& package)
+    {
+        if (state.flat)
+        {
+            state.flat->isArray = true;
+        }
+    }
+};
+
+template<>
 struct Red::TweakParser::ParseAction<Red::TweakGrammar::flat_type>
 {
     template<typename ParseInput>
@@ -281,11 +294,6 @@ struct Red::TweakParser::ParseAction<Red::TweakGrammar::inline_begin>
         inlined->group = group;
 
         package.inlines.push_back(inlined);
-        inlined->owner->inlines.push_back(inlined);
-        if (inlined->owner != inlined->parent)
-        {
-            inlined->parent->inlines.push_back(inlined);
-        }
 
         auto value = Core::MakeShared<TweakValue>();
         value->type = ETweakValueType::Inline;
