@@ -36,6 +36,13 @@ bool App::MetadataExporter::LoadSource(const std::filesystem::path& aSourceDir)
     return !m_sources.empty();
 }
 
+bool App::MetadataExporter::IsDebugGroup(const Red::TweakGroupPtr& aGroup)
+{
+    return std::any_of(aGroup->tags.begin(), aGroup->tags.end(), [](auto& aTag) {
+        return aTag == "Debug";
+    });
+}
+
 void App::MetadataExporter::ResolveGroups()
 {
     if (m_resolved)
@@ -105,7 +112,7 @@ void App::MetadataExporter::ResolveGroups()
 
     for (auto& [_, group] : m_groups)
     {
-        if (group->base.empty() || group->isSchema || group->isQuery)
+        if (group->base.empty() || group->isSchema || group->isQuery || IsDebugGroup(group))
             continue;
 
         auto parent = m_groups[group->base];

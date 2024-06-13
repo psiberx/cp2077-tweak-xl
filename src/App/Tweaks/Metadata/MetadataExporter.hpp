@@ -19,6 +19,8 @@ public:
 private:
     void ResolveGroups();
 
+    static bool IsDebugGroup(const Red::TweakGroupPtr& aGroup);
+
     Core::SharedPtr<Red::TweakDBManager> m_manager;
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;
     Core::Vector<Red::TweakSourcePtr> m_sources;
