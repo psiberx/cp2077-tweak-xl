@@ -641,20 +641,35 @@ void Red::TweakDBReflection::RegisterExtraFlat(Red::CName aRecordType, const std
     s_extraFlats[aRecordType].push_back({aPropType, aForeignType, NameSeparator + aPropName});
 }
 
-void Red::TweakDBReflection::RegisterDescendants(Red::TweakDBID aSourceId,
+void Red::TweakDBReflection::RegisterDescendants(Red::TweakDBID aParentId,
                                                 const Core::Set<Red::TweakDBID>& aDescendantIds)
 {
-    s_inheritanceMap[aSourceId].insert(aDescendantIds.begin(), aDescendantIds.end());
+    s_descendantMap[aParentId].insert(aDescendantIds.begin(), aDescendantIds.end());
+
+    for (const auto& descendantId : aDescendantIds)
+    {
+        s_parentMap[descendantId] = aParentId;
+    }
 }
 
-bool Red::TweakDBReflection::IsOriginalBaseRecord(Red::TweakDBID aSourceId)
+bool Red::TweakDBReflection::IsOriginalRecord(Red::TweakDBID aRecordId)
 {
-    return s_inheritanceMap.contains(aSourceId);
+    return s_parentMap.contains(aRecordId);
+}
+
+bool Red::TweakDBReflection::IsOriginalBaseRecord(Red::TweakDBID aParentId)
+{
+    return s_descendantMap.contains(aParentId);
+}
+
+Red::TweakDBID Red::TweakDBReflection::GetOriginalParent(Red::TweakDBID aRecordId)
+{
+    return s_parentMap[aRecordId];
 }
 
 const Core::Set<Red::TweakDBID>& Red::TweakDBReflection::GetOriginalDescendants(Red::TweakDBID aSourceId)
 {
-    return s_inheritanceMap[aSourceId];
+    return s_descendantMap[aSourceId];
 }
 
 std::string Red::TweakDBReflection::ToString(Red::TweakDBID aID)

@@ -122,12 +122,14 @@ public:
     Red::InstancePtr<> Construct(Red::CName aTypeName);
     Red::InstancePtr<> Construct(const Red::CBaseRTTIType* aType);
 
-    bool IsOriginalBaseRecord(Red::TweakDBID aSourceId);
+    bool IsOriginalRecord(Red::TweakDBID aRecordId);
+    bool IsOriginalBaseRecord(Red::TweakDBID aParentId);
+    Red::TweakDBID GetOriginalParent(Red::TweakDBID aRecordId);
     const Core::Set<Red::TweakDBID>& GetOriginalDescendants(Red::TweakDBID aSourceId);
 
     void RegisterExtraFlat(Red::CName aRecordType, const std::string& aPropName, Red::CName aPropType,
                            Red::CName aForeignType);
-    void RegisterDescendants(Red::TweakDBID aSourceId, const Core::Set<Red::TweakDBID>& aDescendantIds);
+    void RegisterDescendants(Red::TweakDBID aParentId, const Core::Set<Red::TweakDBID>& aDescendantIds);
 
     std::string ToString(Red::TweakDBID aID);
 
@@ -141,8 +143,9 @@ private:
         std::string appendix;
     };
 
+    using ParentMap = Core::Map<Red::TweakDBID, Red::TweakDBID>;
+    using DescendantMap = Core::Map<Red::TweakDBID, Core::Set<Red::TweakDBID>>;
     using ExtraFlatMap = Core::Map<Red::CName, Core::Vector<ExtraFlat>>;
-    using InheritanceMap = Core::Map<Red::TweakDBID, Core::Set<Red::TweakDBID>>;
     using RecordInfoMap = Core::Map<Red::CName, Core::SharedPtr<Red::TweakDBRecordInfo>>;
 
     Core::SharedPtr<Red::TweakDBRecordInfo> CollectRecordInfo(const Red::CClass* aType, Red::TweakDBID aSampleId = {});
@@ -156,7 +159,8 @@ private:
     RecordInfoMap m_resolved;
     std::shared_mutex m_mutex;
 
+    inline static ParentMap s_parentMap;
+    inline static DescendantMap s_descendantMap;
     inline static ExtraFlatMap s_extraFlats;
-    inline static InheritanceMap s_inheritanceMap;
 };
 }

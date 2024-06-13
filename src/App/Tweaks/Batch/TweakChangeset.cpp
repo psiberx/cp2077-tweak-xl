@@ -308,6 +308,12 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         if (!recordEntry.sourceId)
             continue;
 
+        if (aManager->GetReflection()->IsOriginalRecord(recordId))
+        {
+            const_cast<RecordEntry&>(recordEntry).sourceId.value = 0;
+            continue;
+        }
+
         const auto recordInfo = aManager->GetReflection()->GetRecordInfo(recordEntry.type);
 
         for (const auto& [_, propInfo] : recordInfo->props)
