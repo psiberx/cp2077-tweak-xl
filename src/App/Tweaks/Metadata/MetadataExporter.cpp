@@ -9,6 +9,7 @@ constexpr auto TweakExtension = Red::TweakSource::Extension;
 constexpr auto SchemaPackage = Red::TweakSource::SchemaPackage;
 constexpr auto NameSeparator = Red::TweakGrammar::Name::Separator;
 constexpr auto InlineSuffix = "_inline";
+constexpr auto DebugTag = "Debug";
 }
 
 App::MetadataExporter::MetadataExporter(Core::SharedPtr<Red::TweakDBManager> aManager)
@@ -39,7 +40,7 @@ bool App::MetadataExporter::LoadSource(const std::filesystem::path& aSourceDir)
 bool App::MetadataExporter::IsDebugGroup(const Red::TweakGroupPtr& aGroup)
 {
     return std::any_of(aGroup->tags.begin(), aGroup->tags.end(), [](auto& aTag) {
-        return aTag == "Debug";
+        return aTag == DebugTag;
     });
 }
 

@@ -214,11 +214,12 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 const auto& sourceId = item.second.sourceId;
                 const auto& sourceFlatId = item.first;
                 const auto sourceFlatValue = aManager->GetFlat(sourceFlatId);
-#ifndef NDEBUG
-                const auto sourceFlatName = aManager->GetReflection()->ToString(sourceFlatId);
-#endif
-
                 const auto& appendix = item.second.appendix;
+
+#ifndef NDEBUG
+                const auto sourceName = aManager->GetReflection()->ToString(sourceId);
+                const auto sourceFlatName = sourceName + appendix;
+#endif
 
                 const auto isAssignment = m_pendingFlats.contains(sourceFlatId);
                 const auto isMutation = m_pendingMutations.contains(sourceFlatId);
@@ -227,8 +228,10 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 for (const auto& descendantId : aManager->GetReflection()->GetOriginalDescendants(sourceId))
                 {
                     const auto descendantFlatId = Red::TweakDBID(descendantId, appendix);
+
 #ifndef NDEBUG
-                    const auto descendantFlatName = aManager->GetReflection()->ToString(descendantFlatId);
+                    const auto descendantName = aManager->GetReflection()->ToString(descendantId);
+                    const auto descendantFlatName = descendantName + appendix;
 #endif
 
                     if (m_pendingFlats.contains(descendantFlatId))
@@ -502,7 +505,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
             if (!elementType)
             {
-                LogError("Cannot apply changes to {}, the flat doesn't exist.", aManager->GetName(flatId));
+                LogError("Cannot modify {}, the flat doesn't exist.", aManager->GetName(flatId));
                 continue;
             }
 
@@ -510,7 +513,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
         }
         else if (flatData.type->GetType() != Red::ERTTIType::Array)
         {
-            LogError("Cannot apply changes to {}, it's not an array.", aManager->GetName(flatId));
+            LogError("Cannot modify {}, it's not an array.", aManager->GetName(flatId));
             continue;
         }
 
