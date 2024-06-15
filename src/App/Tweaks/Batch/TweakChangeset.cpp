@@ -517,6 +517,10 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
             continue;
         }
 
+#ifndef NDEBUG
+        const auto targetFlatName = aManager->GetReflection()->ToString(flatId);
+#endif
+
         auto* targetType = reinterpret_cast<const Red::CRTTIArrayType*>(flatData.type);
         auto* elementType = targetType->innerType;
 
@@ -540,7 +544,9 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
             {
                 auto& entry = m_pendingMutations[baseId];
                 chain.push_back(&entry);
-
+#ifndef NDEBUG
+                const auto baseFlatName = aManager->GetReflection()->ToString(baseId);
+#endif
                 baseId = entry.baseId;
             }
 
