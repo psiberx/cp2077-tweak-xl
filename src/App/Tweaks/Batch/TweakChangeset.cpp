@@ -289,6 +289,10 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
                         UpdateRecord(descendantId);
                     }
+                    else
+                    {
+                        continue;
+                    }
 
                     if (aManager->GetReflection()->IsOriginalBaseRecord(descendantId))
                     {
