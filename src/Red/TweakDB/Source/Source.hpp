@@ -45,7 +45,7 @@ enum class ETweakFlatOp
 
 struct TweakValue
 {
-    ETweakValueType type;
+    ETweakValueType type{ETweakValueType::Undefined};
     Core::Vector<std::string> data;
     Core::SharedPtr<TweakGroup> group;
 };
@@ -53,10 +53,10 @@ struct TweakValue
 struct TweakFlat
 {
     std::string name;
-    ETweakFlatType type;
+    ETweakFlatType type{ETweakFlatType::Undefined};
     std::string foreignType;
-    bool isArray;
-    ETweakFlatOp operation;
+    bool isArray{false};
+    ETweakFlatOp operation{ETweakFlatOp::Undefined};
     Core::Vector<Core::SharedPtr<TweakValue>> values;
     Core::Vector<std::string> tags;
 };
@@ -67,8 +67,8 @@ struct TweakGroup
     std::string base;
     Core::Vector<Core::SharedPtr<TweakFlat>> flats;
     Core::Vector<std::string> tags;
-    bool isSchema;
-    bool isQuery;
+    bool isSchema{false};
+    bool isQuery{false};
 };
 
 struct TweakInline
@@ -89,9 +89,9 @@ struct TweakSource
     Core::Vector<Core::SharedPtr<TweakGroup>> groups;
     Core::Vector<Core::SharedPtr<TweakFlat>> flats;
     Core::Vector<Core::SharedPtr<TweakInline>> inlines;
-    bool isPackage;
-    bool isSchema;
-    bool isQuery;
+    bool isPackage{false};
+    bool isSchema{false};
+    bool isQuery{false};
 };
 
 using TweakGroupPtr = Core::SharedPtr<TweakGroup>;
