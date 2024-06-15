@@ -192,6 +192,7 @@ bool Red::TweakDBManager::UpdateRecord(Red::TweakDBID aRecordId)
 
 void Red::TweakDBManager::RegisterEnum(Red::TweakDBID aRecordId)
 {
+    std::unique_lock _(m_mutex);
     m_knownEnums.insert(aRecordId);
 }
 
@@ -632,7 +633,10 @@ void Red::TweakDBManager::CreateBaseName(Red::TweakDBID aId, const std::string& 
     Red::TweakDBID empty;
     Raw::CreateTweakDBID(&empty, &aId, aName.c_str());
 
-    m_knownNames[aId] = aName;
+    {
+        std::unique_lock _(m_mutex);
+        m_knownNames[aId] = aName;
+    }
 }
 
 void Red::TweakDBManager::CreateExtraNames(Red::TweakDBID aId, const std::string& aName, const Red::CClass* aType)
@@ -642,7 +646,9 @@ void Red::TweakDBManager::CreateExtraNames(Red::TweakDBID aId, const std::string
     if (!recordInfo)
         return;
 
-    for (const auto& [_, propInfo] : recordInfo->props)
+    std::unique_lock _(m_mutex);
+
+    for (const auto& [propKey, propInfo] : recordInfo->props)
     {
         const auto propId = aId + propInfo->appendix;
         const auto propName = aName + propInfo->appendix;
@@ -661,28 +667,33 @@ void Red::TweakDBManager::CreateExtraNames(Red::TweakDBID aId, const std::string
     }
 }
 
-const std::string& Red::TweakDBManager::GetName(Red::TweakDBID aId)
+std::string_view Red::TweakDBManager::GetName(Red::TweakDBID aId)
 {
-    auto it = m_knownNames.find(aId);
-
-    if (it == m_knownNames.end())
     {
-        auto debugName = m_reflection->ToString(aId);
-        if (!debugName.empty())
-        {
-            it = m_knownNames.emplace(aId, debugName).first;
-        }
-        else
-        {
-            auto hashName = std::format("<TDBID:{:08X}:{:02X}>", aId.name.hash, aId.name.length);
-            it = m_knownNames.emplace(aId, hashName).first;
-        }
+        std::shared_lock _(m_mutex);
+
+        auto it = m_knownNames.find(aId);
+        if (it != m_knownNames.end())
+            return it->second;
     }
 
+    std::unique_lock _(m_mutex);
+
+    auto debugName = m_reflection->ToString(aId);
+    if (!debugName.empty())
+    {
+        auto it = m_knownNames.emplace(aId, debugName).first;
+        return it->second;
+    }
+
+    auto hashName = std::format("<TDBID:{:08X}:{:02X}>", aId.name.hash, aId.name.length);
+    auto it = m_knownNames.emplace(aId, hashName).first;
     return it->second;
 }
 
 const Core::Set<Red::TweakDBID>& Red::TweakDBManager::GetEnums()
 {
+    std::shared_lock _(m_mutex);
+
     return m_knownEnums;
 }

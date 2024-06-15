@@ -43,7 +43,7 @@ public:
     void RegisterName(const std::string& aName, const Red::CClass* aType = nullptr);
     void RegisterName(Red::TweakDBID aId, const std::string& aName, const Red::CClass* aType = nullptr);
     const Core::Set<Red::TweakDBID>& GetEnums();
-    const std::string& GetName(Red::TweakDBID aId);
+    std::string_view GetName(Red::TweakDBID aId);
 
     BatchPtr StartBatch();
     const Core::Set<Red::TweakDBID>& GetFlats(const BatchPtr& aBatch);
@@ -91,5 +91,6 @@ private:
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;
     Core::Map<Red::TweakDBID, std::string> m_knownNames;
     Core::Set<Red::TweakDBID> m_knownEnums;
+    std::shared_mutex m_mutex;
 };
 }
