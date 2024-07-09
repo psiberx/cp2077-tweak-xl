@@ -3,6 +3,7 @@
 namespace
 {
 constexpr auto InstanceAttrKey = "$instances";
+constexpr auto ValueAttrKey = "$value";
 
 constexpr auto AttrMark = '$';
 constexpr auto AttrOpen = "({";
@@ -212,7 +213,15 @@ void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
                             instanceNode.SetTag(subNode.Tag());
                             ProcessNode(instanceNode, instanceData);
 
-                            expandedNode.push_back(instanceNode);
+                            const auto& valueNode = instanceNode[ValueAttrKey];
+                            if (valueNode.IsDefined() && valueNode.IsScalar())
+                            {
+                                expandedNode.push_back(valueNode);
+                            }
+                            else
+                            {
+                                expandedNode.push_back(instanceNode);
+                            }
                         }
 
                         continue;
