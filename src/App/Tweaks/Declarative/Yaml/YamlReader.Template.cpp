@@ -291,6 +291,7 @@ void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
 
         if (!topNode.IsMap())
         {
+            ProcessNode(topNode, s_blankInstanceData);
             expandedNode.force_insert(topKey, topNode);
             continue;
         }
@@ -299,6 +300,7 @@ void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
 
         if (!instanceListNode.IsDefined())
         {
+            ProcessNode(topNode, s_blankInstanceData);
             expandedNode.force_insert(topKey, topNode);
             continue;
         }
@@ -322,7 +324,6 @@ void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
         else
         {
             ProcessNode(topNode, s_blankInstanceData);
-
             expandedNode.force_insert(topKey, topNode);
         }
     }
