@@ -109,22 +109,26 @@ void App::TweakChangelog::ForgetResourcePaths()
 void App::TweakChangelog::CheckForIssues(const Core::SharedPtr<Red::TweakDBManager>& aManager)
 {
     {
-        Core::Set<Red::TweakDBID> brokenRefIds;
+        Core::Map<Red::TweakDBID, Core::Set<Red::TweakDBID>> brokenRefs;
 
         for (const auto& [foreignKey, flatId] : m_foreignKeys)
         {
             if (!aManager->IsRecordExists(foreignKey) && !aManager->IsFlatExists(foreignKey))
             {
-                brokenRefIds.insert(flatId);
+                brokenRefs[flatId].insert(foreignKey);
             }
         }
 
-        for (const auto& flatId : brokenRefIds)
+        for (const auto& [flatId, foreignKeys] : brokenRefs)
         {
             const auto& flatName = aManager->GetName(flatId);
             if (!flatName.starts_with(Red::TweakSource::SchemaPackage))
             {
-                LogWarning("{} refers to a non-existent record or flat.", flatName);
+                for (const auto& foreignKey : foreignKeys)
+                {
+                    const auto& foreignKeyName = aManager->GetName(foreignKey);
+                    LogWarning("{} refers to a non-existent record or flat {}.", flatName, foreignKeyName);
+                }
             }
         }
     }
