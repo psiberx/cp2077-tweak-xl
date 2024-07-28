@@ -285,6 +285,23 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                     }
                     else if (isMutation)
                     {
+                        auto descendantFlatValue = aManager->GetFlat(descendantFlatId);
+                        if (descendantFlatValue != sourceFlatValue)
+                        {
+                            auto* sourceArray = reinterpret_cast<Red::DynArray<uint8_t>*>(sourceFlatValue.instance);
+                            auto* descendantArray = reinterpret_cast<Red::DynArray<uint8_t>*>(descendantFlatValue.instance);
+
+                            if (sourceArray->size > descendantArray->size)
+                                continue;
+
+                            auto* sourceType = reinterpret_cast<const Red::CRTTIArrayType*>(sourceFlatValue.type);
+                            auto* elementType = sourceType->innerType;
+                            auto dataSize = sourceArray->size * elementType->GetSize();
+
+                            if (std::memcmp(sourceArray->entries, descendantArray->entries, dataSize) != 0)
+                                continue;
+                        }
+
                         m_pendingMutations[descendantFlatId].baseId = sourceFlatId;
 
                         UpdateRecord(descendantId);
