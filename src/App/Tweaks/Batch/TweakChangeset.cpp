@@ -212,6 +212,10 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
             for (const auto& item : items)
             {
                 const auto& sourceId = item.second.sourceId;
+
+                if (!aManager->IsRecordExists(sourceId))
+                    continue;
+
                 const auto& sourceFlatId = item.first;
                 const auto sourceFlatValue = aManager->GetFlat(sourceFlatId);
                 const auto& appendix = item.second.appendix;
@@ -221,12 +225,18 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                 const auto sourceFlatName = sourceName + appendix;
 #endif
 
+                if (!sourceFlatValue)
+                    continue;
+
                 const auto isAssignment = m_pendingFlats.contains(sourceFlatId);
                 const auto isMutation = m_pendingMutations.contains(sourceFlatId);
                 auto isConvertedToMutation = false;
 
                 for (const auto& descendantId : aManager->GetReflection()->GetOriginalDescendants(sourceId))
                 {
+                    if (!aManager->IsRecordExists(descendantId))
+                        continue;
+
                     const auto descendantFlatId = Red::TweakDBID(descendantId, appendix);
 
 #ifndef NDEBUG
@@ -240,6 +250,10 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                     if (isAssignment)
                     {
                         auto descendantFlatValue = aManager->GetFlat(descendantFlatId);
+
+                        if (!descendantFlatValue)
+                            continue;
+
                         if (descendantFlatValue == sourceFlatValue)
                         {
                             auto& clonedAssignment = m_pendingFlats[descendantFlatId];
@@ -286,6 +300,10 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                     else if (isMutation)
                     {
                         auto descendantFlatValue = aManager->GetFlat(descendantFlatId);
+
+                        if (!descendantFlatValue)
+                            continue;
+
                         if (descendantFlatValue != sourceFlatValue)
                         {
                             auto* sourceArray = reinterpret_cast<Red::DynArray<uint8_t>*>(sourceFlatValue.instance);
