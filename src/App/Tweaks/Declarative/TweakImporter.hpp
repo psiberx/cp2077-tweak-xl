@@ -26,6 +26,7 @@ private:
                const Core::SharedPtr<App::TweakChangelog>& aChangelog);
 
     static bool IsFirstPriority(const std::filesystem::path& aPath);
+    static bool IsLastPriority(const std::filesystem::path& aPath);
 
     Core::SharedPtr<Red::TweakDBManager> m_manager;
     Core::SharedPtr<App::TweakContext> m_context;

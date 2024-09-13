@@ -22,6 +22,7 @@ void App::TweakImporter::ImportTweaks(const Core::Vector<std::filesystem::path>&
 
         Core::Vector<std::pair<std::filesystem::path, std::filesystem::path>> firstPriorityPaths;
         Core::Vector<std::pair<std::filesystem::path, std::filesystem::path>> secondPriorityPaths;
+        Core::Vector<std::pair<std::filesystem::path, std::filesystem::path>> lastPriorityPaths;
         std::error_code error;
 
         for (const auto& importPath : aImportPaths)
@@ -38,6 +39,10 @@ void App::TweakImporter::ImportTweaks(const Core::Vector<std::filesystem::path>&
                         {
                             firstPriorityPaths.emplace_back(entry.path(), importPath);
                         }
+                        else if (IsLastPriority(entry.path()))
+                        {
+                            lastPriorityPaths.emplace_back(entry.path(), importPath);
+                        }
                         else
                         {
                             secondPriorityPaths.emplace_back(entry.path(), importPath);
@@ -52,6 +57,10 @@ void App::TweakImporter::ImportTweaks(const Core::Vector<std::filesystem::path>&
                 if (IsFirstPriority(importPath))
                 {
                     firstPriorityPaths.emplace_back(importPath, importPath.parent_path());
+                }
+                else if (IsLastPriority(importPath))
+                {
+                    lastPriorityPaths.emplace_back(importPath, importPath.parent_path());
                 }
                 else
                 {
@@ -69,6 +78,11 @@ void App::TweakImporter::ImportTweaks(const Core::Vector<std::filesystem::path>&
         }
 
         for (const auto& [importPath, importDir] : secondPriorityPaths)
+        {
+            Read(changeset, importPath, importDir);
+        }
+
+        for (const auto& [importPath, importDir] : lastPriorityPaths)
         {
             Read(changeset, importPath, importDir);
         }
@@ -165,4 +179,10 @@ bool App::TweakImporter::IsFirstPriority(const std::filesystem::path& aPath)
 {
     const std::string s_firstPriorityMarkers = "_#$!";
     return s_firstPriorityMarkers.find(aPath.filename().string().front()) != std::string::npos;
+}
+
+bool App::TweakImporter::IsLastPriority(const std::filesystem::path& aPath)
+{
+    const std::string s_lastPriorityMarkers = "^";
+    return s_lastPriorityMarkers.find(aPath.filename().string().front()) != std::string::npos;
 }
