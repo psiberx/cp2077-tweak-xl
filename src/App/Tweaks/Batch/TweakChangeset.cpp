@@ -447,14 +447,6 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
             const auto& flatType = item.second.type;
             const auto& flatValue = item.second.value.get();
 
-            const auto success = aManager->SetFlat(batch, flatId, flatType, flatValue);
-
-            if (!success)
-            {
-                LogError("Can't assign flat {}.", aManager->GetName(flatId));
-                continue;
-            }
-
             if (aChangelog)
             {
                 if (aManager->GetReflection()->IsForeignKey(flatType))
@@ -483,6 +475,14 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                         aChangelog->RegisterResourcePath(resRef.path, flatId);
                     }
                 }
+            }
+
+            const auto success = aManager->SetFlat(batch, flatId, flatType, flatValue);
+
+            if (!success)
+            {
+                LogError("Can't assign flat {}.", aManager->GetName(flatId));
+                continue;
             }
         }
 
