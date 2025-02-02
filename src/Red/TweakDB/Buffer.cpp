@@ -124,7 +124,8 @@ uint64_t Red::TweakDBBuffer::GetValueHash(int32_t aOffset)
     return ComputeHash(data.type, data.instance);
 }
 
-uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance, uint64_t aSeed)
+uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance, uint32_t aSize,
+                                         uint64_t aSeed)
 {
     // Case 1: Everything is processed as a sequence of bytes and passed to the hash function,
     //         except for an array of strings.
@@ -144,8 +145,10 @@ uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::I
         if (innerType->GetName() == "String")
         {
             const auto* array = reinterpret_cast<Red::DynArray<Red::CString>*>(aInstance);
+            const auto size = aSize ? aSize : array->size;
+
             hash = aSeed;
-            for (uint32_t i = 0; i != array->size; ++i)
+            for (uint32_t i = 0; i != size; ++i)
             {
                 const auto* str = array->entries + i;
                 const auto length = str->Length();
@@ -156,7 +159,8 @@ uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::I
         else
         {
             const auto* array = reinterpret_cast<Red::DynArray<uint8_t>*>(aInstance);
-            hash = FNV1a64(array->entries, array->size * innerType->GetSize(), aSeed);
+            const auto size = aSize ? aSize : array->size;
+            hash = FNV1a64(array->entries, size * innerType->GetSize(), aSeed);
         }
     }
     else if (aType->GetName() == "String")

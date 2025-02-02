@@ -1,5 +1,10 @@
 #include "TweakChangeset.hpp"
 
+namespace
+{
+constexpr auto StringTypeName = Red::GetTypeName<Red::CString>();
+}
+
 bool App::TweakChangeset::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
                                   const Red::InstancePtr<>& aValue)
 {
@@ -314,10 +319,26 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
                             auto* sourceType = reinterpret_cast<const Red::CRTTIArrayType*>(sourceFlatValue.type);
                             auto* elementType = sourceType->innerType;
-                            auto dataSize = sourceArray->size * elementType->GetSize();
 
-                            if (std::memcmp(sourceArray->entries, descendantArray->entries, dataSize) != 0)
-                                continue;
+                            if (elementType->GetName() == StringTypeName)
+                            {
+                                const auto sourceHash = Red::TweakDBBuffer::ComputeHash(sourceFlatValue.type,
+                                                                                        sourceFlatValue.instance,
+                                                                                        sourceArray->size);
+                                const auto descendantHash = Red::TweakDBBuffer::ComputeHash(descendantFlatValue.type,
+                                                                                            descendantFlatValue.instance,
+                                                                                            sourceArray->size);
+
+                                if (sourceHash != descendantHash)
+                                    continue;
+                            }
+                            else
+                            {
+                                auto dataSize = sourceArray->size * elementType->GetSize();
+
+                                if (std::memcmp(sourceArray->entries, descendantArray->entries, dataSize) != 0)
+                                    continue;
+                            }
                         }
 
                         m_pendingMutations[descendantFlatId].baseId = sourceFlatId;

@@ -34,8 +34,8 @@ public:
 
     void Invalidate();
 
-    inline static uint64_t ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance,
-                                       uint64_t aSeed = 0xCBF29CE484222325);
+    static uint64_t ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance, uint32_t aSize = 0,
+                                uint64_t aSeed = 0xCBF29CE484222325);
 
 private:
     struct FlatTypeInfo
