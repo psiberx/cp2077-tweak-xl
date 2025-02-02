@@ -191,8 +191,10 @@ void App::TweakService::ExportMetadata()
 {
     MetadataExporter exporter{m_manager};
     exporter.LoadSource(m_sourcesDir);
-    exporter.ExportInheritanceMap(m_inheritanceMapPath, true);
-    exporter.ExportExtraFlats(m_extraFlatsPath, true);
+    exporter.ExportInheritanceMap(m_inheritanceMapPath);
+    exporter.ExportExtraFlats(m_extraFlatsPath);
+    exporter.ExportInheritanceMap(m_inheritanceMapPath.replace_extension(".yaml"));
+    exporter.ExportExtraFlats(m_extraFlatsPath.replace_extension(".yaml"));
 }
 
 Red::TweakDBManager& App::TweakService::GetManager()
