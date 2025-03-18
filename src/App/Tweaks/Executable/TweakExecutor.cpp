@@ -28,7 +28,7 @@ void App::TweakExecutor::ExecuteTweaks()
     try
     {
         Red::DynArray<Red::CClass*> tweakClasses;
-        m_rtti->GetDerivedClasses(s_scriptableTweakType, tweakClasses);
+        m_rtti->GetClasses(s_scriptableTweakType, tweakClasses);
 
         if (tweakClasses.size == 0)
             return;
@@ -69,6 +69,12 @@ void App::TweakExecutor::ExecuteTweak(Red::CName aTweakName)
         return;
     }
 
+    if (tweakClass->flags.isAbstract)
+    {
+        LogError(R"(Tweak class "{}" is abstract and cannot be executed.)", aTweakName.ToString());
+        return;
+    }
+
     // ScriptedManager scopedManager(m_manager);
 
     if (Execute(tweakClass))
@@ -79,6 +85,9 @@ bool App::TweakExecutor::Execute(Red::CClass* aTweakClass)
 {
     try
     {
+        if (aTweakClass->flags.isAbstract)
+            return false;
+
         auto applyCallback = aTweakClass->GetFunction(ApplyMethodName);
 
         if (!applyCallback || applyCallback->flags.hasUndefinedBody)
