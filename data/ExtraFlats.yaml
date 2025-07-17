@@ -1,0 +1,1439 @@
+Minigame_Def:
+  forbiddenPrograms:
+    flatType: array:TweakDBID
+    foreignType: Program
+Vehicle:
+  hijackDifficulty:
+    flatType: String
+  fullDisplayName:
+    flatType: String
+  crackLockDifficulty:
+    flatType: String
+Device:
+  deviceType:
+    flatType: String
+  UI_PlayerScanningTime:
+    flatType: Float
+device_role_action_desctiption:
+  revealOrder:
+    flatType: Int32
+  isQuickHack:
+    flatType: Bool
+  skillcheck:
+    flatType: String
+npc_scanning_data:
+  affiliation:
+    flatType: TweakDBID
+    foreignType: Affiliation
+InteractionBase:
+  tag:
+    flatType: CName
+ContentAssignment:
+  overrideValue:
+    flatType: Int32
+  upToCheck:
+    flatType: Bool
+device_scanning_data:
+  revealOrder:
+    flatType: Int32
+AimAssistMagnetism:
+  finishingEnabled:
+    flatType: Bool
+ApplyStatusEffectEffector:
+  isRandom:
+    flatType: Bool
+TriggerAttackEffector:
+  woundType:
+    flatType: CName
+  chance:
+    flatType: Float
+  isRandom:
+    flatType: Bool
+  applicationChance:
+    flatType: Float
+  bodyPart:
+    flatType: CName
+  hitPosition:
+    flatType: Vector3
+  attackPositionSlotName:
+    flatType: CName
+  isCritical:
+    flatType: Bool
+  playerAsInstigator:
+    flatType: Bool
+  statForChance:
+    flatType: TweakDBID
+    foreignType: Stat
+  selfStatusEffect:
+    flatType: TweakDBID
+    foreignType: StatusEffect
+  shouldDelay:
+    flatType: Bool
+  useHitPosition:
+    flatType: Bool
+  triggerHitReaction:
+    flatType: Bool
+SubCharacter:
+  turnInertiaDamping:
+    flatType: Float
+  tiltAngleOnSpeed:
+    flatType: Float
+  relaxedSensesPreset:
+    flatType: String
+  weaponSlot:
+    flatType: CName
+  sizeRight:
+    flatType: Float
+  humanoid:
+    flatType: Bool
+  statusEffectParamsPackageName:
+    flatType: String
+  sizeFront:
+    flatType: Float
+  sizeLeft:
+    flatType: Float
+  startingRecoveryBalance:
+    flatType: Float
+  combatDefaultZOffset:
+    flatType: Float
+  walkTiltCoefficient:
+    flatType: Float
+  mass:
+    flatType: Float
+  pseudoAcceleration:
+    flatType: Float
+  massNormalizedCoefficient:
+    flatType: Float
+  sizeBack:
+    flatType: Float
+  alertedSensesPreset:
+    flatType: String
+  combatSensesPreset:
+    flatType: String
+  speedIdleThreshold:
+    flatType: Float
+Attack_Projectile:
+  puppetBroadphaseHitRadiusSquared:
+    flatType: Float
+  detonationTimer:
+    flatType: Float
+  p1PositionZOffset:
+    flatType: Float
+  vehicleBroadphaseHitRadiusSquared:
+    flatType: Float
+  armingDistance:
+    flatType: Float
+  p2HardCurve:
+    flatType: Bool
+  p1PositionLateralOffset:
+    flatType: Float
+  p2BendFactor:
+    flatType: Float
+  p1StartVelocity:
+    flatType: Float
+  followTargetInPhase2:
+    flatType: Bool
+  p1AngleInHitPlaneMax:
+    flatType: Float
+  p2BendRation:
+    flatType: Float
+  p2AngleInVerticalPlane:
+    flatType: Float
+  playerPositionGrabTime:
+    flatType: Float
+  p1DurationMin:
+    flatType: Float
+  explosionRange:
+    flatType: Float
+  p2AngleInHitPlaneMax:
+    flatType: Float
+  p1DurationMax:
+    flatType: Float
+  finalTargetPositionCalculationDelay:
+    flatType: Float
+  p2StartVelocity:
+    flatType: Float
+  hitCooldown:
+    flatType: Float
+  startVelocityDirectionCheck:
+    flatType: Bool
+  p1BendFactor:
+    flatType: Float
+  p1PositionForwardOffsetMin:
+    flatType: Float
+  p1AngleInVerticalPlane:
+    flatType: Float
+  p2ShouldRotate:
+    flatType: Bool
+  armingTime:
+    flatType: Float
+  explosionRadius:
+    flatType: Float
+  p1BendTimeRatio:
+    flatType: Float
+  projectileAccelOverride:
+    flatType: Float
+  p1SnapRadius:
+    flatType: Float
+  usetargetOffsetWhenUntargeted:
+    flatType: Bool
+  p1PositionForwardOffsetMax:
+    flatType: Float
+  p2AngleInHitPlaneMin:
+    flatType: Float
+  p1AngleInHitPlaneMin:
+    flatType: Float
+  targetPositionXYAdditive:
+    flatType: Float
+  gravitySimulation:
+    flatType: Float
+  targetPositionOffset:
+    flatType: Float
+  p2HardCurveInterpolationTimeRatio:
+    flatType: Float
+  inheritVehicleSpeed:
+    flatType: Bool
+Attack_Melee:
+  adjustmentDistanceRadiusOffset:
+    flatType: Float
+  addedImpulseDelay:
+    flatType: Float
+  enableMoveAssistOnLightAimAssist:
+    flatType: Bool
+  cooldown:
+    flatType: Float
+  attackRange:
+    flatType: Float
+  adjustmentRange:
+    flatType: Float
+  useAttackSlot:
+    flatType: Bool
+  attackGameEffectDelay:
+    flatType: Float
+  adjustmentRadius:
+    flatType: Float
+  adjustmentCurve:
+    flatType: CName
+  adjustmentDuration:
+    flatType: Float
+  addedImpulse:
+    flatType: Float
+  attackGameEffectDuration:
+    flatType: Float
+  forcePlayerToStand:
+    flatType: Bool
+  shouldAdjust:
+    flatType: Bool
+  hitCooldown:
+    flatType: Float
+  disableAdjustingPlayerPositionToTarget:
+    flatType: Bool
+  minimumDistanceToTargetToAddImpulse:
+    flatType: Float
+HudEnhancer:
+  coneAngle:
+    flatType: Float
+Item:
+  rampDownFactor:
+    flatType: Float
+  canTargetDevices:
+    flatType: Bool
+  quickActionlaunchMode:
+    flatType: CName
+  lifetime:
+    flatType: Float
+  quickActionChargeCost:
+    flatType: Float
+  amountOfCapacityGivenForRipperdocUI:
+    flatType: Float
+  collisionActionCharged:
+    flatType: CName
+  detonationDelay:
+    flatType: Float
+  angleInterpolationDuration:
+    flatType: Float
+  onCollisionStimBroadcastRadius:
+    flatType: Float
+  rampUpDistanceEnd:
+    flatType: Float
+  overrideAttack:
+    flatType: String
+  statusEffectsTypeCostReductors:
+    flatType: array:TweakDBID
+    foreignType: StatusEffectType
+  waterSurfaceImpactImpulseStrength:
+    flatType: Float
+  endLeanAngle:
+    flatType: Float
+  chargeActionlaunchMode:
+    flatType: CName
+  linearTimeRatio:
+    flatType: Float
+  canTargetVehicles:
+    flatType: Bool
+  rampDownDistanceEnd:
+    flatType: Float
+  shardType:
+    flatType: CName
+  collisionAction:
+    flatType: CName
+  rampDownDistanceStart:
+    flatType: Float
+  interpolationTimeRatio:
+    flatType: Float
+  angle:
+    flatType: Float
+  returnTimeMargin:
+    flatType: Float
+  onCollisionStimBroadcastLifetime:
+    flatType: Float
+  finisherThresholdModifier:
+    flatType: Float
+  relicAttack:
+    flatType: String
+  secondaryAttack:
+    flatType: String
+  randomizeDirection:
+    flatType: Bool
+  bonusThermalDamageFactor:
+    flatType: Float
+  cyberwareType:
+    flatType: CName
+  startVelocityCharged:
+    flatType: Float
+  halfLeanAngle:
+    flatType: Float
+  revealPositionValue:
+    flatType: Float
+  hideCooldownUI:
+    flatType: Bool
+  exitCombatDelay:
+    flatType: Float
+  maxCostReduction:
+    flatType: Float
+  projectileTemplateName:
+    flatType: CName
+  startVelocity:
+    flatType: Float
+  costReductionPerReductorStack:
+    flatType: Float
+  sinkingDetonationDelay:
+    flatType: Float
+  hideDurationUI:
+    flatType: Bool
+  rampUpDistanceStart:
+    flatType: Float
+  attack:
+    flatType: String
+  waterSurfaceImpactImpulseRadius:
+    flatType: Float
+  onCollisionStimType:
+    flatType: CName
+  maxBounceCount:
+    flatType: Int32
+  price:
+    flatType: TweakDBID
+    foreignType: ConstantStatModifier
+  chargeActionChargeCost:
+    flatType: Float
+  applyAdditiveProjectileSpiraling:
+    flatType: Bool
+  waterDetonationImpulseStrength:
+    flatType: Float
+  launchTrajectory:
+    flatType: CName
+  randomizePhase:
+    flatType: Bool
+  gravitySimulation:
+    flatType: Vector3
+  deepWaterDepth:
+    flatType: Float
+  isIKEnabled:
+    flatType: Bool
+  waterDetonationImpulseRadius:
+    flatType: Float
+  modType:
+    flatType: CName
+  bendFactor:
+    flatType: Float
+  bendTimeRatio:
+    flatType: Float
+  energyLossFactor:
+    flatType: Float
+StatPoolPrereq:
+  invert:
+    flatType: Bool
+  perfectDischargeWindow:
+    flatType: Float
+WeaponItem:
+  weaponNearPlane:
+    flatType: Float
+  weaponVignetteIntensity:
+    flatType: Float
+  scaleToPlayer:
+    flatType: Bool
+  weaponBlurIntensity_aim:
+    flatType: Float
+  hide_nametag:
+    flatType: Bool
+  slowDuration:
+    flatType: Float
+  ironsightAngleWithScope:
+    flatType: Float
+  weaponFarPlane_aim:
+    flatType: Float
+  scaleToPlayerInStash:
+    flatType: Bool
+  weaponFarPlane:
+    flatType: Float
+  weaponNearPlane_aim:
+    flatType: Float
+  position:
+    flatType: Vector3
+  offset:
+    flatType: Float
+  cyberwareType:
+    flatType: CName
+  specialAttackCost:
+    flatType: Float
+  impulseOfOnePunch:
+    flatType: Float
+  weaponVignetteRadius_aim:
+    flatType: Float
+  upwardsVectorStrength:
+    flatType: Float
+  weaponVignetteRadius:
+    flatType: Float
+  projectileSmartTargetingAngle:
+    flatType: Float
+  projectileTemplateName:
+    flatType: CName
+  projectileSmartTargetingDistance:
+    flatType: Float
+  colliderBoxHeight:
+    flatType: Float
+  weaponVignetteCircular:
+    flatType: Float
+  weaponEdgesSharpness_aim:
+    flatType: Float
+  divideAttacksByPelletsOnUI:
+    flatType: Bool
+  specialAttackNumber:
+    flatType: Int32
+  minRandomDelay:
+    flatType: Float
+  maxRandomDelay:
+    flatType: Float
+  explosionRangeBonus:
+    flatType: Float
+  weaponSwapOnAttackDelay:
+    flatType: Float
+  weaponBlurIntensity:
+    flatType: Float
+  colliderBoxWidth:
+    flatType: Float
+  numberOfHandAnims:
+    flatType: Int32
+  minimumReloadTime:
+    flatType: Float
+  price:
+    flatType: TweakDBID
+    foreignType: ConstantStatModifier
+  weaponVignetteCircular_aim:
+    flatType: Float
+  onePunchAttackDelay:
+    flatType: Float
+  slowMoDelay:
+    flatType: Float
+  saveStatPools:
+    flatType: Bool
+  weaponVignetteIntensity_aim:
+    flatType: Float
+  useProjectileAppearance:
+    flatType: Bool
+  specific_player_appearance:
+    flatType: CName
+  audioEventName:
+    flatType: CName
+  weaponEdgesSharpness:
+    flatType: Float
+  grandFinaleAttackDelay:
+    flatType: Float
+  vfxDelay:
+    flatType: Float
+  targetMaxDistanceCheck:
+    flatType: Float
+  slowMoAmount:
+    flatType: Float
+  safeActionDuration:
+    flatType: Float
+HitPrereq:
+  hitFlag:
+    flatType: String
+  processMiss:
+    flatType: Bool
+LootTable:
+  dropCountMin:
+    flatType: Int32
+  itemID:
+    flatType: TweakDBID
+    foreignType: Item
+  dropCountMax:
+    flatType: Int32
+AttachmentSlot:
+  unlockedBy:
+    flatType: String
+IPrereq:
+  checkGain:
+    flatType: Bool
+  timeFrame:
+    flatType: Float
+  hasTag:
+    flatType: Bool
+  waitForVisuals:
+    flatType: Bool
+  horizontalTolerance:
+    flatType: Float
+  minTime:
+    flatType: Float
+  timeout:
+    flatType: Float
+  tier:
+    flatType: Int32
+  isBreached:
+    flatType: Bool
+  howManyCharges:
+    flatType: String
+  duration:
+    flatType: Float
+  pipelineStage:
+    flatType: String
+  typeOfItem:
+    flatType: String
+  minStateTime:
+    flatType: Float
+  recipe:
+    flatType: String
+  isInState:
+    flatType: Bool
+  attachmentSlot:
+    flatType: TweakDBID
+    foreignType: AttachmentSlot
+  callbackType:
+    flatType: String
+  visionModeType:
+    flatType: CName
+  repeated:
+    flatType: Bool
+  level:
+    flatType: Int32
+  checkOnlyRMA:
+    flatType: Bool
+  checkType:
+    flatType: TweakDBID
+    foreignType: CheckType
+  valueToCheck:
+    flatType: Float
+  reactionPreset:
+    flatType: String
+  howManyShots:
+    flatType: Int32
+  isSynchronous:
+    flatType: Bool
+  statusEffect:
+    flatType: TweakDBID
+    foreignType: StatusEffect
+  tagToCheck:
+    flatType: CName
+  consumableItemTag:
+    flatType: CName
+  canCheckProxy:
+    flatType: Bool
+  range:
+    flatType: Float
+  perkType:
+    flatType: String
+  elevationThreshold:
+    flatType: Float
+  isPlayerNoticed:
+    flatType: Bool
+  delay:
+    flatType: Float
+  delayFromStat:
+    flatType: TweakDBID
+    foreignType: Stat
+  itemCategory:
+    flatType: TweakDBID
+    foreignType: ItemCategory
+  ammoState:
+    flatType: String
+  checkForRMA:
+    flatType: Bool
+  randRange:
+    flatType: Float
+  comparePercentage:
+    flatType: Bool
+  minDistanceWithinRMA:
+    flatType: Float
+  weaponEvolution:
+    flatType: TweakDBID
+    foreignType: WeaponEvolution
+  ignoreSelfInflictedPressureWave:
+    flatType: Bool
+  quickhack:
+    flatType: String
+  slotname:
+    flatType: CName
+  rarity:
+    flatType: String
+  comparisonType:
+    flatType: CName
+  previousState:
+    flatType: Bool
+  maxTime:
+    flatType: Float
+  verticalTolerance:
+    flatType: Float
+  setChance:
+    flatType: Float
+  hitFlag:
+    flatType: String
+  stateName:
+    flatType: String
+  characterRecord:
+    flatType: String
+  statPoolType:
+    flatType: CName
+  isMoving:
+    flatType: Bool
+  attackType:
+    flatType: String
+  percentage:
+    flatType: Float
+  minimumQuality:
+    flatType: Int32
+  visualTag:
+    flatType: String
+  qualityLessThan:
+    flatType: CName
+  invert:
+    flatType: Bool
+  failureExplanation:
+    flatType: String
+  hitReactionType:
+    flatType: String
+  isCheckInverted:
+    flatType: Bool
+  intert:
+    flatType: Bool
+  target:
+    flatType: TweakDBID
+    foreignType: AIActionTarget
+  value:
+    flatType: Int32
+  ratioToCompare:
+    flatType: Float
+  attitude:
+    flatType: String
+  detectionThreshold:
+    flatType: Float
+  count:
+    flatType: Int32
+  attackSubtype:
+    flatType: String
+  itemTag:
+    flatType: CName
+  hitSource:
+    flatType: String
+  inverted:
+    flatType: Bool
+  itemType:
+    flatType: TweakDBID
+    foreignType: ItemType
+  object:
+    flatType: String
+  isChoiceHubActive:
+    flatType: Bool
+  minAmountOfAmmoReloaded:
+    flatType: Int32
+  pipelineType:
+    flatType: String
+  locomotionType:
+    flatType: String
+  fact:
+    flatType: CName
+  equipAreas:
+    flatType: array:CName
+Clothing:
+  scaleToPlayer:
+    flatType: Bool
+ProgressionBuild:
+  statModifiers:
+    flatType: array:TweakDBID
+    foreignType: StatModifier
+ItemAction:
+  journalEntry:
+    flatType: String
+Grenade:
+  stopAttackDelay:
+    flatType: Float
+  explodeOnImpact:
+    flatType: Bool
+  delayToDetonate:
+    flatType: Float
+  numberOfHitsForAdditionalAttack:
+    flatType: Int32
+  addAxisRotationSpeedMax:
+    flatType: Float
+  freezingDuration:
+    flatType: Float
+  addAxisRotationSpeedMin:
+    flatType: Float
+  freezeDelayAfterBounce:
+    flatType: Float
+  additionalAttackOnDetonate:
+    flatType: Bool
+  minimumDistanceFromFloor:
+    flatType: Float
+  turretDisableDuration:
+    flatType: Float
+  smokeEffectRadius:
+    flatType: Float
+  effectCooldown:
+    flatType: Float
+  addAxisRotationDelay:
+    flatType: Float
+  smokeEffectDuration:
+    flatType: Float
+  isContinuousEffect:
+    flatType: Bool
+Weakspot:
+  saveStatPools:
+    flatType: Bool
+HitPrereqCondition:
+  ammoState:
+    flatType: String
+  comparisonSource:
+    flatType: CName
+  hackCategory:
+    flatType: TweakDBID
+    foreignType: HackCategory
+  weaponEvolution:
+    flatType: String
+  bodyPart:
+    flatType: CName
+  damageType:
+    flatType: String
+  rarity:
+    flatType: String
+  comparisonType:
+    flatType: String
+  comparisonTarget:
+    flatType: CName
+  isTheNextQhInQueue:
+    flatType: Bool
+  hitFlag:
+    flatType: String
+  attackType:
+    flatType: String
+  isMoving:
+    flatType: Bool
+  npcType:
+    flatType: String
+  statToCompare:
+    flatType: String
+  consecutiveHitsRequired:
+    flatType: Int32
+  distanceRequired:
+    flatType: Float
+  attackTag:
+    flatType: CName
+  checkType:
+    flatType: TweakDBID
+    foreignType: CheckType
+  targetType:
+    flatType: CName
+  valueToCheck:
+    flatType: Float
+  reactionPreset:
+    flatType: String
+  dotType:
+    flatType: String
+  weaponType:
+    flatType: CName
+  timeOut:
+    flatType: Float
+  statusEffect:
+    flatType: CName
+  triggerMode:
+    flatType: TweakDBID
+    foreignType: TriggerMode
+  instigatorType:
+    flatType: CName
+  ratioToCompare:
+    flatType: Float
+  effectName:
+    flatType: CName
+  tagToCheck:
+    flatType: CName
+  objectToCheck:
+    flatType: CName
+  attackSubtype:
+    flatType: String
+  uniqueTarget:
+    flatType: Bool
+  invertHitFlag:
+    flatType: Bool
+  source:
+    flatType: CName
+  weaponItemType:
+    flatType: String
+  statPoolToCompare:
+    flatType: String
+  object:
+    flatType: CName
+GameplayRestrictionStatusEffect:
+  restrictionName:
+    flatType: CName
+Attack_Landing:
+  maxRange:
+    flatType: Float
+Stat:
+  value:
+    flatType: Float
+  impactValue:
+    flatType: Float
+  isPercentage:
+    flatType: Bool
+  staggerValue:
+    flatType: Float
+  shouldFlipNegativeValue:
+    flatType: Bool
+GameplayLogicPackage:
+  duration:
+    flatType: TweakDBID
+    foreignType: StatModifierGroup
+  memoryCostReductionPerStack:
+    flatType: Float
+Effector:
+  stopActiveSfxOnDeactivate:
+    flatType: Bool
+  percentToRefund:
+    flatType: Float
+  isBlockingCompletely:
+    flatType: Bool
+  improveWithDistance:
+    flatType: Bool
+  actionID:
+    flatType: String
+  damageConversion:
+    flatType: Float
+  visionBlockerDetectionModifier:
+    flatType: Float
+  visionBlockerTypeName:
+    flatType: CName
+  timeWindow:
+    flatType: Float
+  probability:
+    flatType: Float
+  effectTypes:
+    flatType: array:String
+  listenConstantly:
+    flatType: Bool
+  effectTag:
+    flatType: CName
+  minTimeBetweenBlocks:
+    flatType: Float
+  onlyHostileDetection:
+    flatType: Bool
+  height:
+    flatType: Float
+  dotDistributionTime:
+    flatType: Float
+  visionBlockerTBHModifier:
+    flatType: Float
+  valueOff:
+    flatType: Int32
+  nanoPlatesStacks:
+    flatType: Int32
+  criticalHealthThreshold:
+    flatType: Float
+  blocksParent:
+    flatType: Bool
+  minStacks:
+    flatType: Int32
+  gameplayTags:
+    flatType: array:CName
+  revealDuration:
+    flatType: Float
+  chanceIncrement:
+    flatType: Float
+  fromHeight:
+    flatType: Float
+  poolStatus:
+    flatType: String
+  maxDistance:
+    flatType: Float
+  attributeType:
+    flatType: String
+  delay:
+    flatType: Float
+  reason:
+    flatType: CName
+  maxPercentMult:
+    flatType: Float
+  uploadTime:
+    flatType: Float
+  startOnUninitialize:
+    flatType: Bool
+  maxStacks:
+    flatType: Int32
+  distance:
+    flatType: Float
+  valueOn:
+    flatType: Int32
+  baseChance:
+    flatType: Float
+  chanceStep:
+    flatType: Float
+  targetEquipSlotIndex:
+    flatType: Int32
+  minDistance:
+    flatType: Float
+  minPlayerHealthPercentage:
+    flatType: Float
+  statPoolType:
+    flatType: String
+  attackRecord:
+    flatType: TweakDBID
+    foreignType: Attack
+  sfxToStop:
+    flatType: CName
+  objectAction:
+    flatType: TweakDBID
+    foreignType: ObjectAction
+  targetHowManyEnemies:
+    flatType: Int32
+  startingThreshold:
+    flatType: Float
+  statPool:
+    flatType: TweakDBID
+    foreignType: StatPool
+  detectionStep:
+    flatType: Float
+  networkAction:
+    flatType: String
+  vfxToStart:
+    flatType: CName
+  vfxToStop:
+    flatType: CName
+  stepUsesPercent:
+    flatType: Bool
+  statusEffectForSelf:
+    flatType: TweakDBID
+    foreignType: StatusEffect
+  playerIncomingDamageMultiplier:
+    flatType: Float
+  applicationTarget:
+    flatType: CName
+  dontRemoveStacks:
+    flatType: Bool
+  statusEffectForTarget:
+    flatType: TweakDBID
+    foreignType: StatusEffect
+  sfxToStart:
+    flatType: CName
+  healAmount:
+    flatType: Float
+  damageReduction:
+    flatType: Float
+  unitThreshold:
+    flatType: Float
+  effectName:
+    flatType: CName
+  pointsType:
+    flatType: String
+  sfxName:
+    flatType: CName
+  visionBlockerOffset:
+    flatType: Vector3
+  countOnlyUnique:
+    flatType: Bool
+  ignoreCivilians:
+    flatType: Bool
+  appearanceName:
+    flatType: CName
+  vfxName:
+    flatType: CName
+  change:
+    flatType: Float
+  tags:
+    flatType: array:CName
+  unique:
+    flatType: Bool
+  critChanceBonus:
+    flatType: Float
+  damageBuffAmount:
+    flatType: Float
+  duration:
+    flatType: Float
+  targetMaxDistance:
+    flatType: Float
+  deactivationSFXName:
+    flatType: CName
+  operationType:
+    flatType: String
+  visionBlockerRadius:
+    flatType: Float
+  roundUpwards:
+    flatType: Bool
+  vectorRotations:
+    flatType: array:Float
+  chanceToTrigger:
+    flatType: Float
+  animFeatureName:
+    flatType: CName
+  effectTags:
+    flatType: array:CName
+  level:
+    flatType: Float
+  playVFXOnHitTargets:
+    flatType: CName
+  refObj:
+    flatType: String
+  secondaryText:
+    flatType: String
+  blendInDuration:
+    flatType: Float
+  applyToWeapon:
+    flatType: Bool
+  amplitudeWeight:
+    flatType: Float
+  statusEffect:
+    flatType: TweakDBID
+    foreignType: StatusEffect
+  playerMaxIncomingDamage:
+    flatType: Float
+  factSuffixes:
+    flatType: array:CName
+  activationSFXName:
+    flatType: CName
+  resetAppearance:
+    flatType: Bool
+  range:
+    flatType: Float
+  primaryText:
+    flatType: String
+  statusEffects:
+    flatType: array:String
+  maxDmg:
+    flatType: Float
+  affectsPlayer:
+    flatType: Bool
+  width:
+    flatType: Float
+  easeOutCurve:
+    flatType: CName
+  statPoolValue:
+    flatType: Float
+  fireAndForget:
+    flatType: Bool
+  effectPath:
+    flatType: String
+  isPercentage:
+    flatType: Bool
+  overrideMaterialName:
+    flatType: CName
+  statForValue:
+    flatType: TweakDBID
+    foreignType: Stat
+  percentMult:
+    flatType: Float
+  canGoOverInitialDuration:
+    flatType: Bool
+  blendOutDuration:
+    flatType: Float
+  hitFlag:
+    flatType: String
+  statusEffectToRemove:
+    flatType: String
+  weakSpotIndex:
+    flatType: Int32
+  dilation:
+    flatType: Float
+  thresholdUsesPercent:
+    flatType: Bool
+  recoverMemoryAmount:
+    flatType: Float
+  uploadChance:
+    flatType: Float
+  usePercent:
+    flatType: Bool
+  damageBuffRarity:
+    flatType: Float
+  maxRangeAddition:
+    flatType: Float
+  statPoolStep:
+    flatType: Float
+  applyToOwner:
+    flatType: Bool
+  value:
+    flatType: Float
+  targetOfStatPoolCheck:
+    flatType: String
+  skipLastCombatHack:
+    flatType: Bool
+  targetEquipArea:
+    flatType: String
+  armorMultiplier:
+    flatType: Float
+  easeInCurve:
+    flatType: CName
+  targetMinDistance:
+    flatType: Float
+  inverted:
+    flatType: Bool
+  overrideMaterialTag:
+    flatType: CName
+  visionBlockerHeight:
+    flatType: Float
+  fact:
+    flatType: CName
+  statusEffectRecord:
+    flatType: TweakDBID
+    foreignType: StatusEffect
+StatusEffect:
+  costReductionPerStack:
+    flatType: Float
+  expModifier:
+    flatType: Float
+  vfxToStart:
+    flatType: CName
+  canReapply:
+    flatType: Bool
+  displayName:
+    flatType: String
+  iconPath:
+    flatType: String
+  maxDuration:
+    flatType: TweakDBID
+    foreignType: StatModifier
+  armorMeltMaxPercent:
+    flatType: Float
+  effectors:
+    flatType: array:TweakDBID
+    foreignType: Effector
+  vfx:
+    flatType: array:CName
+ModifyStatPoolValueEffector:
+  healingItemChargeRestorePercentage:
+    flatType: Float
+  damageScaleFactor:
+    flatType: Float
+  modificationValue:
+    flatType: Float
+BroadcastStimEffector:
+  interval:
+    flatType: Float
+  propagation:
+    flatType: TweakDBID
+    foreignType: StimPropagation
+  priority:
+    flatType: TweakDBID
+    foreignType: StimPriority
+ContinuousEffector:
+  maxEnemyDistance:
+    flatType: Float
+  kInit:
+    flatType: Float
+  onlyClosestToCrosshair:
+    flatType: Bool
+  targetingSet:
+    flatType: CName
+  statPoolType:
+    flatType: TweakDBID
+    foreignType: StatPool
+  b:
+    flatType: Float
+  maxDistance:
+    flatType: Float
+  maxDecay:
+    flatType: Float
+  statusEffect:
+    flatType: TweakDBID
+    foreignType: StatusEffect
+  k:
+    flatType: Float
+  onlyClosestByDistance:
+    flatType: Bool
+  highlightVisible:
+    flatType: Bool
+  searchFilter:
+    flatType: CName
+  onlyWhileAiming:
+    flatType: Bool
+MinigameAction:
+  targetClass:
+    flatType: CName
+VehicleTPPCameraPresetParams:
+  boomLength:
+    flatType: Float
+ScannableData:
+  revealOrder:
+    flatType: Int32
+RangedAttack:
+  explosionAttack:
+    flatType: CName
+  hitCooldown:
+    flatType: Float
+ApplyStatGroupEffector:
+  reapplyOnWeaponChange:
+    flatType: Bool
+NewSkillsProficiency:
+  amountOfCapacityGivenForRipperdocUI:
+    flatType: Float
+ParentAttachmentType:
+  comment:
+    flatType: String
+SpreadEffector:
+  applyOverclock:
+    flatType: Bool
+Gadget:
+  price:
+    flatType: TweakDBID
+    foreignType: ConstantStatModifier
+InventoryItem:
+  recipes:
+    flatType: array:TweakDBID
+    foreignType: Item
+  programs:
+    flatType: array:TweakDBID
+    foreignType: Item
+device_gameplay_role:
+  revealOrder:
+    flatType: Int32
+FocusClue:
+  revealOrder:
+    flatType: Int32
+ModifyStatPoolModifierEffector:
+  statGroup:
+    flatType: TweakDBID
+    foreignType: StatModifierGroup
+VehicleDataPackage:
+  exiting:
+    flatType: Float
+ConsumableItem:
+  healthIncreasePerUse:
+    flatType: array:Float
+  amountOfCapacityGivenForRipperdocUI:
+    flatType: Float
+  staminaNotificationValues:
+    flatType: array:Float
+  memoryNotificationValues:
+    flatType: array:Float
+  staminaRegenRateIncreasePerUse:
+    flatType: array:Float
+  memoryRegenRateIncreasePerUse:
+    flatType: array:Float
+Attack_GameEffect:
+  chance:
+    flatType: Float
+  attackEffectDuration:
+    flatType: Float
+  damageBasedOnMissingMemoryBonusMax:
+    flatType: Float
+  attackEffectDelay:
+    flatType: Float
+  normalNPCMaxHPDamage:
+    flatType: Float
+  overridePlayerDamageFixedPercentage:
+    flatType: Float
+  eliteNPCMaxHPDamage:
+    flatType: Float
+  trashNPCMaxHPDamage:
+    flatType: Float
+  damageBasedOnMissingMemoryBonusMultiplier:
+    flatType: Float
+  attackDirection:
+    flatType: TweakDBID
+    foreignType: AttackDirection
+  nonEliteDamageBonusMultiplier:
+    flatType: Float
+  weakNPCMaxHPDamage:
+    flatType: Float
+  cyberwareMalfunctionDamageBonus:
+    flatType: Float
+  bossNPCMaxHPDamage:
+    flatType: Float
+  hitCooldown:
+    flatType: Float
+  rareNPCMaxHPDamage:
+    flatType: Float
+TriggerHackingMinigameEffector:
+  factName:
+    flatType: CName
+  factValue:
+    flatType: Int32
+  showPopup:
+    flatType: Bool
+Character:
+  BodyDisposalFact:
+    flatType: CName
+  communitySquads:
+    flatType: array:CName
+  globalSquads:
+    flatType: CName
+  hide_nametag:
+    flatType: Bool
+  relaxedSensesPreset:
+    flatType: String
+  weaponSlot:
+    flatType: CName
+  preferedWeapon:
+    flatType: CName
+  hasToBeKilledInWounded:
+    flatType: Bool
+  turnInertiaDamping:
+    flatType: Float
+  hide_nametag_displayname:
+    flatType: Bool
+  factCounterName:
+    flatType: CName
+  statusEffectParamsPackageName:
+    flatType: String
+  stats:
+    flatType: array:TweakDBID
+    foreignType: StatModifier
+  sizeFront:
+    flatType: Float
+  pseudoAcceleration:
+    flatType: Float
+  shieldControllerDestroyed_staggerThreshold:
+    flatType: Float
+  amountOfQuests:
+    flatType: Int32
+  additionalDescription:
+    flatType: CName
+  temp_doNotNotifySS:
+    flatType: Bool
+  airDeathRagdollDelay:
+    flatType: Float
+  speedIdleThreshold:
+    flatType: Float
+  level:
+    flatType: Int32
+  tiltAngleOnSpeed:
+    flatType: Float
+  sizeRight:
+    flatType: Float
+  tooltipAvatar:
+    flatType: TweakDBID
+    foreignType: UIIcon
+  combatDefaultZOffset:
+    flatType: Float
+  keepColliderOnDeath:
+    flatType: Bool
+  nameplate:
+    flatType: Bool
+  sizeLeft:
+    flatType: Float
+  walkTiltCoefficient:
+    flatType: Float
+  mass:
+    flatType: Float
+  startingRecoveryBalance:
+    flatType: Float
+  thresholds:
+    flatType: array:Int32
+  saveStatPools:
+    flatType: Bool
+  massNormalizedCoefficient:
+    flatType: Float
+  sizeBack:
+    flatType: Float
+  alertedSensesPreset:
+    flatType: String
+  combatSensesPreset:
+    flatType: String
+StatusEffectPrereq:
+  fireAndForget:
+    flatType: Bool
+NewPerk:
+  graceChanceHealthThreshold:
+    flatType: Float
+  timeDilationDuration:
+    flatType: Float
+  poiseStrongMeleeMultiplier:
+    flatType: Float
+  baseOffset:
+    flatType: Float
+  distanceMaxStacks:
+    flatType: Float
+  amountOfCapacityGivenForRipperdocUI:
+    flatType: Float
+  poiseQuickMeleeMultiplier:
+    flatType: Float
+  poiseBossLowHealthMultiplier:
+    flatType: Float
+  staminaCostReduction:
+    flatType: Int32
+  decelerationMultiplier:
+    flatType: Float
+  poiseDebufMultiplier:
+    flatType: Float
+  graceChanceThrowable:
+    flatType: Float
+  overshieldPercentage:
+    flatType: Float
+  durationMultiplier:
+    flatType: Float
+  memoryCostReduction:
+    flatType: Float
+  offsetMult:
+    flatType: Float
+  focusedStaminaCost:
+    flatType: Int32
+  maxTargets:
+    flatType: Int32
+  crouchSprintStaminaCostMultiplier:
+    flatType: Float
+  blockSameQhTypeQueuingOnVehicles:
+    flatType: Bool
+  timeDilationStrength:
+    flatType: Float
+  distanceMult:
+    flatType: Float
+  disallowDeviceQhQueue:
+    flatType: Bool
+  memoryReturnFactor:
+    flatType: Float
+  preventInQueueAgain:
+    flatType: array:CName
+  durationIncease:
+    flatType: Float
+  focusedStaminaThreshold:
+    flatType: Float
+  graceChance:
+    flatType: Float
+  distanceBase:
+    flatType: Float
+ObjectAction:
+  isQuickHack:
+    flatType: Bool
+  isFlatheadAction:
+    flatType: Bool
+  awarenessCost:
+    flatType: TweakDBID
+    foreignType: StatModifierGroup
+  memoryCostReductionInOverclock:
+    flatType: Float
+SensePreset:
+  objectType:
+    flatType: TweakDBID
+    foreignType: SenseObjectType
+CrackAction:
+  effectorToApply:
+    flatType: TweakDBID
+    foreignType: Effector
+  factToCheck:
+    flatType: CName
