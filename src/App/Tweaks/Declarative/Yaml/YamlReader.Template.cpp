@@ -213,9 +213,10 @@ void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
                             instanceNode.SetTag(subNode.Tag());
                             ProcessNode(instanceNode, instanceData);
 
-                            const auto& valueNode = instanceNode[ValueAttrKey];
-                            if (valueNode.IsDefined() && valueNode.IsScalar())
+                            auto valueNode = instanceNode[ValueAttrKey];
+                            if (valueNode.IsDefined() && !valueNode.IsMap())
                             {
+                                valueNode.SetTag(subNode.Tag());
                                 expandedNode.push_back(valueNode);
                             }
                             else
