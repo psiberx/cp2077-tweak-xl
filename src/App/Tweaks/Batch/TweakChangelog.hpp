@@ -27,6 +27,7 @@ public:
     void RevertChanges(const Core::SharedPtr<Red::TweakDBManager>& aManager);
 
     [[nodiscard]] const Core::Set<Red::TweakDBID>& GetAffectedRecords() const;
+    [[nodiscard]] bool IsEmpty() const;
 
 private:
     struct AssignmentEntry

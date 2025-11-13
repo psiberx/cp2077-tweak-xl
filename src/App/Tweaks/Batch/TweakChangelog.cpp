@@ -283,3 +283,8 @@ const Core::Set<Red::TweakDBID>& App::TweakChangelog::GetAffectedRecords() const
 {
     return m_records;
 }
+
+bool App::TweakChangelog::IsEmpty() const
+{
+    return m_records.empty() && m_assignments.empty() && m_mutations.empty();
+}

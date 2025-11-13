@@ -160,7 +160,7 @@ bool App::TweakImporter::Read(const Core::SharedPtr<App::TweakChangeset>& aChang
 bool App::TweakImporter::Apply(const Core::SharedPtr<App::TweakChangeset>& aChangeset,
                                const Core::SharedPtr<App::TweakChangelog>& aChangelog)
 {
-    if (aChangeset->IsEmpty())
+    if (aChangeset->IsEmpty() && aChangelog->IsEmpty())
     {
         LogInfo("Nothing to import.");
         return false;
