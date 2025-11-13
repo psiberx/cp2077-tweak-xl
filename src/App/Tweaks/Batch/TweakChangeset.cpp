@@ -592,7 +592,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
             targetType->Assign(targetArray.get(), flatData.instance);
 
         Core::Vector<ElementChange> skips;
-        Core::Vector<ElementChange> deletions;
+        Core::SortedSet<ElementChange, ElementIndexComparator> deletions;
         Core::Vector<ElementChange> insertions;
         Core::Vector<decltype(&mutation)> chain;
 
@@ -625,7 +625,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
                     if (deletionIndex >= 0)
                     {
-                        deletions.emplace_back(deletionIndex, deletionValue);
+                        deletions.emplace(deletionIndex, deletionValue);
                     }
 
                     skips.emplace_back(chainLevel, deletionValue);
@@ -636,10 +636,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
             if (!deletions.empty())
             {
-                auto descending = [](ElementChange& a, ElementChange& b) { return a.first > b.first; };
-                std::sort(deletions.begin(), deletions.end(), descending);
-
-                for (const auto& [deletionIndex, deletionEntry] : deletions)
+                for (const auto& [deletionIndex, deletionEntry] : deletions | std::views::reverse)
                 {
                     targetType->RemoveAt(targetArray.get(), deletionIndex);
                 }

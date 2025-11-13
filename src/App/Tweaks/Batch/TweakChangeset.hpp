@@ -89,6 +89,14 @@ public:
 private:
     using ElementChange = std::pair<int32_t, Core::SharedPtr<void>>;
 
+    struct ElementIndexComparator
+    {
+        bool operator()(const ElementChange& a, const ElementChange& b) const
+        {
+            return a.first < b.first;
+        }
+    };
+
     bool IsCommitFinished();
     void StartCommitJob();
     void FinishCommitJob();
