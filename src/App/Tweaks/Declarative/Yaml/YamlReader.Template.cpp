@@ -133,7 +133,7 @@ void PrepareInstanceData(InstanceData& aInstanceData, const YAML::Node& aInstanc
     }
 }
 
-void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
+void ProcessNode(YAML::Node& aNode, const InstanceData& aInstanceData)
 {
     switch (aNode.Type())
     {
@@ -143,31 +143,32 @@ void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
         const auto markPos = value.find(AttrMark);
         if (markPos != std::string::npos)
         {
+            YAML::Node expandedNode{YAML::NodeType::Undefined};
+
             if (markPos == 0)
             {
                 const auto attr = MakeKey(value.data() + 2, value.size() - 3);
-                const auto it = aInstanceData.find(attr);
+                auto it = aInstanceData.find(attr);
                 if (it != aInstanceData.end())
                 {
-                    if (it.value().IsScalar())
-                    {
-                        const_cast<YAML::Node&>(aNode) = it.value().Scalar();
-                    }
-                    else
-                    {
-                        const_cast<YAML::Node&>(aNode) = it.value();
-                    }
-                    return;
+                    expandedNode = YAML::Clone(it->second);
                 }
             }
 
-            const_cast<YAML::Node&>(aNode) = FormatString(value, aInstanceData);
+            if (!expandedNode.IsDefined())
+            {
+                expandedNode = FormatString(value, aInstanceData);
+            }
+
+            expandedNode.SetTag(aNode.Tag());
+
+            aNode = expandedNode;
         }
         break;
     }
     case YAML::NodeType::Map:
     {
-        for (const auto& nodeIt : aNode)
+        for (auto nodeIt : aNode)
         {
             ProcessNode(nodeIt.second, aInstanceData);
         }
@@ -182,11 +183,11 @@ void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
 
         for (std::size_t i = 0; i < aNode.size(); ++i)
         {
-            const auto& subNode = aNode[i];
+            auto subNode = aNode[i];
 
             if (subNode.IsMap())
             {
-                const auto& instanceListNode = subNode[InstanceAttrKey];
+                auto instanceListNode = subNode[InstanceAttrKey];
 
                 if (instanceListNode.IsDefined())
                 {
@@ -210,13 +211,16 @@ void ProcessNode(const YAML::Node& aNode, const InstanceData& aInstanceData)
                             PrepareInstanceData(instanceData, instanceListNode[j]);
 
                             auto instanceNode = YAML::Clone(subNode);
-                            instanceNode.SetTag(subNode.Tag());
                             ProcessNode(instanceNode, instanceData);
 
                             auto valueNode = instanceNode[ValueAttrKey];
                             if (valueNode.IsDefined() && !valueNode.IsMap())
                             {
-                                valueNode.SetTag(subNode.Tag());
+                                if (valueNode.Tag() == "?")
+                                {
+                                    valueNode.SetTag(subNode.Tag());
+                                }
+
                                 expandedNode.push_back(valueNode);
                             }
                             else
@@ -255,9 +259,9 @@ void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
     {
         auto hasTopTemplates = false;
 
-        for (const auto& topNodeIt : aRootNode)
+        for (auto topNodeIt : aRootNode)
         {
-            const auto& topNode = topNodeIt.second;
+            auto topNode = topNodeIt.second;
 
             if (topNode.IsMap())
             {
@@ -278,10 +282,10 @@ void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
 
     YAML::Node expandedNode{YAML::NodeType::Map};
 
-    for (const auto& topNodeIt : aRootNode)
+    for (auto topNodeIt : aRootNode)
     {
         const auto& topKey = topNodeIt.first.Scalar();
-        const auto& topNode = topNodeIt.second;
+        auto topNode = topNodeIt.second;
 
         if (processedTopNodes > 0)
         {
@@ -306,26 +310,25 @@ void App::YamlReader::ProcessTemplates(YAML::Node& aRootNode)
             continue;
         }
 
-        if (instanceListNode.IsSequence())
-        {
-            const_cast<YAML::Node&>(topNode).remove(InstanceAttrKey);
-
-            for (std::size_t i = 0; i < instanceListNode.size(); ++i)
-            {
-                InstanceData instanceData;
-                PrepareInstanceData(instanceData, instanceListNode[i]);
-
-                auto instanceName = FormatString(topKey, instanceData);
-                auto instanceNode = YAML::Clone(topNode);
-                ProcessNode(instanceNode, instanceData);
-
-                expandedNode.force_insert(instanceName, instanceNode);
-            }
-        }
-        else
+        if (!instanceListNode.IsSequence())
         {
             ProcessNode(topNode, s_blankInstanceData);
             expandedNode.force_insert(topKey, topNode);
+            continue;
+        }
+
+        const_cast<YAML::Node&>(topNode).remove(InstanceAttrKey);
+
+        for (std::size_t i = 0; i < instanceListNode.size(); ++i)
+        {
+            InstanceData instanceData;
+            PrepareInstanceData(instanceData, instanceListNode[i]);
+
+            auto instanceName = FormatString(topKey, instanceData);
+            auto instanceNode = YAML::Clone(topNode);
+            ProcessNode(instanceNode, instanceData);
+
+            expandedNode.force_insert(instanceName, instanceNode);
         }
     }
 
