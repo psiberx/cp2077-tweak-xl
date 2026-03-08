@@ -23,7 +23,7 @@ namespace Raw::StatsDataSystem
 {
 using StatRecords = Core::OffsetPtr<0xD8, Red::DynArray<Red::TweakDBID>>;
 using StatParams = Core::OffsetPtr<0xE8, Red::DynArray<Red::StatParams>>;
-using StatLock = Core::OffsetPtr<0xFC, Red::SharedMutex>;
+using StatLock = Core::OffsetPtr<0xFC, Red::SharedSpinLock>;
 
 constexpr auto InitializeRecords = Core::RawFunc<
     /* addr = */ Red::AddressLib::StatsDataSystem_InitializeRecords,

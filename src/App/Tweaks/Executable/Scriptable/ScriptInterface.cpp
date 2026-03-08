@@ -133,6 +133,6 @@ App::ScriptInterface::RecordArray* App::ScriptInterface::FetchRecords(Red::CName
     if (!tdb)
         return nullptr;
 
-    std::shared_lock<Red::SharedMutex> _(tdb->mutex01);
+    std::shared_lock<Red::SharedSpinLock> _(tdb->mutex01);
     return reinterpret_cast<RecordArray*>(tdb->recordsByType.Get(recordType));
 }

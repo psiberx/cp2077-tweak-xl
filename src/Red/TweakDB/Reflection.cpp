@@ -261,7 +261,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
 
 Red::TweakDBID Red::TweakDBReflection::GetRecordSampleId(const Red::CClass* aType)
 {
-    std::shared_lock<Red::SharedMutex> recordLockR(m_tweakDb->mutex01);
+    std::shared_lock<Red::SharedSpinLock> recordLockR(m_tweakDb->mutex01);
     auto* records = m_tweakDb->recordsByType.Get(const_cast<Red::CClass*>(aType));
 
     if (records == nullptr)
@@ -272,7 +272,7 @@ Red::TweakDBID Red::TweakDBReflection::GetRecordSampleId(const Red::CClass* aTyp
 
 uint32_t Red::TweakDBReflection::GetRecordTypeHash(const Red::CClass* aType)
 {
-    std::shared_lock<Red::SharedMutex> recordLockR(m_tweakDb->mutex01);
+    std::shared_lock<Red::SharedSpinLock> recordLockR(m_tweakDb->mutex01);
     auto* records = m_tweakDb->recordsByType.Get(const_cast<Red::CClass*>(aType));
 
     if (records == nullptr)
@@ -288,7 +288,7 @@ std::string Red::TweakDBReflection::ResolvePropertyName(Red::TweakDBID aSampleId
 
     auto propId = aSampleId + PropSeparator + propName;
 
-    std::shared_lock<Red::SharedMutex> flatLockR(m_tweakDb->mutex00);
+    std::shared_lock<Red::SharedSpinLock> flatLockR(m_tweakDb->mutex00);
 
     auto propFlat = m_tweakDb->flats.Find(propId);
     if (propFlat == m_tweakDb->flats.End())
@@ -312,7 +312,7 @@ int32_t Red::TweakDBReflection::ResolveDefaultValue(const Red::CClass* aType, co
 
     const auto defaultFlatId = Red::TweakDBID(defaultFlatName);
 
-    std::shared_lock<Red::SharedMutex> flatLockR(m_tweakDb->mutex00);
+    std::shared_lock<Red::SharedSpinLock> flatLockR(m_tweakDb->mutex00);
 
     auto defaultFlat = m_tweakDb->flats.Find(defaultFlatId);
 
