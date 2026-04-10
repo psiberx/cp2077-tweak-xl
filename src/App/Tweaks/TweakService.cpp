@@ -25,7 +25,7 @@ void App::TweakService::OnBootstrap()
     HookAfter<Raw::TryLoadTweakDB>([&](bool& aSuccess) {
         if (aSuccess)
         {
-            m_reflection = Core::MakeShared<Red::TweakDBReflection>();
+            m_reflection = Core::MakeShared<Red::TweakDBReflection>(Red::TweakDB::Get());
             m_manager = Core::MakeShared<Red::TweakDBManager>(m_reflection);
             m_context = Core::MakeShared<App::TweakContext>(m_productVer);
             m_importer = Core::MakeShared<App::TweakImporter>(m_manager, m_context);

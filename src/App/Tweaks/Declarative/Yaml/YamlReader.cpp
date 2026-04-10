@@ -275,9 +275,9 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
     {
         flatType = aType;
 
-        if (m_reflection->IsArrayType(flatType))
+        if (Red::TweakDBReflection::IsArrayType(flatType))
         {
-            const auto elementType = ResolveFlatType(m_reflection->GetElementTypeName(flatType));
+            const auto elementType = ResolveFlatType(Red::TweakDBReflection::GetElementTypeName(flatType));
 
             if (HandleMutations(aChangeset, aName, aName, aNode, elementType))
             {
@@ -304,11 +304,11 @@ void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std:
             return;
         }
 
-        flatType = m_reflection->GetFlatType(x.first);
+        flatType = Red::TweakDBReflection::GetFlatType(x.first);
 
-        if (m_reflection->IsArrayType(flatType))
+        if (Red::TweakDBReflection::IsArrayType(flatType))
         {
-            const auto elementType = ResolveFlatType(m_reflection->GetElementTypeName(flatType));
+            const auto elementType = ResolveFlatType(Red::TweakDBReflection::GetElementTypeName(flatType));
 
             if (HandleMutations(aChangeset, aName, aName, aNode, elementType))
             {
@@ -356,8 +356,8 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
 
     if (!recordInfo)
     {
-        if (m_reflection->IsRecordType(aRecordType))
-            LogError("{}: Cannot create record, the record type {} is abstract.", aRecordPath, m_reflection->GetRecordShortName(aRecordType->GetName()));
+        if (Red::TweakDBReflection::IsRecordType(aRecordType))
+            LogError("{}: Cannot create record, the record type {} is abstract.", aRecordPath, Red::TweakDBReflection::GetRecordShortName<std::string>(aRecordType->GetName()));
         else
             LogError("{}: Cannot create record, {} is not a record type.", aRecordPath, aRecordType->GetName().ToString());
         return;
@@ -389,7 +389,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
         const auto propName = ComposeFlatName(aRecordName, nodeKey);
         const auto propPath = ComposeFlatName(aRecordPath, nodeKey);
 
-        const auto propInfo = recordInfo->GetPropInfo(nodeKey.c_str());
+        const auto propInfo = recordInfo->GetProperty(nodeKey.c_str());
 
         if (!propInfo)
         {
@@ -409,9 +409,9 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
         YAML::Node overrideData;
 
         // Inline records
-        if (propInfo->isForeignKey)
+        if (propInfo->IsForeignKey())
         {
-            if (propInfo->isArray && originalData.IsSequence())
+            if (propInfo->IsArray() && originalData.IsSequence())
             {
                 auto inlineFailed = false;
 
@@ -422,7 +422,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
                     if (itemData.IsMap())
                     {
                         auto sourceId = Red::TweakDBID();
-                        auto foreignType = propInfo->foreignType;
+                        auto foreignType = propInfo->GetForeignType();
                         auto inlinePath = ComposePath(propPath, itemIndex);
 
                         if (!ResolveInlineNode(aChangeset, inlinePath, itemData, foreignType, sourceId))
@@ -451,7 +451,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
             else if (originalData.IsMap())
             {
                 auto sourceId = Red::TweakDBID();
-                auto foreignType = propInfo->foreignType;
+                auto foreignType = propInfo->GetForeignType();
 
                 if (!ResolveInlineNode(aChangeset, propPath, originalData, foreignType, sourceId))
                     continue;
@@ -459,11 +459,11 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
                 auto inlineName = ComposeInlineName(propName, foreignType, m_path);
 
                 // Special handling for UIIcon
-                if (propInfo->foreignType->GetName() == UIIconType)
+                if (propInfo->GetForeignType()->GetName() == UIIconType)
                 {
                     // Item records have both .iconPath and .icon properties, but last one is never used.
                     // So if parent record has .iconPath property then auto fill it with our inline icon name.
-                    if (recordInfo->props.contains("iconPath") && !aNode["iconPath"])
+                    if (recordInfo->GetProperties().contains("iconPath") && !aNode["iconPath"])
                     {
                         aChangeset.SetFlat(Red::TweakDBID(recordId, ".iconPath"), ResolveFlatType("String"),
                                            Red::MakeInstance<Red::CString>(inlineName.c_str()));
@@ -483,31 +483,31 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
         const auto& nodeData = !overrideData.IsNull() ? overrideData : originalData;
 
         // Array mutations
-        if (propInfo->isArray)
+        if (propInfo->IsArray())
         {
-            if (HandleMutations(aChangeset, propPath, propName, nodeData, propInfo->elementType))
+            if (HandleMutations(aChangeset, propPath, propName, nodeData, propInfo->GetElementType()))
             {
                 if (isOriginalBase)
                 {
-                    aChangeset.ReinheritFlat(propId, recordId, propInfo->appendix);
+                    aChangeset.ReinheritFlat(propId, recordId, propInfo->GetAppendix());
                 }
                 continue;
             }
         }
 
-        const auto propValue = MakeValue(propInfo->type, nodeData);
+        const auto propValue = MakeValue(propInfo->GetType(), nodeData);
 
         if (!propValue)
         {
-            LogError("{}.{}: Invalid value, expected \"{}\".", aRecordPath, nodeKey, propInfo->type->GetName().ToString());
+            LogError("{}.{}: Invalid value, expected \"{}\".", aRecordPath, nodeKey, propInfo->GetType()->GetName().ToString());
             continue;
         }
 
-        aChangeset.SetFlat(propId, propInfo->type, propValue);
+        aChangeset.SetFlat(propId, propInfo->GetType(), propValue);
 
         if (isOriginalBase)
         {
-            aChangeset.ReinheritFlat(propId, recordId, propInfo->appendix);
+            aChangeset.ReinheritFlat(propId, recordId, propInfo->GetAppendix());
         }
     }
 }
@@ -711,17 +711,17 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
 
 const Red::CBaseRTTIType* App::YamlReader::ResolveFlatType(const YAML::Node& aNode)
 {
-    return m_reflection->GetFlatType(aNode.Scalar().c_str());
+    return Red::TweakDBReflection::GetFlatType(aNode.Scalar().c_str());
 }
 
 const Red::CBaseRTTIType* App::YamlReader::ResolveFlatType(Red::CName aName)
 {
-    return m_reflection->GetFlatType(aName);
+    return Red::TweakDBReflection::GetFlatType(aName);
 }
 
 const Red::CClass* App::YamlReader::ResolveRecordType(const YAML::Node& aNode)
 {
-    return m_reflection->GetRecordType(aNode.Scalar().c_str());
+    return Red::TweakDBReflection::GetRecordType(aNode.Scalar().c_str());
 }
 
 Red::TweakDBID App::YamlReader::ResolveTweakDBID(const YAML::Node& aNode)

@@ -20,8 +20,6 @@ public:
 
     using BatchPtr = Core::SharedPtr<Batch>;
 
-    TweakDBManager();
-    explicit TweakDBManager(Red::TweakDB* aTweakDb);
     explicit TweakDBManager(Core::SharedPtr<Red::TweakDBReflection> aReflection);
 
     TweakDBManager(const TweakDBManager&) = delete;

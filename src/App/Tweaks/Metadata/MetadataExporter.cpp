@@ -183,7 +183,7 @@ void App::MetadataExporter::ResolveInlines(const Red::TweakGroupPtr& aOwner, con
                 : flatValue.As<Red::TweakDBID>();
 
 #ifndef NDEBUG
-            auto resolvedName = m_reflection->ToString(resolvedID);
+            auto resolvedName = Red::TweakDBReflection::ToString(resolvedID);
 #endif
 
             while (++counter < 999)
@@ -336,7 +336,7 @@ bool App::MetadataExporter::ExportExtraFlats(const std::filesystem::path& aOutPa
             std::string_view typeName = schemaName;
             typeName.remove_prefix(std::char_traits<char>::length(SchemaPackage) + 1);
 
-            auto recordType = m_reflection->GetRecordFullName(typeName.data());
+            auto recordType = Red::TweakDBReflection::GetRecordFullName<Red::CName>(typeName.data());
             auto numberOfFlats = extraFlats.size();
 
             out.write(reinterpret_cast<char*>(&recordType), sizeof(recordType));
@@ -347,7 +347,7 @@ bool App::MetadataExporter::ExportExtraFlats(const std::filesystem::path& aOutPa
                 uint8_t flatNameLen = flat->name.size();
                 auto flatName = flat->name.data();
                 auto flatType = RedReader::GetFlatTypeName(flat);
-                auto foreignType = m_reflection->GetRecordFullName(flat->foreignType.data());
+                auto foreignType = Red::TweakDBReflection::GetRecordFullName<Red::CName>(flat->foreignType.data());
 
                 out.write(reinterpret_cast<char*>(&flatNameLen), sizeof(flatNameLen));
                 out.write(reinterpret_cast<char*>(flatName), flatNameLen);

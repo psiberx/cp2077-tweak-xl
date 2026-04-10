@@ -123,16 +123,16 @@ App::RedReader::GroupStatePtr App::RedReader::HandleGroup(App::TweakChangeset& a
 
     for (const auto& flat : aGroup->flats)
     {
-        const auto propInfo = recordInfo->GetPropInfo(flat->name.c_str());
+        const auto propInfo = recordInfo->GetProperty(flat->name.c_str());
 
         if (propInfo)
         {
             auto flatState = HandleFlat(aChangeset, flat, groupState->groupName, groupState->groupPath,
-                                        propInfo->type, propInfo->foreignType);
+                                        propInfo->GetType(), propInfo->GetForeignType());
 
             if (flatState && flatState->isProcessed && groupState->isOriginalBase)
             {
-                aChangeset.ReinheritFlat(flatState->flatId, groupState->recordId, propInfo->appendix);
+                aChangeset.ReinheritFlat(flatState->flatId, groupState->recordId, propInfo->GetAppendix());
             }
         }
         else
@@ -199,12 +199,12 @@ App::RedReader::GroupStatePtr App::RedReader::HandleInline(App::TweakChangeset& 
 
         for (const auto& flat : aGroup->flats)
         {
-            const auto propInfo = recordInfo->GetPropInfo(flat->name.c_str());
+            const auto propInfo = recordInfo->GetProperty(flat->name.c_str());
 
             if (propInfo)
             {
                 flatState = HandleFlat(aChangeset, flat, inlineState->groupName, inlineState->groupPath,
-                                       propInfo->type, propInfo->foreignType);
+                                       propInfo->GetType(), propInfo->GetForeignType());
             }
             else
             {

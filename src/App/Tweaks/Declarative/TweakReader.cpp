@@ -27,7 +27,7 @@ App::BaseTweakReader::BaseTweakReader(Core::SharedPtr<Red::TweakDBManager> aMana
 
 bool App::BaseTweakReader::IsOriginalBaseRecord(Red::TweakDBID aRecordId)
 {
-    return m_reflection->IsOriginalBaseRecord(aRecordId);
+    return Red::TweakDBReflection::IsOriginalBaseRecord(aRecordId);
 }
 
 std::string App::BaseTweakReader::ComposeGroupName(const std::string& aParentName, const std::string& aGroupName)
@@ -156,7 +156,7 @@ const Red::CClass* App::BaseTweakReader::ResolveRecordInstanceType(App::TweakCha
 
 std::string App::BaseTweakReader::ToName(const Red::CClass* aType)
 {
-    return m_reflection->GetRecordShortName(aType->GetName());
+    return Red::TweakDBReflection::GetRecordShortName<std::string>(aType->GetName());
 }
 
 std::string App::BaseTweakReader::ToName(const Red::CBaseRTTIType* aType, const Red::CClass* aKey)
@@ -169,7 +169,7 @@ std::string App::BaseTweakReader::ToName(const Red::CBaseRTTIType* aType, const 
     if (aKey)
     {
         name.append(ForeignKeyOpen);
-        name.append(m_reflection->GetRecordShortName(aKey->name));
+        name.append(Red::TweakDBReflection::GetRecordShortName<std::string>(aKey->name));
         name.append(ForeignKeyClose);
     }
 

@@ -38,7 +38,7 @@ bool App::MetadataImporter::ImportInheritanceMap(const std::filesystem::path& aP
                 --numberOfChildren;
             }
 
-            m_reflection->RegisterDescendants(recordID, descendantIDs);
+            Red::TweakDBReflection::RegisterDescendants(recordID, descendantIDs);
 
             --numberOfEntries;
         }
@@ -81,7 +81,7 @@ bool App::MetadataImporter::ImportInheritanceMap(const std::filesystem::path& aP
             if (descendantIDs.empty())
                 return false;
 
-            m_reflection->RegisterDescendants(recordID, descendantIDs);
+            Red::TweakDBReflection::RegisterDescendants(recordID, descendantIDs);
         }
 
         return true;
@@ -123,7 +123,7 @@ bool App::MetadataImporter::ImportExtraFlats(const std::filesystem::path& aPath)
                 in.read(reinterpret_cast<char*>(&propType), sizeof(propType));
                 in.read(reinterpret_cast<char*>(&foreignType), sizeof(foreignType));
 
-                m_reflection->RegisterExtraFlat(recordType, {propName, propNameLen}, propType, foreignType);
+                Red::TweakDBReflection::RegisterExtraFlat(recordType, {propName, propNameLen}, propType, foreignType);
 
                 --numberOfFlats;
             }
@@ -142,9 +142,9 @@ bool App::MetadataImporter::ImportExtraFlats(const std::filesystem::path& aPath)
 
         for (const auto& topNodeIt : data)
         {
-            const auto recordType = m_reflection->GetRecordFullName(topNodeIt.first.Scalar().data());
+            const auto recordType = Red::TweakDBReflection::GetRecordFullName<Red::CName>(topNodeIt.first.Scalar().data());
 
-            if (!m_reflection->IsRecordType(recordType))
+            if (!Red::TweakDBReflection::IsRecordType(recordType))
                 return false;
 
             const auto& extraFlats = topNodeIt.second;
@@ -167,7 +167,7 @@ bool App::MetadataImporter::ImportExtraFlats(const std::filesystem::path& aPath)
 
                 const auto propType = Red::CName(propTypeNode.Scalar().data());
 
-                if (!m_reflection->IsFlatType(propType))
+                if (!Red::TweakDBReflection::IsFlatType(propType))
                     return false;
 
                 const auto& foreignTypeNode = propDataNode["foreignType"];
@@ -179,13 +179,13 @@ bool App::MetadataImporter::ImportExtraFlats(const std::filesystem::path& aPath)
                     if (!foreignTypeNode.IsScalar())
                         return false;
 
-                    foreignType = m_reflection->GetRecordFullName(foreignTypeNode.Scalar().data());
+                    foreignType = Red::TweakDBReflection::GetRecordFullName<Red::CName>(foreignTypeNode.Scalar().data());
 
-                    if (!m_reflection->IsRecordType(foreignType))
+                    if (!Red::TweakDBReflection::IsRecordType(foreignType))
                         return false;
                 }
 
-                m_reflection->RegisterExtraFlat(recordType, propName, propType, foreignType);
+                Red::TweakDBReflection::RegisterExtraFlat(recordType, propName, propType, foreignType);
             }
         }
 
