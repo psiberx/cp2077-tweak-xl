@@ -1,4 +1,7 @@
 #include "Manager.hpp"
+
+#include "App/Tweaks/Record/CustomTweakDBRecord.hpp"
+#include "Core/Facades/Container.hpp"
 #include "Red/TweakDB/Raws.hpp"
 
 namespace
@@ -6,22 +9,11 @@ namespace
 constexpr auto OptimizedFlatChunkSize = 16000;
 }
 
-Red::TweakDBManager::TweakDBManager()
-    : TweakDBManager(Red::TweakDB::Get())
-{
-}
-
-Red::TweakDBManager::TweakDBManager(Red::TweakDB* aTweakDb)
-    : m_tweakDb(aTweakDb)
-    , m_buffer(Core::MakeShared<Red::TweakDBBuffer>(m_tweakDb))
-    , m_reflection(Core::MakeShared<Red::TweakDBReflection>(m_tweakDb))
-{
-}
-
 Red::TweakDBManager::TweakDBManager(Core::SharedPtr<Red::TweakDBReflection> aReflection)
     : m_tweakDb(aReflection->GetTweakDB())
     , m_buffer(Core::MakeShared<Red::TweakDBBuffer>(m_tweakDb))
     , m_reflection(std::move(aReflection))
+    , m_rtti(Red::CRTTISystem::Get())
 {
 }
 
@@ -93,6 +85,20 @@ bool Red::TweakDBManager::SetFlat(Red::TweakDBID aFlatId, const Red::Value<>& aD
     return SetFlat(aFlatId, aData.type, aData.instance);
 }
 
+bool Red::TweakDBManager::CreateCustomRecord(Red::TweakDB* aTweakDB, TweakDBID aRecordId, const uint32_t aHash) const
+{
+    if (const auto* recordInfo = m_reflection->GetCustomRecordInfo(aHash))
+    {
+        if (const auto* cls = recordInfo->type)
+        {
+            const auto instance = Red::MakeHandle<App::CustomTweakDBRecord>(*recordInfo, aRecordId);
+            Raw::InsertRecord(aTweakDB, aRecordId, cls, instance);
+            return true;
+        }
+    }
+    return false;
+}
+
 bool Red::TweakDBManager::CreateRecord(Red::TweakDBID aRecordId, const Red::CClass* aType)
 {
     if (!aRecordId.IsValid() || IsRecordExists(aRecordId))
@@ -112,7 +118,7 @@ bool Red::TweakDBManager::CreateRecord(Red::TweakDBID aRecordId, const Red::CCla
         m_tweakDb->flats.Insert(propFlats);
     }
 
-    Raw::CreateRecord(m_tweakDb, recordInfo->typeHash, aRecordId);
+    m_tweakDb->CreateRecord(aRecordId, recordInfo->typeHash);
 
     return true;
 }
@@ -140,7 +146,7 @@ bool Red::TweakDBManager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID a
         m_tweakDb->flats.Insert(propFlats);
     }
 
-    Raw::CreateRecord(m_tweakDb, recordInfo->typeHash, aRecordId);
+    m_tweakDb->CreateRecord(aRecordId, recordInfo->typeHash);
 
     return true;
 }
@@ -415,7 +421,7 @@ void Red::TweakDBManager::CommitBatch(const BatchPtr& aBatch)
         }
         else
         {
-            Raw::CreateRecord(m_tweakDb, recordInfo->typeHash, recordId);
+            m_tweakDb->CreateRecord(recordId, recordInfo->typeHash);
         }
     }
 
@@ -491,7 +497,7 @@ void Red::TweakDBManager::InheritFlats(RED4ext::SortedUniqueArray<Red::TweakDBID
 {
     for (const auto& [_, propInfo] : aRecordInfo->props)
     {
-        if (!propInfo->dataOffset)
+        if (propInfo->isExtra)
             continue;
 
         auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);
@@ -537,7 +543,7 @@ bool Red::TweakDBManager::AssignFlat(const Red::TweakDBManager::BatchPtr& aBatch
     std::unique_lock batchLockRW(aBatch->mutex);
 
     const auto& flat = aBatch->flats.find(aFlatId);
-    int32_t offset = -1;
+    int32_t offset;
 
     if (flat != aBatch->flats.end())
     {
@@ -576,7 +582,7 @@ void Red::TweakDBManager::InheritFlats(const Red::TweakDBManager::BatchPtr& aBat
 {
     for (const auto& [_, propInfo] : aRecordInfo->props)
     {
-        if (!propInfo->dataOffset)
+        if (propInfo->isExtra)
             continue;
 
         auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);
@@ -653,7 +659,7 @@ void Red::TweakDBManager::CreateExtraNames(Red::TweakDBID aId, const std::string
         const auto propId = aId + propInfo->appendix;
         const auto propName = aName + propInfo->appendix;
 
-        if (propInfo->dataOffset)
+        if (!propInfo->isExtra)
         {
             Raw::CreateTweakDBID(&aId, &propId, propInfo->appendix.c_str());
         }
@@ -696,4 +702,85 @@ const Core::Set<Red::TweakDBID>& Red::TweakDBManager::GetEnums()
     std::shared_lock _(m_mutex);
 
     return m_knownEnums;
+}
+
+bool Red::TweakDBManager::RegisterCustomRecord(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo)
+{
+    if (!aRecordInfo || !aRecordInfo->isCustom)
+        return false;
+
+    m_rtti->CreateScriptedClass(aRecordInfo->name, {}, nullptr);
+
+    const auto* cls = m_rtti->GetClass(aRecordInfo->name);
+
+    if (!cls)
+        return false;
+
+    aRecordInfo->type = cls;
+
+    assert(m_reflection->IsValid(aRecordInfo));
+
+    m_reflection->RegisterRecordInfo(aRecordInfo);
+    return true;
+}
+
+bool Red::TweakDBManager::DescribeCustomRecord(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo,
+                                               const Red::ScriptingFunction_t<void*> aGetterFunction)
+{
+    static auto* customRecordType = m_rtti->GetClass(App::CustomTweakDBRecord::NAME);
+
+    if (!aRecordInfo || !aRecordInfo->isCustom)
+        return false;
+
+    auto* cls = m_rtti->GetClass(aRecordInfo->name);
+
+    m_rtti->RegisterScriptName(aRecordInfo->name, aRecordInfo->aliasName);
+
+    if (auto* parent = aRecordInfo->parent; parent && parent->IsA(customRecordType))
+        cls->parent = const_cast<Red::CClass*>(parent);
+    else
+        cls->parent = customRecordType;
+
+    for (const auto propInfo : aRecordInfo->props | std::views::values)
+    {
+        DescribeCustomRecordProperty(cls, propInfo, aGetterFunction);
+        InsertPropertyFlat(aRecordInfo->name, propInfo);
+    }
+
+    return true;
+}
+
+void Red::TweakDBManager::DescribeCustomRecordProperty(CClass* cls,
+                                                       Core::SharedPtr<const Red::TweakDBPropertyInfo> aPropertyInfo,
+                                                       const Red::ScriptingFunction_t<void*> aGetterFunction)
+{
+    auto* function = Red::CClassFunction::Create(cls, aPropertyInfo->functionName.ToString(),
+                                                 aPropertyInfo->functionName.ToString(), aGetterFunction);
+    function->SetReturnType(aPropertyInfo->name);
+}
+
+void Red::TweakDBManager::InsertPropertyFlat(CName aRecordName,
+                                             Core::SharedPtr<const Red::TweakDBPropertyInfo> aPropertyInfo)
+{
+    const auto id = m_reflection->BuildRTDBID(aRecordName.ToString(), aPropertyInfo->name.ToString());
+    const auto ptr = m_reflection->Construct(aPropertyInfo->type);
+    SetFlat(id, m_reflection->GetFlatType(aPropertyInfo->name), ptr.get());
+}
+
+void* Red::TweakDBManager::GetCustomRecordValue(const App::CustomTweakDBRecord* aRecord, CName functionName)
+{
+    if (const auto* recordInfo = m_reflection->GetCustomRecordInfo(aRecord->GetTweakBaseHash()))
+    {
+        std::string propName = functionName.ToString();
+        propName[0] = static_cast<char>(std::tolower(propName[0]));
+
+        if (const auto propertyInfo = recordInfo->GetPropInfo(propName.c_str()))
+        {
+            if (const auto flat = GetFlat(aRecord->recordID + propertyInfo->appendix); flat && flat.instance)
+            {
+                return flat.instance;
+            }
+        }
+    }
+    return nullptr;
 }

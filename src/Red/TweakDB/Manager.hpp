@@ -1,5 +1,6 @@
 #pragma once
 
+#include "App/Tweaks/Record/CustomTweakDBRecord.hpp"
 #include "Red/TweakDB/Alias.hpp"
 #include "Red/TweakDB/Buffer.hpp"
 #include "Red/TweakDB/Reflection.hpp"
@@ -66,6 +67,13 @@ public:
     Red::TweakDB* GetTweakDB();
     Core::SharedPtr<Red::TweakDBReflection>& GetReflection();
 
+    bool CreateCustomRecord(Red::TweakDB* aTweakDB, Red::TweakDBID aRecordId, uint32_t aHash) const;
+    bool RegisterCustomRecord(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo);
+    bool DescribeCustomRecord(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo, Red::ScriptingFunction_t<void*> aGetterFunction);
+    void DescribeCustomRecordProperty(Red::CClass* cls, Core::SharedPtr<const Red::TweakDBPropertyInfo> aPropertyInfo, Red::ScriptingFunction_t<void*> aGetterFunction);
+    void InsertPropertyFlat(Red::CName aRecordName, Core::SharedPtr<const Red::TweakDBPropertyInfo> aPropertyInfo);
+    void* GetCustomRecordValue(const App::CustomTweakDBRecord* aRecord, Red::CName functionName);
+
 private:
     template<class SharedLockable>
     inline bool AssignFlat(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aFlatId,
@@ -87,6 +95,7 @@ private:
     void CreateExtraNames(Red::TweakDBID aId, const std::string& aName, const Red::CClass* aType = nullptr);
 
     Red::TweakDB* m_tweakDb;
+    Red::CRTTISystem* m_rtti;
     Core::SharedPtr<Red::TweakDBBuffer> m_buffer;
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;
     Core::Map<Red::TweakDBID, std::string> m_knownNames;

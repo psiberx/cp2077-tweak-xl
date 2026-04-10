@@ -40,23 +40,25 @@ enum : uint64_t
 struct TweakDBPropertyInfo
 {
     Red::CName name;
+    Red::CName functionName;
     const Red::CBaseRTTIType* type;
     const Red::CBaseRTTIType* elementType;
     const Red::CClass* foreignType;
     bool isArray;
     bool isForeignKey;
+    bool isExtra;
     std::string appendix; // The name used to build ID of the property
-    uintptr_t dataOffset; // Offset of the property in record instance
     int32_t defaultValue; // Offset of the default value in the buffer
 };
 
 struct TweakDBRecordInfo
 {
     Red::CName name;
+    Red::CName aliasName;
     const Red::CClass* type;
     const Red::CClass* parent;
     Core::Map<Red::CName, Core::SharedPtr<Red::TweakDBPropertyInfo>> props;
-    bool extraFlats;
+    bool isCustom;
     std::string shortName;
     uint32_t typeHash;
 
@@ -73,9 +75,13 @@ public:
     TweakDBReflection();
     explicit TweakDBReflection(Red::TweakDB* aTweakDb);
 
-    const Red::TweakDBRecordInfo* GetRecordInfo(Red::CName aTypeName);
-    const Red::TweakDBRecordInfo* GetRecordInfo(const Red::CClass* aType);
+    const Red::TweakDBRecordInfo* GetRecordInfo(Red::CName aTypeName, bool aCollect = true);
+    const Red::TweakDBRecordInfo* GetRecordInfo(const Red::CClass* aType, bool aCollect = true);
 
+    const Red::TweakDBRecordInfo* GetCustomRecordInfo(Red::CName aTypeName);
+    const Red::TweakDBRecordInfo* GetCustomRecordInfo(const Red::CClass* aType);
+
+    const Red::CBaseRTTIType* GetFlatType(uint64_t aType);
     const Red::CBaseRTTIType* GetFlatType(Red::CName aTypeName);
     const Red::CClass* GetRecordType(Red::CName aTypeName);
     const Red::CClass* GetRecordType(const char* aTypeName);
@@ -116,8 +122,15 @@ public:
     Red::CName GetRecordFullName(Red::CName aName);
     Red::CName GetRecordFullName(const char* aName);
 
+    Red::CName GetRecordAliasName(Red::CName aName);
+    Red::CName GetRecordAliasName(const char* aName);
+
     std::string GetRecordShortName(Red::CName aName);
     std::string GetRecordShortName(const char* aName);
+
+    std::string GetPropertyFunctionName(Red::CName aName);
+
+    uint32_t GetRecordTypeHash(const std::string& aName);
 
     Red::InstancePtr<> Construct(Red::CName aTypeName);
     Red::InstancePtr<> Construct(const Red::CBaseRTTIType* aType);
@@ -130,10 +143,23 @@ public:
     void RegisterExtraFlat(Red::CName aRecordType, const std::string& aPropName, Red::CName aPropType,
                            Red::CName aForeignType);
     void RegisterDescendants(Red::TweakDBID aParentId, const Core::Set<Red::TweakDBID>& aDescendantIds);
+    bool RegisterRecordInfo(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo);
+    bool RegisterPropertyInfo(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo,
+        Core::SharedPtr<Red::TweakDBPropertyInfo> aPropertyInfo);
 
     std::string ToString(Red::TweakDBID aID);
 
     Red::TweakDB* GetTweakDB();
+
+    bool IsValid(Core::SharedPtr<Red::TweakDBPropertyInfo> aPropInfo);
+    bool IsValid(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo);
+
+    Red::TweakDBID BuildRTDBID(Red::CName aRecordName, Red::CName aPropertyName);
+
+    Core::SharedPtr<Red::TweakDBRecordInfo> CreateRecordInfo(const char* aName);
+    Core::SharedPtr<Red::TweakDBRecordInfo> CreateRecordInfo(const Red::CClass* aClass);
+    Core::SharedPtr<Red::TweakDBPropertyInfo> CreatePropertyInfo(const char* aName, uint64_t aType);
+    Core::SharedPtr<Red::TweakDBPropertyInfo> CreatePropertyInfo(const char* aName, const Red::CBaseRTTIType* aType);
 
 private:
     struct ExtraFlat

@@ -3,6 +3,8 @@
 #include "App/Tweaks/Executable/TweakExecutor.hpp"
 #include "App/Tweaks/Metadata/MetadataExporter.hpp"
 #include "App/Tweaks/Metadata/MetadataImporter.hpp"
+#include "Core/Facades/Container.hpp"
+#include "Record/CustomTweakDBRecord.hpp"
 #include "Red/TweakDB/Raws.hpp"
 
 App::TweakService::TweakService(const Core::SemvVer& aProductVer, std::filesystem::path aGameDir,
@@ -25,12 +27,16 @@ void App::TweakService::OnBootstrap()
     HookAfter<Raw::TryLoadTweakDB>([&](bool& aSuccess) {
         if (aSuccess)
         {
-            m_reflection = Core::MakeShared<Red::TweakDBReflection>();
+            m_reflection = Core::MakeShared<Red::TweakDBReflection>(Red::TweakDB::Get());
             m_manager = Core::MakeShared<Red::TweakDBManager>(m_reflection);
             m_context = Core::MakeShared<App::TweakContext>(m_productVer);
             m_importer = Core::MakeShared<App::TweakImporter>(m_manager, m_context);
             m_executor = Core::MakeShared<App::TweakExecutor>(m_manager);
             m_changelog = Core::MakeShared<App::TweakChangelog>();
+
+#ifndef NDEBUG
+            RegisterTestCustomRecord();
+#endif
 
             if (ImportMetadata())
             {
@@ -44,6 +50,12 @@ void App::TweakService::OnBootstrap()
     HookAfter<Raw::InitTweakDB>([&]() {
         EnsureRuntimeAccess();
         CheckForIssues();
+    });
+
+    HookWrap<Raw::CreateRecord>([&](const CreateRecordFunction aOriginal, Red::TweakDB* aTweakDB,
+                                    const uint32_t aTypeHash, const Red::TweakDBID aTweakDBID) {
+        if (!m_manager || !m_manager->CreateCustomRecord(aTweakDB, aTweakDBID, aTypeHash))
+            aOriginal(aTweakDB, aTypeHash, aTweakDBID);
     });
 }
 
@@ -211,3 +223,33 @@ App::TweakChangelog& App::TweakService::GetChangelog()
 {
     return *m_changelog;
 }
+
+void App::CustomRecordGetter(Red::IScriptable* aInstance, Red::CStackFrame* aStackFrame, void* aOut, int64_t)
+{
+    const void* value = Core::Resolve<App::TweakService>()->GetManager().GetCustomRecordValue(
+        reinterpret_cast<App::CustomTweakDBRecord*>(aInstance), aStackFrame->func->fullName);
+
+    if (aOut && value)
+    {
+        aStackFrame->dataType->Assign(aOut, value);
+    }
+}
+
+#ifndef NDEBUG
+
+void App::TweakService::RegisterTestCustomRecord() const
+{
+    const auto recordInfo = m_reflection->CreateRecordInfo("TweakXLTest");
+    recordInfo->isCustom = true;
+
+    m_reflection->RegisterPropertyInfo(recordInfo, m_reflection->CreatePropertyInfo("foo", Red::ERTDBFlatType::CName));
+    m_reflection->RegisterPropertyInfo(recordInfo, m_reflection->CreatePropertyInfo("bar", Red::ERTDBFlatType::CName));
+
+    if (!m_manager->RegisterCustomRecord(recordInfo))
+        LogError("Failed to register custom TweakDB record type {}.", recordInfo->name.ToString());
+
+    if (!m_manager->DescribeCustomRecord(recordInfo, &CustomRecordGetter))
+        LogError("Failed to describe custom TweakDB record type {}.", recordInfo->name.ToString());
+}
+
+#endif

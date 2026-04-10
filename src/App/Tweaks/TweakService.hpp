@@ -9,6 +9,7 @@
 #include "Core/Logging/LoggingAgent.hpp"
 #include "Core/Runtime/HostImage.hpp"
 #include "Red/TweakDB/Manager.hpp"
+#include "Red/TweakDB/Raws.hpp"
 #include "Red/TweakDB/Reflection.hpp"
 
 namespace App
@@ -19,6 +20,8 @@ class TweakService
     , public Core::LoggingAgent
 {
 public:
+    using CreateRecordFunction = std::remove_cvref_t<decltype(Raw::CreateRecord)>::Callable;
+
     TweakService(const Core::SemvVer& aProductVer, std::filesystem::path aGameDir, std::filesystem::path aTweaksDir,
                  std::filesystem::path aInheritanceMapPath, std::filesystem::path aExtraFlatsPath,
                  std::filesystem::path aSourcesDir);
@@ -58,5 +61,12 @@ protected:
     Core::SharedPtr<App::TweakImporter> m_importer;
     Core::SharedPtr<App::TweakExecutor> m_executor;
     Core::SharedPtr<App::TweakContext> m_context;
+
+#ifndef NDEBUG
+    void RegisterTestCustomRecord() const;
+#endif
 };
+
+void CustomRecordGetter(Red::IScriptable* aInstance, Red::CStackFrame* aStackFrame, void* aOut, int64_t aType);
+
 }
