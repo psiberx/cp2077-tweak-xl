@@ -1,16 +1,18 @@
 #include "RedReader.hpp"
 #include "Red/TweakDB/Source/Parser.hpp"
 
-App::RedReader::RedReader(Core::SharedPtr<Red::TweakDBManager> aManager, Core::SharedPtr<App::TweakContext> aContext)
-    : BaseTweakReader(std::move(aManager), std::move(aContext))
-    , m_path{}
+App::RedReader::RedReader(const Core::DeferredPtr<Red::TweakDBManager>& aManager,
+                          const Core::DeferredPtr<Red::TweakDBReflection>& aReflection,
+                          const Core::SharedPtr<ScriptableRecordManager>& aRecordManager,
+                          const Core::SharedPtr<TweakContext>& aContext)
+    : BaseTweakReader(aManager, aReflection, aRecordManager, aContext)
 {
 }
 
-bool App::RedReader::Load(const std::filesystem::path& aGroupPath)
+bool App::RedReader::Load(const std::filesystem::path& aPath)
 {
-    m_path = aGroupPath;
-    m_source = Red::TweakParser::Parse(aGroupPath);
+    m_path = aPath;
+    m_source = Red::TweakParser::Parse(aPath);
 
     return IsLoaded();
 }
@@ -26,16 +28,35 @@ void App::RedReader::Unload()
     m_source.reset();
 }
 
-void App::RedReader::Read(App::TweakChangeset& aChangeset)
+void App::RedReader::ReadSchemas(SchemaChangeset& aChangeset)
 {
     if (!IsLoaded())
         return;
 
-    if (m_source->isSchema)
-    {
-        LogError("Schema package editing is not supported.");
+    if (!m_source->isSchema)
         return;
+
+    if (!m_source->package.empty())
+    {
+        m_source->usings.insert(m_source->usings.begin(), m_source->package);
     }
+
+    for (const auto& group : m_source->groups)
+    {
+        HandleSchemaGroup(aChangeset, group);
+    }
+}
+
+void App::RedReader::ReadValues(TweakChangeset& aChangeset)
+{
+    if (!IsLoaded())
+        return;
+
+    if (!m_reflection || !m_manager)
+        return;
+
+    if (m_source->isSchema)
+        return;
 
     if (m_source->isQuery)
     {
@@ -62,8 +83,39 @@ void App::RedReader::Read(App::TweakChangeset& aChangeset)
     }
 }
 
-App::RedReader::GroupStatePtr App::RedReader::HandleGroup(App::TweakChangeset& aChangeset,
-                                                          const Red::TweakGroupPtr& aGroup,
+void App::RedReader::HandleSchemaGroup(SchemaChangeset& aChangeset, const Red::TweakGroupPtr& aGroup)
+{
+    if (!CheckConditions(aGroup->tags))
+        return;
+
+    if (aGroup->name.empty())
+        return;
+
+    const auto parent = !aGroup->base.empty() ? std::optional(aGroup->base) : std::nullopt;
+
+    if (!aChangeset.MakeRecord(aGroup->name, parent))
+        return;
+
+    for (const auto prop : aGroup->flats)
+        HandleSchemaProperty(aChangeset, aGroup->name, prop);
+}
+
+void App::RedReader::HandleSchemaProperty(SchemaChangeset& aChangeset, const std::string& aRecordName,
+                                          const Red::TweakFlatPtr& aFlat)
+{
+    const auto foreignType = !aFlat->foreignType.empty() ? std::optional(aFlat->foreignType) : std::nullopt;
+    const auto typeSpec = GetTweakTypeSpec(GetFlatTypeName(aFlat), foreignType);
+
+    if (!typeSpec)
+    {
+        LogError("{}: Unable to infer type for property {}.", aRecordName, aFlat->name);
+        return;
+    }
+
+    aChangeset.MakeProperty(aRecordName.c_str(), aFlat->name, typeSpec, MakeValue(typeSpec->flatType, aFlat->values));
+}
+
+App::RedReader::GroupStatePtr App::RedReader::HandleGroup(TweakChangeset& aChangeset, const Red::TweakGroupPtr& aGroup,
                                                           const std::string& aParentName,
                                                           const std::string& aParentPath)
 {
@@ -82,15 +134,11 @@ App::RedReader::GroupStatePtr App::RedReader::HandleGroup(App::TweakChangeset& a
     if (!groupState->isCompatible)
     {
         if (groupState->isRedefined)
-            LogError("{}: Record type {} doesn't match previous definition {}.",
-                     groupState->groupPath,
-                     ToName(groupState->resolvedType),
-                     ToName(groupState->requiredType));
+            LogError("{}: Record type {} doesn't match previous definition {}.", groupState->groupPath,
+                     ToName(groupState->resolvedType), ToName(groupState->requiredType));
         else
-            LogError("{}: Record type {} is not compatible with {}.",
-                     groupState->groupPath,
-                     ToName(groupState->resolvedType),
-                     ToName(groupState->requiredType));
+            LogError("{}: Record type {} is not compatible with {}.", groupState->groupPath,
+                     ToName(groupState->resolvedType), ToName(groupState->requiredType));
         return groupState;
     }
 
@@ -107,8 +155,8 @@ App::RedReader::GroupStatePtr App::RedReader::HandleGroup(App::TweakChangeset& a
 
     if (!recordInfo)
     {
-        LogError("{}: Cannot create record, the record type {} is abstract.",
-                 groupState->groupPath, ToName(groupState->resolvedType));
+        LogError("{}: Cannot create record, the record type {} is abstract.", groupState->groupPath,
+                 ToName(groupState->resolvedType));
         return groupState;
     }
 
@@ -123,12 +171,10 @@ App::RedReader::GroupStatePtr App::RedReader::HandleGroup(App::TweakChangeset& a
 
     for (const auto& flat : aGroup->flats)
     {
-        const auto propInfo = recordInfo->GetPropInfo(flat->name.c_str());
-
-        if (propInfo)
+        if (const auto propInfo = recordInfo->GetPropInfo(flat->name.c_str()))
         {
-            auto flatState = HandleFlat(aChangeset, flat, groupState->groupName, groupState->groupPath,
-                                        propInfo->type, propInfo->foreignType);
+            const auto flatState = HandleFlat(aChangeset, flat, groupState->groupName, groupState->groupPath,
+                                              propInfo->type, propInfo->foreignType);
 
             if (flatState && flatState->isProcessed && groupState->isOriginalBase)
             {
@@ -146,12 +192,10 @@ App::RedReader::GroupStatePtr App::RedReader::HandleGroup(App::TweakChangeset& a
     return groupState;
 }
 
-App::RedReader::GroupStatePtr App::RedReader::HandleInline(App::TweakChangeset& aChangeset,
-                                                           const Red::TweakGroupPtr& aGroup,
+App::RedReader::GroupStatePtr App::RedReader::HandleInline(TweakChangeset& aChangeset, const Red::TweakGroupPtr& aGroup,
                                                            const std::string& aParentName,
                                                            const std::string& aParentPath,
-                                                           const Red::CClass* aRequiredType,
-                                                           int32_t aInlineIndex)
+                                                           const Red::CClass* aRequiredType, int32_t aInlineIndex)
 {
     auto inlineState = ResolveGroupState(aChangeset, aGroup, aParentName, aParentPath, aRequiredType, aInlineIndex);
 
@@ -165,16 +209,23 @@ App::RedReader::GroupStatePtr App::RedReader::HandleInline(App::TweakChangeset& 
     if (!inlineState->isCompatible)
     {
         if (inlineState->isRedefined)
-            LogError("{}: Record type {} doesn't match previous definition {}.",
-                     inlineState->groupPath,
-                     ToName(inlineState->resolvedType),
-                     ToName(inlineState->requiredType));
+            LogError("{}: Record type {} doesn't match previous definition {}.", inlineState->groupPath,
+                     ToName(inlineState->resolvedType), ToName(inlineState->requiredType));
         else
-            LogError("{}: Record type {} is not compatible with {}.",
-                     inlineState->groupPath,
-                     ToName(inlineState->resolvedType),
-                     ToName(inlineState->requiredType));
+            LogError("{}: Record type {} is not compatible with {}.", inlineState->groupPath,
+                     ToName(inlineState->resolvedType), ToName(inlineState->requiredType));
 
+        return inlineState;
+    }
+
+    if (!m_reflection && m_manager)
+    {
+        m_reflection = m_manager->GetReflection();
+    }
+
+    if (!m_reflection)
+    {
+        LogError("{}: Cannot create record, reflection is unavailable.", inlineState->groupPath);
         return inlineState;
     }
 
@@ -182,8 +233,8 @@ App::RedReader::GroupStatePtr App::RedReader::HandleInline(App::TweakChangeset& 
 
     if (!recordInfo)
     {
-        LogError("{}: Cannot create record, the record type {} is abstract.",
-                 inlineState->groupPath, ToName(inlineState->resolvedType));
+        LogError("{}: Cannot create record, the record type {} is abstract.", inlineState->groupPath,
+                 ToName(inlineState->resolvedType));
 
         return inlineState;
     }
@@ -199,12 +250,10 @@ App::RedReader::GroupStatePtr App::RedReader::HandleInline(App::TweakChangeset& 
 
         for (const auto& flat : aGroup->flats)
         {
-            const auto propInfo = recordInfo->GetPropInfo(flat->name.c_str());
-
-            if (propInfo)
+            if (const auto propInfo = recordInfo->GetPropInfo(flat->name.c_str()))
             {
-                flatState = HandleFlat(aChangeset, flat, inlineState->groupName, inlineState->groupPath,
-                                       propInfo->type, propInfo->foreignType);
+                flatState = HandleFlat(aChangeset, flat, inlineState->groupName, inlineState->groupPath, propInfo->type,
+                                       propInfo->foreignType);
             }
             else
             {
@@ -224,10 +273,8 @@ App::RedReader::GroupStatePtr App::RedReader::HandleInline(App::TweakChangeset& 
     return inlineState;
 }
 
-App::RedReader::FlatStatePtr App::RedReader::HandleFlat(App::TweakChangeset& aChangeset,
-                                                        const Red::TweakFlatPtr& aFlat,
-                                                        const std::string& aParentName,
-                                                        const std::string& aParentPath,
+App::RedReader::FlatStatePtr App::RedReader::HandleFlat(TweakChangeset& aChangeset, const Red::TweakFlatPtr& aFlat,
+                                                        const std::string& aParentName, const std::string& aParentPath,
                                                         const Red::CBaseRTTIType* aRequiredType,
                                                         const Red::CClass* aForeignType)
 {
@@ -245,8 +292,7 @@ App::RedReader::FlatStatePtr App::RedReader::HandleFlat(App::TweakChangeset& aCh
 
     if (!flatState->isCompatible)
     {
-        LogError("{}: Type {} doesn't match previous definition {}.",
-                 flatState->flatPath,
+        LogError("{}: Type {} doesn't match previous definition {}.", flatState->flatPath,
                  ToName(flatState->resolvedType, flatState->resolvedKey),
                  ToName(flatState->requiredType, flatState->requiredKey));
 
@@ -297,8 +343,7 @@ App::RedReader::FlatStatePtr App::RedReader::HandleFlat(App::TweakChangeset& aCh
 
             if (!flatValue)
             {
-                LogError("{}: Invalid value, expected \"{}\".",
-                         ComposePath(flatState->flatPath, index),
+                LogError("{}: Invalid value, expected \"{}\".", ComposePath(flatState->flatPath, index),
                          ToName(flatState->resolvedType));
 
                 return flatState;
@@ -335,12 +380,11 @@ App::RedReader::FlatStatePtr App::RedReader::HandleFlat(App::TweakChangeset& aCh
     return flatState;
 }
 
-App::RedReader::GroupStatePtr App::RedReader::ResolveGroupState(App::TweakChangeset& aChangeset,
+App::RedReader::GroupStatePtr App::RedReader::ResolveGroupState(TweakChangeset& aChangeset,
                                                                 const Red::TweakGroupPtr& aGroup,
                                                                 const std::string& aParentName,
                                                                 const std::string& aParentPath,
-                                                                const Red::CClass* aBaseType,
-                                                                int32_t aInlineIndex)
+                                                                const Red::CClass* aBaseType, int32_t aInlineIndex)
 {
     auto state = Core::MakeShared<GroupState>();
 
@@ -383,7 +427,7 @@ App::RedReader::GroupStatePtr App::RedReader::ResolveGroupState(App::TweakChange
     }
     else
     {
-        state->resolvedType = m_reflection->GetRecordType(aGroup->base.c_str());
+        state->resolvedType = Red::GetRecordType(aGroup->base.c_str());
 
         if (state->resolvedType)
         {
@@ -460,12 +504,9 @@ App::RedReader::GroupStatePtr App::RedReader::ResolveGroupState(App::TweakChange
     return state;
 }
 
-App::RedReader::FlatStatePtr App::RedReader::ResolveFlatState(App::TweakChangeset& aChangeset,
-                                                              const Red::TweakFlatPtr& aFlat,
-                                                              const std::string& aParentName,
-                                                              const std::string& aParentPath,
-                                                              const Red::CBaseRTTIType* aRequiredType,
-                                                              const Red::CClass* aForeignType)
+App::RedReader::FlatStatePtr App::RedReader::ResolveFlatState(
+    TweakChangeset& aChangeset, const Red::TweakFlatPtr& aFlat, const std::string& aParentName,
+    const std::string& aParentPath, const Red::CBaseRTTIType* aRequiredType, const Red::CClass* aForeignType)
 {
     auto state = Core::MakeShared<FlatState>();
 
@@ -495,23 +536,21 @@ App::RedReader::FlatStatePtr App::RedReader::ResolveFlatState(App::TweakChangese
         {
             state->isResolved = true;
             state->isCompatible = !state->requiredType || state->resolvedType == state->requiredType;
-            state->isArray = m_reflection->IsArrayType( state->resolvedType);
-            state->isForeignKey = state->isArray
-                ? m_reflection->IsForeignKeyArray( state->resolvedType)
-                : m_reflection->IsForeignKey( state->resolvedType);
+            state->isArray = Red::IsArrayType(state->resolvedType);
+            state->isForeignKey =
+                state->isArray ? Red::IsForeignKeyArray(state->resolvedType) : Red::IsForeignKey(state->resolvedType);
         }
     }
     else
     {
-        state->resolvedType = m_reflection->GetFlatType(GetFlatTypeName(aFlat));
+        state->resolvedType = Red::GetFlatType(GetFlatTypeName(aFlat));
 
         if (state->resolvedType)
         {
             state->isResolved = true;
-            state->isArray = m_reflection->IsArrayType( state->resolvedType);
-            state->isForeignKey = state->isArray
-                ? m_reflection->IsForeignKeyArray( state->resolvedType)
-                : m_reflection->IsForeignKey( state->resolvedType);
+            state->isArray = Red::IsArrayType(state->resolvedType);
+            state->isForeignKey =
+                state->isArray ? Red::IsForeignKeyArray(state->resolvedType) : Red::IsForeignKey(state->resolvedType);
 
             if (instanceType)
             {
@@ -532,7 +571,7 @@ App::RedReader::FlatStatePtr App::RedReader::ResolveFlatState(App::TweakChangese
             if (state->isForeignKey)
             {
                 state->requiredKey = aForeignType;
-                state->resolvedKey = m_reflection->GetRecordType(aFlat->foreignType.c_str());
+                state->resolvedKey = Red::GetRecordType(aFlat->foreignType.c_str());
 
                 if (state->isCompatible && state->requiredKey)
                 {
@@ -544,13 +583,13 @@ App::RedReader::FlatStatePtr App::RedReader::ResolveFlatState(App::TweakChangese
 
     if (state->isArray)
     {
-        state->elementType = m_reflection->GetElementType(state->resolvedType);
+        state->elementType = Red::GetElementType(state->resolvedType);
     }
 
     return state;
 }
 
-bool App::RedReader::CheckConditions(const Core::Vector<std::string>& aTags)
+bool App::RedReader::CheckConditions(const Core::Vector<std::string>& aTags) const
 {
     if (!aTags.empty())
     {

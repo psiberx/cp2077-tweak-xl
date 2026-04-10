@@ -3,8 +3,8 @@
 namespace App
 {
 template<typename T>
-requires std::is_integral_v<T>
-bool ParseInt(const char* aIn, size_t aLength, T& aOut, const int aRadix = 10)
+    requires std::is_integral_v<T>
+bool ParseInt(const char* aIn, const size_t aLength, T& aOut, const int aRadix = 10)
 {
     using Temp = std::conditional_t<std::is_signed_v<T>, int64_t, uint64_t>;
 
@@ -24,14 +24,14 @@ bool ParseInt(const char* aIn, size_t aLength, T& aOut, const int aRadix = 10)
 }
 
 template<typename T>
-requires std::is_integral_v<T>
+    requires std::is_integral_v<T>
 bool ParseInt(const std::string& aIn, T& aOut, const int aRadix = 10)
 {
     return ParseInt(aIn.c_str(), aIn.size(), aOut, aRadix);
 }
 
 template<typename T>
-requires std::is_integral_v<T>
+    requires std::is_integral_v<T>
 T ParseInt(const std::string& aIn, const int aRadix = 10)
 {
     using Temp = std::conditional_t<std::is_signed_v<T>, int64_t, uint64_t>;
@@ -47,7 +47,7 @@ T ParseInt(const std::string& aIn, const int aRadix = 10)
 }
 
 template<typename T>
-requires std::is_floating_point_v<T>
+    requires std::is_floating_point_v<T>
 bool ParseFloat(const std::string& aIn, T& aOut, const char* aSuffix = nullptr)
 {
     char* end;
@@ -67,19 +67,19 @@ bool ParseFloat(const std::string& aIn, T& aOut, const char* aSuffix = nullptr)
     return true;
 }
 
-inline bool IsNumeric(const std::string& aIn, size_t aStart = 0)
+inline bool IsNumeric(const std::string& aIn, const size_t aStart = 0)
 {
     return aIn.find_first_not_of("0123456789", aStart) == std::string::npos;
 }
 
-inline bool IsNumeric(const std::string_view& aIn, size_t aStart = 0)
+inline bool IsNumeric(const std::string_view& aIn, const size_t aStart = 0)
 {
     return aIn.find_first_not_of("0123456789", aStart) == std::string::npos;
 }
 
 template<typename T>
-requires std::is_integral_v<T>
-inline std::string ToHex(T aValue)
+    requires std::is_integral_v<T>
+std::string ToHex(T aValue)
 {
     constexpr auto max = 2 * sizeof(uint64_t);
     constexpr auto len = 2 * sizeof(aValue);
@@ -87,4 +87,4 @@ inline std::string ToHex(T aValue)
     snprintf(buffer, max + 1, "%016X", aValue);
     return {buffer + (max - len), len};
 }
-};
+}; // namespace App

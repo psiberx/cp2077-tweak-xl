@@ -12,13 +12,17 @@ class RedReader
     , public Core::LoggingAgent
 {
 public:
-    RedReader(Core::SharedPtr<Red::TweakDBManager> aManager, Core::SharedPtr<App::TweakContext> aContext);
+    explicit RedReader(const Core::DeferredPtr<Red::TweakDBManager>& aManager,
+                       const Core::DeferredPtr<Red::TweakDBReflection>& aReflection,
+                       const Core::SharedPtr<ScriptableRecordManager>& aRecordManager,
+                       const Core::SharedPtr<TweakContext>& aContext);
     ~RedReader() override = default;
 
     bool Load(const std::filesystem::path& aPath) override;
     [[nodiscard]] bool IsLoaded() const override;
     void Unload() override;
-    void Read(TweakChangeset& aChangeset) override;
+    void ReadSchemas(SchemaChangeset& aChangeset) override;
+    void ReadValues(TweakChangeset& aChangeset) override;
 
     static Red::CName GetFlatTypeName(const Red::TweakFlatPtr& aFlat);
 
@@ -64,33 +68,39 @@ private:
     using GroupStatePtr = Core::SharedPtr<GroupState>;
     using FlatStatePtr = Core::SharedPtr<FlatState>;
 
-    GroupStatePtr HandleGroup(App::TweakChangeset& aChangeset, const Red::TweakGroupPtr& aGroup,
+    void HandleSchemaGroup(SchemaChangeset& aChangeset, const Red::TweakGroupPtr& aGroup);
+
+    void HandleSchemaProperty(SchemaChangeset& aChangeset, const std::string& aRecordName,
+                              const Red::TweakFlatPtr& aFlat);
+
+    GroupStatePtr HandleGroup(TweakChangeset& aChangeset, const Red::TweakGroupPtr& aGroup,
                               const std::string& aParentName, const std::string& aParentPath);
 
-    GroupStatePtr HandleInline(App::TweakChangeset& aChangeset, const Red::TweakGroupPtr& aGroup,
+    GroupStatePtr HandleInline(TweakChangeset& aChangeset, const Red::TweakGroupPtr& aGroup,
                                const std::string& aParentName, const std::string& aParentPath,
                                const Red::CClass* aRequiredType, int32_t aInlineIndex = 0);
 
-    FlatStatePtr HandleFlat(App::TweakChangeset& aChangeset, const Red::TweakFlatPtr& aFlat,
-                            const std::string& aParentName, const std::string& aParentPath,
-                            const Red::CBaseRTTIType* aRequiredType = nullptr,
+    FlatStatePtr HandleFlat(TweakChangeset& aChangeset, const Red::TweakFlatPtr& aFlat, const std::string& aParentName,
+                            const std::string& aParentPath, const Red::CBaseRTTIType* aRequiredType = nullptr,
                             const Red::CClass* aForeignType = nullptr);
 
-    GroupStatePtr ResolveGroupState(App::TweakChangeset& aChangeset, const Red::TweakGroupPtr& aGroup,
+    GroupStatePtr ResolveGroupState(TweakChangeset& aChangeset, const Red::TweakGroupPtr& aGroup,
                                     const std::string& aParentName, const std::string& aParentPath,
                                     const Red::CClass* aBaseType = nullptr, int32_t aInlineIndex = 0);
 
-    FlatStatePtr ResolveFlatState(App::TweakChangeset& aChangeset, const Red::TweakFlatPtr& aFlat,
+    FlatStatePtr ResolveFlatState(TweakChangeset& aChangeset, const Red::TweakFlatPtr& aFlat,
                                   const std::string& aParentName, const std::string& aParentPath,
                                   const Red::CBaseRTTIType* aRequiredType = nullptr,
                                   const Red::CClass* aForeignType = nullptr);
 
     Red::InstancePtr<> MakeValue(const FlatStatePtr& aState, const Red::TweakValuePtr& aValue);
     Red::InstancePtr<> MakeValue(const FlatStatePtr& aState, const Core::Vector<Red::TweakValuePtr>& aValues = {});
+    Red::InstancePtr<> MakeValue(const Red::CBaseRTTIType* aType, const Red::TweakValuePtr& aValue);
+    Red::InstancePtr<> MakeValue(const Red::CBaseRTTIType* aType, const Core::Vector<Red::TweakValuePtr>& aValues);
 
-    bool CheckConditions(const Core::Vector<std::string>& aTags);
+    [[nodiscard]] bool CheckConditions(const Core::Vector<std::string>& aTags) const;
 
     std::filesystem::path m_path;
     Red::TweakSourcePtr m_source;
 };
-}
+} // namespace App

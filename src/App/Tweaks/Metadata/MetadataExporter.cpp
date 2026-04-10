@@ -10,10 +10,12 @@ constexpr auto SchemaPackage = Red::TweakSource::SchemaPackage;
 constexpr auto NameSeparator = Red::TweakGrammar::Name::Separator;
 constexpr auto InlineSuffix = "_inline";
 constexpr auto DebugTag = "Debug";
-}
+} // namespace
 
-App::MetadataExporter::MetadataExporter(Core::SharedPtr<Red::TweakDBManager> aManager)
+App::MetadataExporter::MetadataExporter(Core::DeferredPtr<Red::TweakDBManager> aManager,
+                                        Core::DeferredPtr<Red::TweakDBReflection> aReflection)
     : m_manager(std::move(aManager))
+    , m_reflection(std::move(aReflection))
     , m_resolved(true)
 {
 }
@@ -39,9 +41,7 @@ bool App::MetadataExporter::LoadSource(const std::filesystem::path& aSourceDir)
 
 bool App::MetadataExporter::IsDebugGroup(const Red::TweakGroupPtr& aGroup)
 {
-    return std::any_of(aGroup->tags.begin(), aGroup->tags.end(), [](auto& aTag) {
-        return aTag == DebugTag;
-    });
+    return std::any_of(aGroup->tags.begin(), aGroup->tags.end(), [](auto& aTag) { return aTag == DebugTag; });
 }
 
 void App::MetadataExporter::ResolveGroups()
@@ -178,9 +178,8 @@ void App::MetadataExporter::ResolveInlines(const Red::TweakGroupPtr& aOwner, con
                 }
             }
 
-            auto resolvedID = flat->isArray
-                ? flatValue.As<Red::DynArray<Red::TweakDBID>>()[offset + i]
-                : flatValue.As<Red::TweakDBID>();
+            auto resolvedID = flat->isArray ? flatValue.As<Red::DynArray<Red::TweakDBID>>()[offset + i]
+                                            : flatValue.As<Red::TweakDBID>();
 
 #ifndef NDEBUG
             auto resolvedName = m_reflection->ToString(resolvedID);
@@ -307,9 +306,8 @@ bool App::MetadataExporter::ExportExtraFlats(const std::filesystem::path& aOutPa
             auto schema = m_groups[schemaName];
             while (schema)
             {
-                auto found = std::ranges::any_of(schema->flats, [&flat](auto& aProp) {
-                    return aProp->name == flat->name;
-                });
+                auto found =
+                    std::ranges::any_of(schema->flats, [&flat](auto& aProp) { return aProp->name == flat->name; });
 
                 if (found)
                     break;
@@ -336,7 +334,7 @@ bool App::MetadataExporter::ExportExtraFlats(const std::filesystem::path& aOutPa
             std::string_view typeName = schemaName;
             typeName.remove_prefix(std::char_traits<char>::length(SchemaPackage) + 1);
 
-            auto recordType = m_reflection->GetRecordFullName(typeName.data());
+            auto recordType = Red::GetRecordFullName<Red::CName>(typeName.data());
             auto numberOfFlats = extraFlats.size();
 
             out.write(reinterpret_cast<char*>(&recordType), sizeof(recordType));
@@ -347,7 +345,7 @@ bool App::MetadataExporter::ExportExtraFlats(const std::filesystem::path& aOutPa
                 uint8_t flatNameLen = flat->name.size();
                 auto flatName = flat->name.data();
                 auto flatType = RedReader::GetFlatTypeName(flat);
-                auto foreignType = m_reflection->GetRecordFullName(flat->foreignType.data());
+                auto foreignType = Red::GetRecordFullName<Red::CName>(flat->foreignType.data());
 
                 out.write(reinterpret_cast<char*>(&flatNameLen), sizeof(flatNameLen));
                 out.write(reinterpret_cast<char*>(flatName), flatNameLen);

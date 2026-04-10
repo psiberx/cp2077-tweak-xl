@@ -1,0 +1,4 @@
+Diagnostics:
+  Suppress:
+    - deprecated-declarations
+

@@ -8,7 +8,8 @@ namespace App
 class ScriptManager : public Red::IScriptable
 {
 public:
-    static void SetManager(Core::SharedPtr<Red::TweakDBManager> aManager);
+    static void SetManager(Core::DeferredPtr<Red::TweakDBManager> aManager);
+    static void SetReflection(Core::DeferredPtr<Red::TweakDBReflection> aReflection);
 
     static void RegisterEnum(Red::TweakDBID aRecordID);
     static Red::Handle<ScriptBatch> StartBatch();
@@ -20,8 +21,8 @@ private:
     static void UpdateRecord(Red::IScriptable* aContext, Red::CStackFrame* aFrame, bool* aRet, void*);
     static void RegisterName(Red::IScriptable* aContext, Red::CStackFrame* aFrame, bool* aRet, void*);
 
-    inline static Core::SharedPtr<Red::TweakDBManager> s_manager;
-    inline static Core::SharedPtr<Red::TweakDBReflection> s_reflection;
+    inline static Core::DeferredPtr<Red::TweakDBManager> s_manager;
+    inline static Core::DeferredPtr<Red::TweakDBReflection> s_reflection;
 
     RTTI_IMPL_TYPEINFO(App::ScriptManager);
     RTTI_MEMBER_ACCESS(App::ScriptManager);

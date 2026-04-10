@@ -1,0 +1,1 @@
+Checks: '-clang-diagnostic-deprecated-declarations,-readability-convert-member-functions-to-static'

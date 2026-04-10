@@ -1,18 +1,22 @@
 #include "ScriptBatch.hpp"
 #include "App/Tweaks/Executable/Scriptable/ScriptUtils.hpp"
 
-App::ScriptBatch::ScriptBatch(Core::SharedPtr<Red::TweakDBManager> aManager)
+App::ScriptBatch::ScriptBatch(Core::DeferredPtr<Red::TweakDBManager> aManager,
+                              Core::DeferredPtr<Red::TweakDBReflection> aReflection)
     : m_manager(std::move(aManager))
-    , m_reflection(m_manager->GetReflection())
-    , m_batch(m_manager->StartBatch())
+    , m_reflection(std::move(aReflection))
 {
+    if (m_manager)
+    {
+        m_batch = m_manager->StartBatch();
+    }
 }
 
 bool App::ScriptBatch::SetFlat(Red::TweakDBID aFlatID, Red::Variant& aVariant) const
 {
     if (m_batch && !aVariant.IsEmpty())
     {
-        ConvertScriptValueForFlatValue(aVariant, m_reflection);
+        ConvertScriptValueForFlatValue(aVariant);
         return m_manager->SetFlat(m_batch, aFlatID, aVariant.GetType(), aVariant.GetDataPtr());
     }
 
@@ -23,7 +27,7 @@ bool App::ScriptBatch::CreateRecord(Red::TweakDBID aRecordID, Red::CName aTypeNa
 {
     if (m_batch && aTypeName)
     {
-        return m_manager->CreateRecord(m_batch, aRecordID, m_reflection->GetRecordType(aTypeName));
+        return m_manager->CreateRecord(m_batch, aRecordID, Red::GetRecordType(aTypeName));
     }
 
     return false;

@@ -22,24 +22,25 @@
 
 #include <RED4ext/Relocation.hpp>
 #include <RED4ext/ResourceDepot.hpp>
-#include <RED4ext/Scripting/Natives/ScriptGameInstance.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Color.hpp>
 #include <RED4ext/Scripting/Natives/Generated/EulerAngles.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Quaternion.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Vector2.hpp>
 #include <RED4ext/Scripting/Natives/Generated/Vector3.hpp>
-#include <RED4ext/Scripting/Natives/Generated/game/data/TweakDBInterface.hpp>
 #include <RED4ext/Scripting/Natives/Generated/game/IGameSystem.hpp>
 #include <RED4ext/Scripting/Natives/Generated/game/ScriptableSystem.hpp>
 #include <RED4ext/Scripting/Natives/Generated/game/data/StatType.hpp>
+#include <RED4ext/Scripting/Natives/Generated/game/data/TweakDBInterface.hpp>
 #include <RED4ext/Scripting/Natives/Generated/red/ResourceReferenceScriptToken.hpp>
 #include <RED4ext/Scripting/Natives/Generated/world/IRuntimeSystem.hpp>
+#include <RED4ext/Scripting/Natives/ScriptGameInstance.hpp>
 
 #include <nameof.hpp>
 #include <semver.hpp>
 #include <tao/pegtl.hpp>
 #include <yaml-cpp/yaml.h>
 
+#include "Core/DeferredPtr.hpp"
 #include "Core/Raw.hpp"
 #include "Core/Stl.hpp"
 
@@ -51,3 +52,6 @@
 #include "Red/Value.hpp"
 
 #include "Red/Addresses/Library.hpp"
+
+#include "Red/TweakDB/Types.hpp"
+#include "Red/TweakDB/Util.hpp"

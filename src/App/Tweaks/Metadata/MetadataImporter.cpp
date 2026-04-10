@@ -1,8 +1,8 @@
 #include "MetadataImporter.hpp"
 
-App::MetadataImporter::MetadataImporter(Core::SharedPtr<Red::TweakDBManager> aManager)
+App::MetadataImporter::MetadataImporter(Core::DeferredPtr<Red::TweakDBManager> aManager, Core::DeferredPtr<Red::TweakDBReflection> aReflection)
     : m_manager(std::move(aManager))
-    , m_reflection(m_manager->GetReflection())
+    , m_reflection(std::move(aReflection))
 {
 }
 
@@ -142,9 +142,9 @@ bool App::MetadataImporter::ImportExtraFlats(const std::filesystem::path& aPath)
 
         for (const auto& topNodeIt : data)
         {
-            const auto recordType = m_reflection->GetRecordFullName(topNodeIt.first.Scalar().data());
+            const auto recordType = Red::GetRecordFullName<Red::CName>(topNodeIt.first.Scalar().data());
 
-            if (!m_reflection->IsRecordType(recordType))
+            if (!Red::IsRecordType(recordType))
                 return false;
 
             const auto& extraFlats = topNodeIt.second;
@@ -167,7 +167,7 @@ bool App::MetadataImporter::ImportExtraFlats(const std::filesystem::path& aPath)
 
                 const auto propType = Red::CName(propTypeNode.Scalar().data());
 
-                if (!m_reflection->IsFlatType(propType))
+                if (!Red::IsFlatType(propType))
                     return false;
 
                 const auto& foreignTypeNode = propDataNode["foreignType"];
@@ -179,9 +179,9 @@ bool App::MetadataImporter::ImportExtraFlats(const std::filesystem::path& aPath)
                     if (!foreignTypeNode.IsScalar())
                         return false;
 
-                    foreignType = m_reflection->GetRecordFullName(foreignTypeNode.Scalar().data());
+                    foreignType = Red::GetRecordFullName<Red::CName>(foreignTypeNode.Scalar().data());
 
-                    if (!m_reflection->IsRecordType(foreignType))
+                    if (!Red::IsRecordType(foreignType))
                         return false;
                 }
 

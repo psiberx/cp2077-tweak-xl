@@ -1,5 +1,6 @@
 #pragma once
 
+#include "App/Tweaks/Batch/SchemaChangeset.hpp"
 #include "App/Tweaks/Batch/TweakChangeset.hpp"
 #include "App/Tweaks/TweakContext.hpp"
 
@@ -12,13 +13,17 @@ public:
     virtual bool Load(const std::filesystem::path& aPath) = 0;
     [[nodiscard]] virtual bool IsLoaded() const = 0;
     virtual void Unload() = 0;
-    virtual void Read(TweakChangeset& aChangeset) = 0;
+    virtual void ReadSchemas(SchemaChangeset& aChangeset) = 0;
+    virtual void ReadValues(TweakChangeset& aChangeset) = 0;
 };
 
 class BaseTweakReader : public ITweakReader
 {
 public:
-    BaseTweakReader(Core::SharedPtr<Red::TweakDBManager> aManager, Core::SharedPtr<App::TweakContext> aContext);
+    explicit BaseTweakReader(const Core::DeferredPtr<Red::TweakDBManager>& aManager,
+                             const Core::DeferredPtr<Red::TweakDBReflection>& aReflection,
+                             const Core::SharedPtr<ScriptableRecordManager>& aRecordManager,
+                             const Core::SharedPtr<TweakContext>& aContext);
 
 protected:
     static std::string ComposePath(const std::string& aParentPath, const std::string& aItemName);
@@ -37,9 +42,10 @@ protected:
     std::string ToName(const Red::CClass* aType);
     std::string ToName(const Red::CBaseRTTIType* aType, const Red::CClass* aKey = nullptr);
 
-    Core::SharedPtr<Red::TweakDBManager> m_manager;
-    Core::SharedPtr<Red::TweakDBReflection> m_reflection;
-    Core::SharedPtr<App::TweakContext> m_context;
+    Core::DeferredPtr<Red::TweakDBManager> m_manager;
+    Core::DeferredPtr<Red::TweakDBReflection> m_reflection;
+    Core::SharedPtr<ScriptableRecordManager> m_recordManager;
+    Core::SharedPtr<TweakContext> m_context;
     Core::Map<std::string, int32_t> m_inlineIndexSuffix;
 };
-}
+} // namespace App

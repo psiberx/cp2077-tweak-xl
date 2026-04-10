@@ -6,19 +6,18 @@
 
 namespace App
 {
-inline void ConvertScriptValueForFlatValue(Red::Variant& aVariant,
-                                           const Core::SharedPtr<Red::TweakDBReflection>& aReflection)
+inline void ConvertScriptValueForFlatValue(Red::Variant& aVariant)
 {
     const auto& variantType = aVariant.GetType();
 
-    if (aReflection->IsResRefToken(variantType))
+    if (Red::IsResRefToken(variantType))
     {
         const auto rtti = Red::CRTTISystem::Get();
         const auto type = rtti->GetType(Red::ERTDBFlatType::ResRef);
 
         aVariant = Red::Variant(type, aVariant.GetDataPtr());
     }
-    else if (aReflection->IsResRefTokenArray(variantType))
+    else if (Red::IsResRefTokenArray(variantType))
     {
         const auto rtti = Red::CRTTISystem::Get();
         const auto type = rtti->GetType(Red::ERTDBFlatType::ResRefArray);
@@ -40,7 +39,7 @@ inline void ConvertScriptValueForFlatValue(Red::Variant& aVariant,
                 wrapper.primaryKey = Red::FNV1a64(value);
             }
 
-            aVariant.Fill(aReflection->GetFlatType(Red::ERTDBFlatType::LocKey), &wrapper);
+            aVariant.Fill(Red::GetFlatType(Red::ERTDBFlatType::LocKey), &wrapper);
         }
     }
     else if (variantType->GetName() == Red::ERTDBFlatType::String)

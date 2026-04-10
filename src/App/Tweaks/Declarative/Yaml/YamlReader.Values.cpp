@@ -1,7 +1,6 @@
 #include "YamlReader.hpp"
 #include "App/Utils/Str.hpp"
 #include "Red/Localization.hpp"
-#include "Red/TweakDB/Reflection.hpp"
 
 template<typename T>
 Red::InstancePtr<T> App::YamlReader::ConvertValue(const YAML::Node& aNode, bool)
@@ -93,14 +92,12 @@ Red::InstancePtr<Red::TweakDBID> App::YamlReader::ConvertValue(const YAML::Node&
 
         if (str.starts_with(QuotedPrefix) && str.ends_with(QuotedSuffix))
         {
-            return Red::MakeInstance<Red::TweakDBID>(
-                str.substr(QuotedSkip, str.length() - QuotedDiff));
+            return Red::MakeInstance<Red::TweakDBID>(str.substr(QuotedSkip, str.length() - QuotedDiff));
         }
 
         if (str.starts_with(WrappedPrefix) && str.ends_with(WrappedSuffix))
         {
-            return Red::MakeInstance<Red::TweakDBID>(
-                str.substr(WrappedSkip, str.length() - WrappedDiff));
+            return Red::MakeInstance<Red::TweakDBID>(str.substr(WrappedSkip, str.length() - WrappedDiff));
         }
 
         if (str.length() == DebugLength && str.starts_with(DebugPrefix) && str.ends_with(DebugSuffix))
@@ -152,8 +149,7 @@ Red::InstancePtr<Red::LocKeyWrapper> App::YamlReader::ConvertValue(const YAML::N
 
         if (str.starts_with(QuotedPrefix) && str.ends_with(QuotedSuffix))
         {
-            return Red::MakeInstance<Red::LocKeyWrapper>(
-                str.substr(QuotedSkip, str.length() - QuotedDiff).c_str());
+            return Red::MakeInstance<Red::LocKeyWrapper>(str.substr(QuotedSkip, str.length() - QuotedDiff).c_str());
         }
 
         if (str.starts_with(WrappedPrefix) && str.ends_with(WrappedSuffix))
@@ -425,75 +421,38 @@ Red::InstancePtr<> App::YamlReader::MakeValue(const Red::CBaseRTTIType* aType, c
 
 Red::InstancePtr<> App::YamlReader::MakeValue(Red::CName aTypeName, const YAML::Node& aNode)
 {
+    // clang-format off
     switch (aTypeName)
     {
-    case Red::ERTDBFlatType::Int:
-        return ConvertValue<int>(aNode);
-    case Red::ERTDBFlatType::IntArray:
-        return ConvertArray<int>(aNode);
-
-    case Red::ERTDBFlatType::Float:
-        return ConvertValue<float>(aNode);
-    case Red::ERTDBFlatType::FloatArray:
-        return ConvertArray<float>(aNode);
-
-    case Red::ERTDBFlatType::Bool:
-        return ConvertValue<bool>(aNode);
-    case Red::ERTDBFlatType::BoolArray:
-        return ConvertArray<bool>(aNode);
-
-    case Red::ERTDBFlatType::String:
-        return ConvertValue<Red::CString>(aNode);
-    case Red::ERTDBFlatType::StringArray:
-        return ConvertArray<Red::CString>(aNode);
-
-    case Red::ERTDBFlatType::CName:
-        return ConvertValue<Red::CName>(aNode);
-    case Red::ERTDBFlatType::CNameArray:
-        return ConvertArray<Red::CName>(aNode);
-
-    case Red::ERTDBFlatType::TweakDBID:
-        return ConvertValue<Red::TweakDBID>(aNode);
-    case Red::ERTDBFlatType::TweakDBIDArray:
-        return ConvertArray<Red::TweakDBID>(aNode);
-
-    case Red::ERTDBFlatType::LocKey:
-        return ConvertValue<Red::LocKeyWrapper>(aNode);
-    case Red::ERTDBFlatType::LocKeyArray:
-        return ConvertArray<Red::LocKeyWrapper>(aNode);
-
-    case Red::ERTDBFlatType::ResRef:
-        return ConvertValue<Red::ResourceAsyncReference<>>(aNode);
-    case Red::ERTDBFlatType::ResRefArray:
-        return ConvertArray<Red::ResourceAsyncReference<>>(aNode);
-
-    case Red::ERTDBFlatType::Quaternion:
-        return ConvertValue<Red::Quaternion>(aNode);
-    case Red::ERTDBFlatType::QuaternionArray:
-        return ConvertArray<Red::Quaternion>(aNode);
-
-    case Red::ERTDBFlatType::EulerAngles:
-        return ConvertValue<Red::EulerAngles>(aNode);
-    case Red::ERTDBFlatType::EulerAnglesArray:
-        return ConvertArray<Red::EulerAngles>(aNode);
-
-    case Red::ERTDBFlatType::Vector3:
-        return ConvertValue<Red::Vector3>(aNode);
-    case Red::ERTDBFlatType::Vector3Array:
-        return ConvertArray<Red::Vector3>(aNode);
-
-    case Red::ERTDBFlatType::Vector2:
-        return ConvertValue<Red::Vector2>(aNode);
-    case Red::ERTDBFlatType::Vector2Array:
-        return ConvertArray<Red::Vector2>(aNode);
-
-    case Red::ERTDBFlatType::Color:
-        return ConvertValue<Red::Color>(aNode);
-    case Red::ERTDBFlatType::ColorArray:
-        return ConvertArray<Red::Color>(aNode);
+    case Red::ERTDBFlatType::Int: return ConvertValue<int>(aNode);
+    case Red::ERTDBFlatType::IntArray: return ConvertArray<int>(aNode);
+    case Red::ERTDBFlatType::Float: return ConvertValue<float>(aNode);
+    case Red::ERTDBFlatType::FloatArray: return ConvertArray<float>(aNode);
+    case Red::ERTDBFlatType::Bool: return ConvertValue<bool>(aNode);
+    case Red::ERTDBFlatType::BoolArray: return ConvertArray<bool>(aNode);
+    case Red::ERTDBFlatType::String: return ConvertValue<Red::CString>(aNode);
+    case Red::ERTDBFlatType::StringArray: return ConvertArray<Red::CString>(aNode);
+    case Red::ERTDBFlatType::CName: return ConvertValue<Red::CName>(aNode);
+    case Red::ERTDBFlatType::CNameArray: return ConvertArray<Red::CName>(aNode);
+    case Red::ERTDBFlatType::TweakDBID: return ConvertValue<Red::TweakDBID>(aNode);
+    case Red::ERTDBFlatType::TweakDBIDArray: return ConvertArray<Red::TweakDBID>(aNode);
+    case Red::ERTDBFlatType::LocKey: return ConvertValue<Red::LocKeyWrapper>(aNode);
+    case Red::ERTDBFlatType::LocKeyArray: return ConvertArray<Red::LocKeyWrapper>(aNode);
+    case Red::ERTDBFlatType::ResRef: return ConvertValue<Red::ResourceAsyncReference<>>(aNode);
+    case Red::ERTDBFlatType::ResRefArray: return ConvertArray<Red::ResourceAsyncReference<>>(aNode);
+    case Red::ERTDBFlatType::Quaternion: return ConvertValue<Red::Quaternion>(aNode);
+    case Red::ERTDBFlatType::QuaternionArray: return ConvertArray<Red::Quaternion>(aNode);
+    case Red::ERTDBFlatType::EulerAngles: return ConvertValue<Red::EulerAngles>(aNode);
+    case Red::ERTDBFlatType::EulerAnglesArray: return ConvertArray<Red::EulerAngles>(aNode);
+    case Red::ERTDBFlatType::Vector3: return ConvertValue<Red::Vector3>(aNode);
+    case Red::ERTDBFlatType::Vector3Array: return ConvertArray<Red::Vector3>(aNode);
+    case Red::ERTDBFlatType::Vector2: return ConvertValue<Red::Vector2>(aNode);
+    case Red::ERTDBFlatType::Vector2Array: return ConvertArray<Red::Vector2>(aNode);
+    case Red::ERTDBFlatType::Color: return ConvertValue<Red::Color>(aNode);
+    case Red::ERTDBFlatType::ColorArray: return ConvertArray<Red::Color>(aNode);
+    default: return nullptr;
     }
-
-    return nullptr;
+    // clang-format on
 }
 
 std::pair<Red::CName, Red::InstancePtr<>> App::YamlReader::TryMakeValue(const YAML::Node& aNode)
@@ -505,47 +464,47 @@ std::pair<Red::CName, Red::InstancePtr<>> App::YamlReader::TryMakeValue(const YA
     case YAML::NodeType::Scalar:
     {
         if (ConvertValue<Red::CString>(aNode, value, true))
-            return { Red::ERTDBFlatType::String, value };
+            return {Red::ERTDBFlatType::String, value};
 
         if (ConvertValue<int>(aNode, value, true))
-            return { Red::ERTDBFlatType::Int, value };
+            return {Red::ERTDBFlatType::Int, value};
 
         if (ConvertValue<float>(aNode, value, true))
-            return { Red::ERTDBFlatType::Float, value };
+            return {Red::ERTDBFlatType::Float, value};
 
         if (ConvertValue<bool>(aNode, value, true))
-            return { Red::ERTDBFlatType::Bool, value };
+            return {Red::ERTDBFlatType::Bool, value};
 
         if (ConvertValue<Red::CName>(aNode, value, true))
-            return { Red::ERTDBFlatType::CName, value };
+            return {Red::ERTDBFlatType::CName, value};
 
         if (ConvertValue<Red::TweakDBID>(aNode, value, true))
-            return { Red::ERTDBFlatType::TweakDBID, value };
+            return {Red::ERTDBFlatType::TweakDBID, value};
 
         if (ConvertValue<Red::LocKeyWrapper>(aNode, value, true))
-            return { Red::ERTDBFlatType::LocKey, value };
+            return {Red::ERTDBFlatType::LocKey, value};
 
         if (ConvertValue<Red::ResourceAsyncReference<>>(aNode, value, true))
-            return { Red::ERTDBFlatType::ResRef, value };
+            return {Red::ERTDBFlatType::ResRef, value};
 
         break;
     }
     case YAML::NodeType::Map:
     {
         if (ConvertValue<Red::Quaternion>(aNode, value, true))
-            return { Red::ERTDBFlatType::Quaternion, value };
+            return {Red::ERTDBFlatType::Quaternion, value};
 
         if (ConvertValue<Red::EulerAngles>(aNode, value, true))
-            return { Red::ERTDBFlatType::EulerAngles, value };
+            return {Red::ERTDBFlatType::EulerAngles, value};
 
         if (ConvertValue<Red::Vector3>(aNode, value, true))
-            return { Red::ERTDBFlatType::Vector3, value };
+            return {Red::ERTDBFlatType::Vector3, value};
 
         if (ConvertValue<Red::Vector2>(aNode, value, true))
-            return { Red::ERTDBFlatType::Vector2, value };
+            return {Red::ERTDBFlatType::Vector2, value};
 
         if (ConvertValue<Red::Color>(aNode, value, true))
-            return { Red::ERTDBFlatType::Color, value };
+            return {Red::ERTDBFlatType::Color, value};
 
         break;
     }
@@ -561,7 +520,7 @@ std::pair<Red::CName, Red::InstancePtr<>> App::YamlReader::TryMakeValue(const YA
                 constexpr auto ArrayPrefix = Red::GetTypePrefixStr<Red::DynArray>();
                 auto arrayTypeName = Red::CName(std::string(ArrayPrefix.data()).append(item.first.ToString()).c_str());
 
-                return { arrayTypeName, MakeValue(arrayTypeName, aNode) };
+                return {arrayTypeName, MakeValue(arrayTypeName, aNode)};
             }
         }
         break;
@@ -571,5 +530,5 @@ std::pair<Red::CName, Red::InstancePtr<>> App::YamlReader::TryMakeValue(const YA
         break;
     }
 
-    return { {}, value };
+    return {{}, value};
 }

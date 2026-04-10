@@ -6,7 +6,7 @@
 namespace
 {
 template<typename T>
-requires std::is_integral_v<T>
+    requires std::is_integral_v<T>
 inline bool ParseInt(const std::string& aData, T& aResult)
 {
     return App::ParseInt(aData, aResult);
@@ -177,8 +177,8 @@ Red::InstancePtr<Red::Quaternion> ConvertValue(const Red::TweakValuePtr& aValue)
         auto& data = aValue->data;
         auto result = Red::MakeInstance<Red::Quaternion>();
 
-        if (ParseFloat(data[0], result->i) && ParseFloat(data[1], result->j)
-            && ParseFloat(data[2], result->k) && ParseFloat(data[3], result->r))
+        if (ParseFloat(data[0], result->i) && ParseFloat(data[1], result->j) && ParseFloat(data[2], result->k) &&
+            ParseFloat(data[3], result->r))
         {
             return result;
         }
@@ -246,8 +246,8 @@ Red::InstancePtr<Red::Color> ConvertValue(const Red::TweakValuePtr& aValue)
         auto& data = aValue->data;
         auto result = Red::MakeInstance<Red::Color>();
 
-        if (ParseInt(data[0], result->Red) && ParseInt(data[1], result->Green)
-            && ParseInt(data[2], result->Blue) && ParseInt(data[3], result->Alpha))
+        if (ParseInt(data[0], result->Red) && ParseInt(data[1], result->Green) && ParseInt(data[2], result->Blue) &&
+            ParseInt(data[3], result->Alpha))
         {
             return result;
         }
@@ -273,13 +273,14 @@ Red::InstancePtr<Red::DynArray<T>> ConvertValue(const Core::Vector<Red::TweakVal
 
     return array;
 }
-}
+} // namespace
 
 Red::InstancePtr<> App::RedReader::MakeValue(const App::RedReader::FlatStatePtr& aState,
-                                                const Red::TweakValuePtr& aValue)
+                                             const Red::TweakValuePtr& aValue)
 {
     const auto& type = aState->isArray ? aState->elementType : aState->resolvedType;
 
+    // clang-format off
     switch (type->GetName())
     {
     case Red::ERTDBFlatType::Int: return ConvertValue<int>(aValue);
@@ -295,13 +296,13 @@ Red::InstancePtr<> App::RedReader::MakeValue(const App::RedReader::FlatStatePtr&
     case Red::ERTDBFlatType::Vector3: return ConvertValue<Red::Vector3>(aValue);
     case Red::ERTDBFlatType::Vector2: return ConvertValue<Red::Vector2>(aValue);
     case Red::ERTDBFlatType::Color: return ConvertValue<Red::Color>(aValue);
+    default: return {};
     }
-
-    return {};
+    // clang-format on
 }
 
 Red::InstancePtr<> App::RedReader::MakeValue(const App::RedReader::FlatStatePtr& aState,
-                                                const Core::Vector<Red::TweakValuePtr>& aValues)
+                                             const Core::Vector<Red::TweakValuePtr>& aValues)
 {
     if (!aState->isArray)
     {
@@ -311,6 +312,7 @@ Red::InstancePtr<> App::RedReader::MakeValue(const App::RedReader::FlatStatePtr&
         return MakeValue(aState, aValues.front());
     }
 
+    // clang-format off
     switch (aState->resolvedType->GetName())
     {
     case Red::ERTDBFlatType::IntArray: return ConvertValue<int>(aValues);
@@ -326,7 +328,62 @@ Red::InstancePtr<> App::RedReader::MakeValue(const App::RedReader::FlatStatePtr&
     case Red::ERTDBFlatType::Vector3Array: return ConvertValue<Red::Vector3>(aValues);
     case Red::ERTDBFlatType::Vector2Array: return ConvertValue<Red::Vector2>(aValues);
     case Red::ERTDBFlatType::ColorArray: return ConvertValue<Red::Color>(aValues);
+    default: return {};
+    }
+    // clang-format on
+}
+
+Red::InstancePtr<> App::RedReader::MakeValue(const Red::CBaseRTTIType* aType, const Red::TweakValuePtr& aValue)
+{
+    // clang-format off
+    switch (aType->GetName())
+    {
+    case Red::ERTDBFlatType::Int: return ConvertValue<int>(aValue);
+    case Red::ERTDBFlatType::Float: return ConvertValue<float>(aValue);
+    case Red::ERTDBFlatType::Bool: return ConvertValue<bool>(aValue);
+    case Red::ERTDBFlatType::String: return ConvertValue<Red::CString>(aValue);
+    case Red::ERTDBFlatType::CName: return ConvertValue<Red::CName>(aValue);
+    case Red::ERTDBFlatType::LocKey: return ConvertValue<Red::LocKeyWrapper>(aValue);
+    case Red::ERTDBFlatType::ResRef: return ConvertValue<Red::ResourceAsyncReference<>>(aValue);
+    case Red::ERTDBFlatType::TweakDBID: return ConvertValue<Red::TweakDBID>(aValue);
+    case Red::ERTDBFlatType::Quaternion: return ConvertValue<Red::Quaternion>(aValue);
+    case Red::ERTDBFlatType::EulerAngles: return ConvertValue<Red::EulerAngles>(aValue);
+    case Red::ERTDBFlatType::Vector3: return ConvertValue<Red::Vector3>(aValue);
+    case Red::ERTDBFlatType::Vector2: return ConvertValue<Red::Vector2>(aValue);
+    case Red::ERTDBFlatType::Color: return ConvertValue<Red::Color>(aValue);
+    default: return {};
+    }
+    // clang-format on
+}
+
+Red::InstancePtr<> App::RedReader::MakeValue(const Red::CBaseRTTIType* aType,
+                                             const Core::Vector<Red::TweakValuePtr>& aValues)
+{
+    if (!Red::IsArrayType(aType))
+    {
+        if (aValues.size() != 1)
+            return {};
+
+        return MakeValue(aType, aValues.front());
     }
 
-    return {};
+    // clang-format off
+    switch (aType->GetName())
+    {
+    case Red::ERTDBFlatType::IntArray: return ConvertValue<int>(aValues);
+    case Red::ERTDBFlatType::FloatArray: return ConvertValue<float>(aValues);
+    case Red::ERTDBFlatType::BoolArray: return ConvertValue<bool>(aValues);
+    case Red::ERTDBFlatType::StringArray: return ConvertValue<Red::CString>(aValues);
+    case Red::ERTDBFlatType::CNameArray: return ConvertValue<Red::CName>(aValues);
+    case Red::ERTDBFlatType::LocKeyArray: return ConvertValue<Red::LocKeyWrapper>(aValues);
+    case Red::ERTDBFlatType::ResRefArray: return ConvertValue<Red::ResourceAsyncReference<>>(aValues);
+    case Red::ERTDBFlatType::TweakDBIDArray: return ConvertValue<Red::TweakDBID>(aValues);
+    case Red::ERTDBFlatType::QuaternionArray: return ConvertValue<Red::Quaternion>(aValues);
+    case Red::ERTDBFlatType::EulerAnglesArray: return ConvertValue<Red::EulerAngles>(aValues);
+    case Red::ERTDBFlatType::Vector3Array: return ConvertValue<Red::Vector3>(aValues);
+    case Red::ERTDBFlatType::Vector2Array: return ConvertValue<Red::Vector2>(aValues);
+    case Red::ERTDBFlatType::ColorArray: return ConvertValue<Red::Color>(aValues);
+    default: return {};
+    }
+    // clang-format on
 }
