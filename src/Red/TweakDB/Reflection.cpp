@@ -91,7 +91,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
 
     const auto baseOffset = aType->parent->size;
 
-    for (uint32_t funcIndex = 0u; funcIndex < aType->funcs.size; ++funcIndex)
+    for (uint32_t funcIndex = 0u; funcIndex < aType->funcs.Size(); ++funcIndex)
     {
         const auto func = aType->funcs[funcIndex];
 

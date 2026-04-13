@@ -145,12 +145,12 @@ uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::I
         if (innerType->GetName() == "String")
         {
             const auto* array = reinterpret_cast<Red::DynArray<Red::CString>*>(aInstance);
-            const auto size = aSize ? aSize : array->size;
+            const auto size = aSize ? aSize : array->Size();
 
             hash = aSeed;
             for (uint32_t i = 0; i != size; ++i)
             {
-                const auto* str = array->entries + i;
+                const auto* str = array->Data() + i;
                 const auto length = str->Length();
                 hash = FNV1a64(reinterpret_cast<const uint8_t*>(&length), sizeof(length), hash);
                 hash = FNV1a64(reinterpret_cast<const uint8_t*>(str->c_str()), length, hash);
@@ -159,8 +159,8 @@ uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::I
         else
         {
             const auto* array = reinterpret_cast<Red::DynArray<uint8_t>*>(aInstance);
-            const auto size = aSize ? aSize : array->size;
-            hash = FNV1a64(array->entries, size * innerType->GetSize(), aSeed);
+            const auto size = aSize ? aSize : array->Size();
+            hash = FNV1a64(array->Data(), size * innerType->GetSize(), aSeed);
         }
     }
     else if (aType->GetName() == "String")

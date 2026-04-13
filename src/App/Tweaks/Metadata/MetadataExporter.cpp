@@ -174,7 +174,7 @@ void App::MetadataExporter::ResolveInlines(const Red::TweakGroupPtr& aOwner, con
                         break;
                     }
 
-                    offset = inheritedFlatValue.As<Red::DynArray<Red::TweakDBID>>().size;
+                    offset = inheritedFlatValue.As<Red::DynArray<Red::TweakDBID>>().Size();
                 }
             }
 

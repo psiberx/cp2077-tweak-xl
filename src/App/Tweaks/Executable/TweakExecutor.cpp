@@ -30,7 +30,7 @@ void App::TweakExecutor::ExecuteTweaks()
         Red::DynArray<Red::CClass*> tweakClasses;
         m_rtti->GetClasses(s_scriptableTweakType, tweakClasses);
 
-        if (tweakClasses.size == 0)
+        if (tweakClasses.IsEmpty())
             return;
 
         LogInfo("Executing scriptable tweaks...");

@@ -314,7 +314,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                             auto* sourceArray = reinterpret_cast<Red::DynArray<uint8_t>*>(sourceFlatValue.instance);
                             auto* descendantArray = reinterpret_cast<Red::DynArray<uint8_t>*>(descendantFlatValue.instance);
 
-                            if (sourceArray->size > descendantArray->size)
+                            if (sourceArray->Size() > descendantArray->Size())
                                 continue;
 
                             auto* sourceType = reinterpret_cast<const Red::CRTTIArrayType*>(sourceFlatValue.type);
@@ -324,19 +324,19 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
                             {
                                 const auto sourceHash = Red::TweakDBBuffer::ComputeHash(sourceFlatValue.type,
                                                                                         sourceFlatValue.instance,
-                                                                                        sourceArray->size);
+                                                                                        sourceArray->Size());
                                 const auto descendantHash = Red::TweakDBBuffer::ComputeHash(descendantFlatValue.type,
                                                                                             descendantFlatValue.instance,
-                                                                                            sourceArray->size);
+                                                                                            sourceArray->Size());
 
                                 if (sourceHash != descendantHash)
                                     continue;
                             }
                             else
                             {
-                                auto dataSize = sourceArray->size * elementType->GetSize();
+                                auto dataSize = sourceArray->Size() * elementType->GetSize();
 
-                                if (std::memcmp(sourceArray->entries, descendantArray->entries, dataSize) != 0)
+                                if (std::memcmp(sourceArray->Data(), descendantArray->Data(), dataSize) != 0)
                                     continue;
                             }
                         }
