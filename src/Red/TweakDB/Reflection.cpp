@@ -272,13 +272,11 @@ Red::TweakDBID Red::TweakDBReflection::GetRecordSampleId(const Red::CClass* aTyp
 
 uint32_t Red::TweakDBReflection::GetRecordTypeHash(const Red::CClass* aType)
 {
-    std::shared_lock<Red::SharedSpinLock> recordLockR(m_tweakDb->mutex01);
-    auto* records = m_tweakDb->recordsByType.Get(const_cast<Red::CClass*>(aType));
+    std::string_view name(aType->name.ToString());
+    name.remove_prefix(RecordTypePrefixLength);
+    name.remove_suffix(RecordTypeSuffixLength);
 
-    if (records == nullptr)
-        return 0;
-
-    return records->Begin()->GetPtr<Red::TweakDBRecord>()->GetTweakBaseHash();
+    return Red::Murmur3_32(reinterpret_cast<const uint8_t*>(name.data()), name.size());
 }
 
 std::string Red::TweakDBReflection::ResolvePropertyName(Red::TweakDBID aSampleId, Red::CName aGetterName)
