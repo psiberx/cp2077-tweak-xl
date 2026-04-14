@@ -52,7 +52,7 @@ public:
     TweakDBRecordInfo() noexcept = default;
 
     void SetName(const char* aName);
-    void SetName(const CName& aName);
+    void SetName(CName aName);
     void SetType(const CClass* aType);
     void SetParent(const CClass* aParent);
 
@@ -65,7 +65,7 @@ public:
     [[nodiscard]] const CClass* GetParent() const;
     [[nodiscard]] uint32_t GetTypeHash() const;
 
-    [[nodiscard]] Core::SharedPtr<const TweakDBPropertyInfo> GetProperty(const CName& aPropName) const;
+    [[nodiscard]] Core::SharedPtr<const TweakDBPropertyInfo> GetProperty(CName aPropName) const;
     [[nodiscard]] const Core::Map<CName, Core::SharedPtr<const TweakDBPropertyInfo>>& GetProperties() const;
 
     [[nodiscard]] bool IsValid() const;

@@ -163,7 +163,7 @@ void TweakDBRecordInfo::SetName(const char* aName)
     m_typeHash = TweakDBReflection::GetRecordTypeHash(m_shortName);
 }
 
-void TweakDBRecordInfo::SetName(const CName& aName)
+void TweakDBRecordInfo::SetName(CName aName)
 {
     SetName(aName.ToString());
 }
@@ -220,7 +220,7 @@ uint32_t TweakDBRecordInfo::GetTypeHash() const
     return m_typeHash;
 }
 
-Core::SharedPtr<const TweakDBPropertyInfo> TweakDBRecordInfo::GetProperty(const CName& aPropName) const
+Core::SharedPtr<const TweakDBPropertyInfo> TweakDBRecordInfo::GetProperty(CName aPropName) const
 {
     const auto& propIt = m_props.find(aPropName);
     return propIt != m_props.end() ? propIt->second : nullptr;
