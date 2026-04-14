@@ -101,7 +101,7 @@ public:
     template<CStringConstructible T>
     static T GetRecordShortName(const char* aName);
 
-    static uint32_t GetRecordTypeHash(const std::string& aName);
+    static TweakDBRecordHash GetRecordTypeHash(const std::string& aName);
 
     static InstancePtr<> Construct(Red::CName aTypeName);
     static InstancePtr<> Construct(const Red::CBaseRTTIType* aType);

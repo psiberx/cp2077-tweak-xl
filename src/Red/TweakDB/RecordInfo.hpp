@@ -1,4 +1,5 @@
 #pragma once
+#include "Alias.hpp"
 
 namespace Red
 {
@@ -63,7 +64,7 @@ public:
     [[nodiscard]] const std::string& GetShortName() const;
     [[nodiscard]] const CClass* GetType() const;
     [[nodiscard]] const CClass* GetParent() const;
-    [[nodiscard]] uint32_t GetTypeHash() const;
+    [[nodiscard]] TweakDBRecordHash GetTypeHash() const;
 
     [[nodiscard]] Core::SharedPtr<const TweakDBPropertyInfo> GetProperty(CName aPropName) const;
     [[nodiscard]] const Core::Map<CName, Core::SharedPtr<const TweakDBPropertyInfo>>& GetProperties() const;
@@ -79,7 +80,7 @@ private:
     std::string m_shortName;
     const CClass* m_type{nullptr};
     const CClass* m_parent{nullptr};
-    uint32_t m_typeHash{};
+    TweakDBRecordHash m_typeHash{};
 
     Core::Map<CName, Core::SharedPtr<const TweakDBPropertyInfo>> m_props;
 };

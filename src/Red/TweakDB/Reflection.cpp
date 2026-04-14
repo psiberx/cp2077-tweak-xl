@@ -245,7 +245,7 @@ Red::TweakDBID Red::TweakDBReflection::GetRecordSampleId(const Red::CClass* aTyp
     return records->Begin()->GetPtr<Red::TweakDBRecord>()->recordID;
 }
 
-uint32_t Red::TweakDBReflection::GetRecordTypeHash(const std::string& aName)
+Red::TweakDBRecordHash Red::TweakDBReflection::GetRecordTypeHash(const std::string& aName)
 {
     return Red::Murmur3_32(reinterpret_cast<const uint8_t*>(aName.c_str()), aName.length());
 }
@@ -621,7 +621,7 @@ Red::IRTTISystem* Red::TweakDBReflection::GetRTTI()
 {
     if (!s_rtti)
         s_rtti = Red::CRTTISystem::Get();
-    ;
+
     return s_rtti;
 }
 

@@ -215,7 +215,7 @@ const CClass* TweakDBRecordInfo::GetParent() const
     return m_parent;
 }
 
-uint32_t TweakDBRecordInfo::GetTypeHash() const
+TweakDBRecordHash TweakDBRecordInfo::GetTypeHash() const
 {
     return m_typeHash;
 }
