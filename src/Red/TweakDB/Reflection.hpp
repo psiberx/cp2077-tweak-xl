@@ -4,15 +4,6 @@
 
 namespace Red
 {
-constexpr auto RecordTypePrefix = "gamedata";
-constexpr auto RecordTypePrefixLength = std::char_traits<char>::length(RecordTypePrefix);
-constexpr auto RecordTypeSuffix = "_Record";
-constexpr auto RecordTypeSuffixLength = std::char_traits<char>::length(RecordTypeSuffix);
-
-template<typename T>
-concept CStringConstructible =
-    !std::is_pointer_v<T> && !std::is_reference_v<T> && std::is_constructible_v<T, const char*>;
-
 namespace ERTDBFlatType
 {
     enum : uint64_t
@@ -45,6 +36,15 @@ namespace ERTDBFlatType
         ColorArray = Red::FNV1a64("array:Color"),
     };
 } // namespace ERTDBFlatType
+
+constexpr auto RecordTypePrefix = "gamedata";
+constexpr auto RecordTypePrefixLength = std::char_traits<char>::length(RecordTypePrefix);
+constexpr auto RecordTypeSuffix = "_Record";
+constexpr auto RecordTypeSuffixLength = std::char_traits<char>::length(RecordTypeSuffix);
+
+template<typename T>
+concept CStringConstructible =
+    !std::is_pointer_v<T> && !std::is_reference_v<T> && std::is_constructible_v<T, const char*>;
 
 class TweakDBReflection
 {
