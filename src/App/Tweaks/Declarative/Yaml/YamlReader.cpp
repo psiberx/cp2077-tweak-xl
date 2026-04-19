@@ -263,10 +263,10 @@ void App::YamlReader::HandleTopNode(App::TweakChangeset& aChangeset, PropertyMod
 }
 
 void App::YamlReader::HandleFlatNode(App::TweakChangeset& aChangeset, const std::string& aName, const YAML::Node& aNode,
-                                     const Red::CBaseRTTIType* aType)
+                                     const Red::rtti::IType* aType)
 {
     const auto flatId = Red::TweakDBID(aName);
-    const Red::CBaseRTTIType* flatType;
+    const Red::rtti::IType* flatType;
     Red::InstancePtr<> flatValue;
 
     aChangeset.RegisterName(flatId, aName);
@@ -587,7 +587,7 @@ bool App::YamlReader::ResolveInlineNode(App::TweakChangeset& aChangeset, const s
 
 bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::string& aPath,
                                       const std::string& aName, const YAML::Node& aNode,
-                                      const Red::CBaseRTTIType* aElementType)
+                                      const Red::rtti::IType* aElementType)
 {
     if (!aNode.IsSequence())
         return false;
@@ -709,12 +709,12 @@ bool App::YamlReader::HandleMutations(TweakChangeset& aChangeset, const std::str
     return isMutation;
 }
 
-const Red::CBaseRTTIType* App::YamlReader::ResolveFlatType(const YAML::Node& aNode)
+const Red::rtti::IType* App::YamlReader::ResolveFlatType(const YAML::Node& aNode)
 {
     return m_reflection->GetFlatType(aNode.Scalar().c_str());
 }
 
-const Red::CBaseRTTIType* App::YamlReader::ResolveFlatType(Red::CName aName)
+const Red::rtti::IType* App::YamlReader::ResolveFlatType(Red::CName aName)
 {
     return m_reflection->GetFlatType(aName);
 }

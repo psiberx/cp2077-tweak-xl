@@ -23,8 +23,8 @@ public:
     explicit TweakDBBuffer(Red::TweakDB* aTweakDb);
 
     int32_t AllocateValue(const Red::Value<>& aData);
-    int32_t AllocateValue(const Red::CBaseRTTIType* aType, Red::Instance aInstance);
-    int32_t AllocateDefault(const Red::CBaseRTTIType* aType);
+    int32_t AllocateValue(const Red::rtti::IType* aType, Red::Instance aInstance);
+    int32_t AllocateDefault(const Red::rtti::IType* aType);
 
     Red::Value<> GetValue(int32_t aOffset);
     Red::Instance GetValuePtr(int32_t aOffset);
@@ -34,13 +34,13 @@ public:
 
     void Invalidate();
 
-    static uint64_t ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance, uint32_t aSize = 0,
+    static uint64_t ComputeHash(const Red::rtti::IType* aType, Red::Instance aInstance, uint32_t aSize = 0,
                                 uint64_t aSeed = 0xCBF29CE484222325);
 
 private:
     struct FlatTypeInfo
     {
-        Red::CBaseRTTIType* type;
+        Red::rtti::IType* type;
         uintptr_t offset;
     };
 

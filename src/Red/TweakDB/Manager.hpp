@@ -28,12 +28,12 @@ public:
     TweakDBManager& operator=(const TweakDBManager&) = delete;
 
     Red::Value<> GetFlat(Red::TweakDBID aFlatId);
-    Red::Value<> GetDefault(const Red::CBaseRTTIType* aType);
+    Red::Value<> GetDefault(const Red::rtti::IType* aType);
     Red::Handle<Red::TweakDBRecord> GetRecord(Red::TweakDBID aRecordId);
     const Red::CClass* GetRecordType(Red::TweakDBID aRecordId);
     bool IsFlatExists(Red::TweakDBID aFlatId);
     bool IsRecordExists(Red::TweakDBID aRecordId);
-    bool SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, Red::Instance aInstance);
+    bool SetFlat(Red::TweakDBID aFlatId, const Red::rtti::IType* aType, Red::Instance aInstance);
     bool SetFlat(Red::TweakDBID aFlatId, const Red::Value<>& aData);
     bool CreateRecord(Red::TweakDBID aRecordId, const Red::CClass* aType);
     bool CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
@@ -51,7 +51,7 @@ public:
     const Red::CClass* GetRecordType(const BatchPtr& aBatch, Red::TweakDBID aRecordId);
     bool IsFlatExists(const BatchPtr& aBatch, Red::TweakDBID aFlatId);
     bool IsRecordExists(const BatchPtr& aBatch, Red::TweakDBID aRecordId);
-    bool SetFlat(const BatchPtr& aBatch, Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, Red::Instance aValue);
+    bool SetFlat(const BatchPtr& aBatch, Red::TweakDBID aFlatId, const Red::rtti::IType* aType, Red::Instance aValue);
     bool SetFlat(const BatchPtr& aBatch, Red::TweakDBID aFlatId, const Red::Value<>& aData);
     bool CreateRecord(const BatchPtr& aBatch, Red::TweakDBID aRecordId, const Red::CClass* aType);
     bool CloneRecord(const BatchPtr& aBatch, Red::TweakDBID aRecordId, Red::TweakDBID aSourceId);
@@ -69,7 +69,7 @@ public:
 private:
     template<class SharedLockable>
     inline bool AssignFlat(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aFlatId,
-                           const Red::CBaseRTTIType* aType, Red::Instance aInstance,
+                           const Red::rtti::IType* aType, Red::Instance aInstance,
                            SharedLockable& aMutex);
     inline void InheritFlats(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aRecordId,
                              const Red::TweakDBRecordInfo* aRecordInfo);

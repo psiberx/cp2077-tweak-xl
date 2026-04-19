@@ -13,7 +13,7 @@ class TweakChangeset
 public:
     struct FlatEntry
     {
-        const Red::CBaseRTTIType* type;
+        const Red::rtti::IType* type;
         Red::InstancePtr<> value;
     };
 
@@ -25,14 +25,14 @@ public:
 
     struct InsertionEntry
     {
-        const Red::CBaseRTTIType* type;
+        const Red::rtti::IType* type;
         Red::InstancePtr<> value;
         bool unique;
     };
 
     struct DeletionEntry
     {
-        const Red::CBaseRTTIType* type;
+        const Red::rtti::IType* type;
         Red::InstancePtr<> value;
     };
 
@@ -58,17 +58,17 @@ public:
         std::string appendix;
     };
 
-    bool SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, const Red::InstancePtr<>& aValue);
+    bool SetFlat(Red::TweakDBID aFlatId, const Red::rtti::IType* aType, const Red::InstancePtr<>& aValue);
     bool ReinheritFlat(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId, const std::string& aAppendix);
 
     bool MakeRecord(Red::TweakDBID aRecordId, const Red::CClass* aType, Red::TweakDBID aSourceId = {});
     bool UpdateRecord(Red::TweakDBID aRecordId);
 
-    bool AppendElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
+    bool AppendElement(Red::TweakDBID aFlatId, const Red::rtti::IType* aType,
                        const Red::InstancePtr<>& aValue, bool aUnique = false);
-    bool PrependElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
+    bool PrependElement(Red::TweakDBID aFlatId, const Red::rtti::IType* aType,
                         const Red::InstancePtr<>& aValue, bool aUnique = false);
-    bool RemoveElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
+    bool RemoveElement(Red::TweakDBID aFlatId, const Red::rtti::IType* aType,
                        const Red::InstancePtr<>& aValue);
     bool RemoveAllElements(Red::TweakDBID aFlatId);
     bool AppendFrom(Red::TweakDBID aFlatId, Red::TweakDBID aSourceId);

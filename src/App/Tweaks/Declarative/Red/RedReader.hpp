@@ -50,10 +50,10 @@ private:
 
         bool isArray{};
         bool isForeignKey{};
-        const Red::CBaseRTTIType* requiredType{};
+        const Red::rtti::IType* requiredType{};
         const Red::CClass* requiredKey{};
-        const Red::CBaseRTTIType* resolvedType{};
-        const Red::CBaseRTTIType* elementType{};
+        const Red::rtti::IType* resolvedType{};
+        const Red::rtti::IType* elementType{};
         const Red::CClass* resolvedKey{};
 
         std::string flatPath;
@@ -73,7 +73,7 @@ private:
 
     FlatStatePtr HandleFlat(App::TweakChangeset& aChangeset, const Red::TweakFlatPtr& aFlat,
                             const std::string& aParentName, const std::string& aParentPath,
-                            const Red::CBaseRTTIType* aRequiredType = nullptr,
+                            const Red::rtti::IType* aRequiredType = nullptr,
                             const Red::CClass* aForeignType = nullptr);
 
     GroupStatePtr ResolveGroupState(App::TweakChangeset& aChangeset, const Red::TweakGroupPtr& aGroup,
@@ -82,7 +82,7 @@ private:
 
     FlatStatePtr ResolveFlatState(App::TweakChangeset& aChangeset, const Red::TweakFlatPtr& aFlat,
                                   const std::string& aParentName, const std::string& aParentPath,
-                                  const Red::CBaseRTTIType* aRequiredType = nullptr,
+                                  const Red::rtti::IType* aRequiredType = nullptr,
                                   const Red::CClass* aForeignType = nullptr);
 
     Red::InstancePtr<> MakeValue(const FlatStatePtr& aState, const Red::TweakValuePtr& aValue);

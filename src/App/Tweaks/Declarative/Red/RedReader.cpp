@@ -228,7 +228,7 @@ App::RedReader::FlatStatePtr App::RedReader::HandleFlat(App::TweakChangeset& aCh
                                                         const Red::TweakFlatPtr& aFlat,
                                                         const std::string& aParentName,
                                                         const std::string& aParentPath,
-                                                        const Red::CBaseRTTIType* aRequiredType,
+                                                        const Red::rtti::IType* aRequiredType,
                                                         const Red::CClass* aForeignType)
 {
     if (!CheckConditions(aFlat->tags))
@@ -464,7 +464,7 @@ App::RedReader::FlatStatePtr App::RedReader::ResolveFlatState(App::TweakChangese
                                                               const Red::TweakFlatPtr& aFlat,
                                                               const std::string& aParentName,
                                                               const std::string& aParentPath,
-                                                              const Red::CBaseRTTIType* aRequiredType,
+                                                              const Red::rtti::IType* aRequiredType,
                                                               const Red::CClass* aForeignType)
 {
     auto state = Core::MakeShared<FlatState>();

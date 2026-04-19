@@ -53,7 +53,7 @@ int32_t Red::TweakDBBuffer::AllocateValue(const Red::Value<>& aData)
     return AllocateValue(aData.type, aData.instance);
 }
 
-int32_t Red::TweakDBBuffer::AllocateValue(const Red::CBaseRTTIType* aType, Red::Instance aInstance)
+int32_t Red::TweakDBBuffer::AllocateValue(const Red::rtti::IType* aType, Red::Instance aInstance)
 {
     if (m_bufferEnd != m_tweakDb->flatDataBufferEnd)
         SyncBufferData();
@@ -68,8 +68,8 @@ int32_t Red::TweakDBBuffer::AllocateValue(const Red::CBaseRTTIType* aType, Red::
             return offsetIt->second;
     }
 
-    const auto offset = m_tweakDb->CreateFlatValue({const_cast<Red::CBaseRTTIType*>(aType), aInstance});
-    // const auto copy = Red::MakeValue(const_cast<Red::CBaseRTTIType*>(aType), aInstance);
+    const auto offset = m_tweakDb->CreateFlatValue({const_cast<Red::rtti::IType*>(aType), aInstance});
+    // const auto copy = Red::MakeValue(const_cast<Red::rtti::IType*>(aType), aInstance);
     // const auto offset = m_tweakDb->CreateFlatValue(*copy);
 
     if (offset > 0)
@@ -81,7 +81,7 @@ int32_t Red::TweakDBBuffer::AllocateValue(const Red::CBaseRTTIType* aType, Red::
     return offset;
 }
 
-int32_t Red::TweakDBBuffer::AllocateDefault(const Red::CBaseRTTIType* aType)
+int32_t Red::TweakDBBuffer::AllocateDefault(const Red::rtti::IType* aType)
 {
     if (m_bufferEnd != m_tweakDb->flatDataBufferEnd)
         SyncBufferData();
@@ -124,7 +124,7 @@ uint64_t Red::TweakDBBuffer::GetValueHash(int32_t aOffset)
     return ComputeHash(data.type, data.instance);
 }
 
-uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::Instance aInstance, uint32_t aSize,
+uint64_t Red::TweakDBBuffer::ComputeHash(const Red::rtti::IType* aType, Red::Instance aInstance, uint32_t aSize,
                                          uint64_t aSeed)
 {
     // Case 1: Everything is processed as a sequence of bytes and passed to the hash function,
@@ -137,7 +137,7 @@ uint64_t Red::TweakDBBuffer::ComputeHash(const Red::CBaseRTTIType* aType, Red::I
 
     uint64_t hash;
 
-    if (aType->GetType() == Red::ERTTIType::Array)
+    if (aType->GetType() == Red::rtti::ERTTIType::Array)
     {
         auto* arrayType = reinterpret_cast<const Red::CRTTIArrayType*>(aType);
         auto* innerType = arrayType->GetInnerType();

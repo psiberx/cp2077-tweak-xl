@@ -418,7 +418,7 @@ bool App::YamlReader::ConvertArray(const YAML::Node& aNode, Red::InstancePtr<>& 
     return aValue != nullptr;
 }
 
-Red::InstancePtr<> App::YamlReader::MakeValue(const Red::CBaseRTTIType* aType, const YAML::Node& aNode)
+Red::InstancePtr<> App::YamlReader::MakeValue(const Red::rtti::IType* aType, const YAML::Node& aNode)
 {
     return MakeValue(aType->GetName(), aNode);
 }

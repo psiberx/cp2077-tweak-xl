@@ -40,8 +40,8 @@ enum : uint64_t
 struct TweakDBPropertyInfo
 {
     Red::CName name;
-    const Red::CBaseRTTIType* type;
-    const Red::CBaseRTTIType* elementType;
+    const Red::rtti::IType* type;
+    const Red::rtti::IType* elementType;
     const Red::CClass* foreignType;
     bool isArray;
     bool isForeignKey;
@@ -76,42 +76,42 @@ public:
     const Red::TweakDBRecordInfo* GetRecordInfo(Red::CName aTypeName);
     const Red::TweakDBRecordInfo* GetRecordInfo(const Red::CClass* aType);
 
-    const Red::CBaseRTTIType* GetFlatType(Red::CName aTypeName);
+    const Red::rtti::IType* GetFlatType(Red::CName aTypeName);
     const Red::CClass* GetRecordType(Red::CName aTypeName);
     const Red::CClass* GetRecordType(const char* aTypeName);
 
-    Red::CBaseRTTIType* GetArrayType(Red::CName aTypeName);
-    Red::CBaseRTTIType* GetArrayType(const Red::CBaseRTTIType* aType);
+    Red::rtti::IType* GetArrayType(Red::CName aTypeName);
+    Red::rtti::IType* GetArrayType(const Red::rtti::IType* aType);
 
-    Red::CBaseRTTIType* GetElementType(Red::CName aTypeName);
-    Red::CBaseRTTIType* GetElementType(const Red::CBaseRTTIType* aType);
+    Red::rtti::IType* GetElementType(Red::CName aTypeName);
+    Red::rtti::IType* GetElementType(const Red::rtti::IType* aType);
 
     bool IsFlatType(Red::CName aTypeName);
-    bool IsFlatType(const Red::CBaseRTTIType* aType);
+    bool IsFlatType(const Red::rtti::IType* aType);
 
     bool IsRecordType(Red::CName aTypeName);
     bool IsRecordType(const Red::CClass* aType);
 
     bool IsArrayType(Red::CName aTypeName);
-    bool IsArrayType(const Red::CBaseRTTIType* aType);
+    bool IsArrayType(const Red::rtti::IType* aType);
 
     bool IsForeignKey(Red::CName aTypeName);
-    bool IsForeignKey(const Red::CBaseRTTIType* aType);
+    bool IsForeignKey(const Red::rtti::IType* aType);
 
     bool IsForeignKeyArray(Red::CName aTypeName);
-    bool IsForeignKeyArray(const Red::CBaseRTTIType* aType);
+    bool IsForeignKeyArray(const Red::rtti::IType* aType);
 
     bool IsResRefToken(Red::CName aTypeName);
-    bool IsResRefToken(const Red::CBaseRTTIType* aType);
+    bool IsResRefToken(const Red::rtti::IType* aType);
 
     bool IsResRefTokenArray(Red::CName aTypeName);
-    bool IsResRefTokenArray(const Red::CBaseRTTIType* aType);
+    bool IsResRefTokenArray(const Red::rtti::IType* aType);
 
     Red::CName GetArrayTypeName(Red::CName aTypeName);
-    Red::CName GetArrayTypeName(const Red::CBaseRTTIType* aType);
+    Red::CName GetArrayTypeName(const Red::rtti::IType* aType);
 
     Red::CName GetElementTypeName(Red::CName aTypeName);
-    Red::CName GetElementTypeName(const Red::CBaseRTTIType* aType);
+    Red::CName GetElementTypeName(const Red::rtti::IType* aType);
 
     Red::CName GetRecordFullName(Red::CName aName);
     Red::CName GetRecordFullName(const char* aName);
@@ -120,7 +120,7 @@ public:
     std::string GetRecordShortName(const char* aName);
 
     Red::InstancePtr<> Construct(Red::CName aTypeName);
-    Red::InstancePtr<> Construct(const Red::CBaseRTTIType* aType);
+    Red::InstancePtr<> Construct(const Red::rtti::IType* aType);
 
     bool IsOriginalRecord(Red::TweakDBID aRecordId);
     bool IsOriginalBaseRecord(Red::TweakDBID aParentId);

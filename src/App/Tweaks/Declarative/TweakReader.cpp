@@ -115,7 +115,7 @@ std::string App::BaseTweakReader::ComposePath(const std::string& aParentPath, in
     return itemPath;
 }
 
-const Red::CBaseRTTIType* App::BaseTweakReader::ResolveFlatInstanceType(App::TweakChangeset& aChangeset,
+const Red::rtti::IType* App::BaseTweakReader::ResolveFlatInstanceType(App::TweakChangeset& aChangeset,
                                                                         Red::TweakDBID aFlatId)
 {
     const auto existingFlat = m_manager->GetFlat(aFlatId);
@@ -159,7 +159,7 @@ std::string App::BaseTweakReader::ToName(const Red::CClass* aType)
     return m_reflection->GetRecordShortName(aType->GetName());
 }
 
-std::string App::BaseTweakReader::ToName(const Red::CBaseRTTIType* aType, const Red::CClass* aKey)
+std::string App::BaseTweakReader::ToName(const Red::rtti::IType* aType, const Red::CClass* aKey)
 {
     if (!aType)
         return "<UnknownType>";

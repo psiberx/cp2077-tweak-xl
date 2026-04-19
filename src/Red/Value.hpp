@@ -16,14 +16,14 @@ InstancePtr<T> MakeInstance(Args&&... args)
 template<typename T = void>
 struct Value
 {
-    Value(CBaseRTTIType* aType = nullptr, T* aInstance = nullptr)
+    Value(rtti::IType* aType = nullptr, T* aInstance = nullptr)
         : type(aType)
         , instance(aInstance)
     {
     }
 
-    Value(const CBaseRTTIType* aType, T* aInstance = nullptr)
-        : type(const_cast<CBaseRTTIType*>(aType))
+    Value(const rtti::IType* aType, T* aInstance = nullptr)
+        : type(const_cast<rtti::IType*>(aType))
         , instance(aInstance)
     {
     }
@@ -78,7 +78,7 @@ struct Value
         return type == aRhs.type && (!type || instance == aRhs.instance || type->IsEqual(instance, aRhs.instance));
     }
 
-    CBaseRTTIType* type;
+    rtti::IType* type;
     T* instance;
 };
 
@@ -92,7 +92,7 @@ struct ManagedValue : Value<T>
     {
     }
 
-    ManagedValue(const CBaseRTTIType* aType, void* aInstance = nullptr)
+    ManagedValue(const rtti::IType* aType, void* aInstance = nullptr)
         : Data(aType)
     {
         Data::instance = Data::type->GetAllocator()->AllocAligned(Data::type->GetSize(), Data::type->GetAlignment()).memory;
@@ -108,7 +108,7 @@ struct ManagedValue : Value<T>
 
     template<typename... Args>
     requires (!std::is_void_v<T>)
-    ManagedValue(CBaseRTTIType* aType, Args&&... aArgs)
+    ManagedValue(rtti::IType* aType, Args&&... aArgs)
         : Data(aType)
     {
         Data::instance = Data::type->GetAllocator()->AllocAligned(Data::type->GetSize(), Data::type->GetAlignment()).memory;
@@ -135,13 +135,13 @@ using ValuePtr = Core::SharedPtr<const ManagedValue<T>>;
 
 template<typename T, typename... Args>
 requires (!std::is_void_v<T>)
-ValuePtr<T> MakeValue(const CBaseRTTIType* aType, Args&&... aArgs)
+ValuePtr<T> MakeValue(const rtti::IType* aType, Args&&... aArgs)
 {
     return Core::MakeShared<ManagedValue<T>>(aType, std::forward<Args>(aArgs)...);
 }
 
 template<typename T = void>
-ValuePtr<T> MakeValue(const CBaseRTTIType* aType, void* aInstance = nullptr)
+ValuePtr<T> MakeValue(const rtti::IType* aType, void* aInstance = nullptr)
 {
     return Core::MakeShared<ManagedValue<T>>(aType, aInstance);
 }

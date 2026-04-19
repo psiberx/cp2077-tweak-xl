@@ -29,13 +29,13 @@ protected:
     std::string ComposeInlineName(const std::string& aParentName, const Red::CClass* aRecordType,
                                   const std::filesystem::path& aSource, int32_t aItemIndex = -1);
 
-    const Red::CBaseRTTIType* ResolveFlatInstanceType(TweakChangeset& aChangeset, Red::TweakDBID aFlatId);
+    const Red::rtti::IType* ResolveFlatInstanceType(TweakChangeset& aChangeset, Red::TweakDBID aFlatId);
     const Red::CClass* ResolveRecordInstanceType(TweakChangeset& aChangeset, Red::TweakDBID aRecordId);
 
     bool IsOriginalBaseRecord(Red::TweakDBID aRecordId);
 
     std::string ToName(const Red::CClass* aType);
-    std::string ToName(const Red::CBaseRTTIType* aType, const Red::CClass* aKey = nullptr);
+    std::string ToName(const Red::rtti::IType* aType, const Red::CClass* aKey = nullptr);
 
     Core::SharedPtr<Red::TweakDBManager> m_manager;
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;

@@ -29,20 +29,20 @@ private:
     void HandleTopNode(TweakChangeset& aChangeset, PropertyMode aPropMode, const std::string& aName,
                        const YAML::Node& aNode);
     void HandleFlatNode(TweakChangeset& aChangeset, const std::string& aName, const YAML::Node& aNode,
-                        const Red::CBaseRTTIType* aType = nullptr);
+                        const Red::rtti::IType* aType = nullptr);
     void HandleRecordNode(TweakChangeset& aChangeset, PropertyMode aPropMode, const std::string& aRecordPath,
                           const std::string& aRecordName, const YAML::Node& aNode, const Red::CClass* aRecordType,
                           Red::TweakDBID aSourceId = {});
     bool ResolveInlineNode(App::TweakChangeset& aChangeset, const std::string& aPath, const YAML::Node& aNode,
                            const Red::CClass*& aForeignType, Red::TweakDBID& aSourceId);
     bool HandleMutations(TweakChangeset& aChangeset, const std::string& aPath, const std::string& aName,
-                         const YAML::Node& aNode, const Red::CBaseRTTIType* aElementType);
+                         const YAML::Node& aNode, const Red::rtti::IType* aElementType);
     void UpdateFlatOwner(TweakChangeset& aChangeset, const std::string& aName);
 
     bool CheckConditions(const YAML::Node& aNode);
     static PropertyMode ResolvePropertyMode(const YAML::Node& aNode, PropertyMode aDefault = PropertyMode::Strict);
-    const Red::CBaseRTTIType* ResolveFlatType(const YAML::Node& aNode);
-    const Red::CBaseRTTIType* ResolveFlatType(Red::CName aName);
+    const Red::rtti::IType* ResolveFlatType(const YAML::Node& aNode);
+    const Red::rtti::IType* ResolveFlatType(Red::CName aName);
     const Red::CClass* ResolveRecordType(const YAML::Node& aNode);
     Red::TweakDBID ResolveTweakDBID(const YAML::Node& aNode);
 
@@ -59,7 +59,7 @@ private:
     bool ConvertArray(const YAML::Node& aNode, Red::InstancePtr<>& aValue, bool aStrict = false);
 
     Red::InstancePtr<> MakeValue(Red::CName aTypeName, const YAML::Node& aNode);
-    Red::InstancePtr<> MakeValue(const Red::CBaseRTTIType* aType, const YAML::Node& aNode);
+    Red::InstancePtr<> MakeValue(const Red::rtti::IType* aType, const YAML::Node& aNode);
     std::pair<Red::CName, Red::InstancePtr<>> TryMakeValue(const YAML::Node& aNode);
 
     void ProcessTemplates(YAML::Node& aRootNode);

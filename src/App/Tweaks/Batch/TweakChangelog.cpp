@@ -166,7 +166,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
             continue;
         }
 
-        if (flatData.type->GetType() != Red::ERTTIType::Array)
+        if (flatData.type->GetType() != Red::rtti::ERTTIType::Array)
         {
             LogWarning("Cannot restore {}, it's not an array.", aManager->GetName(flatId));
             continue;

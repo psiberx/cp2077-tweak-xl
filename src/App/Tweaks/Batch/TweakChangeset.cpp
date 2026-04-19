@@ -5,7 +5,7 @@ namespace
 constexpr auto StringTypeName = Red::GetTypeName<Red::CString>();
 }
 
-bool App::TweakChangeset::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
+bool App::TweakChangeset::SetFlat(Red::TweakDBID aFlatId, const Red::rtti::IType* aType,
                                   const Red::InstancePtr<>& aValue)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
@@ -63,7 +63,7 @@ bool App::TweakChangeset::UpdateRecord(Red::TweakDBID aRecordId)
     return true;
 }
 
-bool App::TweakChangeset::AppendElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
+bool App::TweakChangeset::AppendElement(Red::TweakDBID aFlatId, const Red::rtti::IType* aType,
                                         const Red::InstancePtr<>& aValue, bool aUnique)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
@@ -75,7 +75,7 @@ bool App::TweakChangeset::AppendElement(Red::TweakDBID aFlatId, const Red::CBase
     return true;
 }
 
-bool App::TweakChangeset::PrependElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
+bool App::TweakChangeset::PrependElement(Red::TweakDBID aFlatId, const Red::rtti::IType* aType,
                                          const Red::InstancePtr<>& aValue, bool aUnique)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
@@ -87,7 +87,7 @@ bool App::TweakChangeset::PrependElement(Red::TweakDBID aFlatId, const Red::CBas
     return true;
 }
 
-bool App::TweakChangeset::RemoveElement(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType,
+bool App::TweakChangeset::RemoveElement(Red::TweakDBID aFlatId, const Red::rtti::IType* aType,
                                         const Red::InstancePtr<>& aValue)
 {
     if (!aFlatId.IsValid() || !aType || !aValue)
@@ -406,7 +406,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
         auto flatData = aManager->GetFlat(flatId);
 
-        if (!flatData.instance || flatData.type->GetType() != Red::ERTTIType::Array)
+        if (!flatData.instance || flatData.type->GetType() != Red::rtti::ERTTIType::Array)
             continue;
 
         auto* targetType = reinterpret_cast<const Red::CRTTIArrayType*>(flatData.type);
@@ -571,7 +571,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
             flatData.type = aManager->GetReflection()->GetArrayType(elementType);
         }
-        else if (flatData.type->GetType() != Red::ERTTIType::Array)
+        else if (flatData.type->GetType() != Red::rtti::ERTTIType::Array)
         {
             LogError("Cannot modify {}, it's not an array.", aManager->GetName(flatId));
             continue;

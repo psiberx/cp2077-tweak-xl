@@ -42,7 +42,7 @@ Red::Value<> Red::TweakDBManager::GetFlat(Red::TweakDBID aFlatId)
     return m_buffer->GetValue(offset);
 }
 
-Red::Value<> Red::TweakDBManager::GetDefault(const Red::CBaseRTTIType* aType)
+Red::Value<> Red::TweakDBManager::GetDefault(const Red::rtti::IType* aType)
 {
     if (!m_reflection->IsFlatType(aType))
         return {};
@@ -80,7 +80,7 @@ bool Red::TweakDBManager::IsRecordExists(Red::TweakDBID aRecordId)
     return m_tweakDb->recordsByID.Get(aRecordId) != nullptr;
 }
 
-bool Red::TweakDBManager::SetFlat(Red::TweakDBID aFlatId, const Red::CBaseRTTIType* aType, Red::Instance aInstance)
+bool Red::TweakDBManager::SetFlat(Red::TweakDBID aFlatId, const Red::rtti::IType* aType, Red::Instance aInstance)
 {
     if (!aFlatId.IsValid() || !aInstance || !m_reflection->IsFlatType(aType))
         return false;
@@ -263,7 +263,7 @@ bool Red::TweakDBManager::IsRecordExists(const Red::TweakDBManager::BatchPtr& aB
 }
 
 bool Red::TweakDBManager::SetFlat(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aFlatId,
-                                  const Red::CBaseRTTIType* aType, Red::Instance aInstance)
+                                  const Red::rtti::IType* aType, Red::Instance aInstance)
 {
     if (!aFlatId.IsValid() || !aInstance || !m_reflection->IsFlatType(aType))
         return false;
@@ -446,7 +446,7 @@ Core::SharedPtr<Red::TweakDBReflection>& Red::TweakDBManager::GetReflection()
 
 template<class SharedLockable>
 bool Red::TweakDBManager::AssignFlat(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aFlatId,
-                                     const Red::CBaseRTTIType* aType, Red::Instance aInstance,
+                                     const Red::rtti::IType* aType, Red::Instance aInstance,
                                      SharedLockable& aMutex)
 {
     int32_t offset = -1;
