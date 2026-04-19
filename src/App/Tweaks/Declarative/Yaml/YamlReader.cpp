@@ -389,7 +389,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
         const auto propName = ComposeFlatName(aRecordName, nodeKey);
         const auto propPath = ComposeFlatName(aRecordPath, nodeKey);
 
-        const auto propInfo = recordInfo->GetPropInfo(nodeKey.c_str());
+        const auto propInfo = recordInfo->GetPropInfoByName(nodeKey.c_str());
 
         if (!propInfo)
         {
@@ -463,7 +463,7 @@ void App::YamlReader::HandleRecordNode(App::TweakChangeset& aChangeset, Property
                 {
                     // Item records have both .iconPath and .icon properties, but last one is never used.
                     // So if parent record has .iconPath property then auto fill it with our inline icon name.
-                    if (recordInfo->props.contains("iconPath") && !aNode["iconPath"])
+                    if (recordInfo->propsByName.contains("iconPath") && !aNode["iconPath"])
                     {
                         aChangeset.SetFlat(Red::TweakDBID(recordId, ".iconPath"), ResolveFlatType("String"),
                                            Red::MakeInstance<Red::CString>(inlineName.c_str()));

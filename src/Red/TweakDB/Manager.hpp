@@ -68,10 +68,10 @@ public:
     Core::SharedPtr<Red::TweakDBReflection>& GetReflection();
 
     bool CreateCustomRecord(Red::TweakDB* aTweakDB, Red::TweakDBID aRecordId, uint32_t aHash) const;
-    bool RegisterCustomRecord(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo);
-    bool DescribeCustomRecord(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo, Red::ScriptingFunction_t<void*> aGetterFunction);
-    void DescribeCustomRecordProperty(Red::CClass* cls, Core::SharedPtr<const Red::TweakDBPropertyInfo> aPropertyInfo, Red::ScriptingFunction_t<void*> aGetterFunction);
-    void InsertPropertyFlat(Red::CName aRecordName, Core::SharedPtr<const Red::TweakDBPropertyInfo> aPropertyInfo);
+    bool RegisterCustomRecord(RecordInfo aRecordInfo);
+    bool DescribeCustomRecord(RecordInfo aRecordInfo, Red::ScriptingFunction_t<void*> aGetterFunction);
+    void DescribeCustomRecordProperty(Red::CClass* cls, PropertyInfo aPropertyInfo, Red::ScriptingFunction_t<void*> aGetterFunction);
+    void InsertPropertyFlat(Red::CName aRecordName, PropertyInfo aPropertyInfo);
     void* GetCustomRecordValue(const App::CustomTweakDBRecord* aRecord, Red::CName functionName);
 
 private:

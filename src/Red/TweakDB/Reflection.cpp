@@ -1,4 +1,5 @@
 #include "Reflection.hpp"
+#include "Alias.hpp"
 #include "Red/TweakDB/Source/Grammar.hpp"
 #include "Red/TweakDB/Source/Source.hpp"
 
@@ -81,7 +82,7 @@ const Red::TweakDBRecordInfo* Red::TweakDBReflection::GetCustomRecordInfo(const 
     return nullptr;
 }
 
-Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInfo(
+Red::RecordInfo Red::TweakDBReflection::CollectRecordInfo(
     const Red::CClass* aType, Red::TweakDBID aSampleId)
 {
     if (!IsRecordType(aType))
@@ -98,11 +99,16 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
 
     auto recordInfo = CreateRecordInfo(aType);
 
-    const auto parentInfo = CollectRecordInfo(aType->parent, sampleId);
-    if (parentInfo)
+    if (const auto parentInfo = CollectRecordInfo(aType->parent, sampleId))
     {
-        recordInfo->parent = aType->parent;
-        recordInfo->props.insert(parentInfo->props.begin(), parentInfo->props.end());
+        recordInfo->parent = parentInfo->type;
+
+        for (const auto& propInfo : parentInfo->props)
+        {
+            recordInfo->props.push_back(propInfo);
+            recordInfo->propsByName[propInfo->name] = propInfo;
+            recordInfo->propsByFunction[propInfo->functionName] = propInfo;
+        }
     }
 
     for (uint32_t funcIndex = 0u; funcIndex < aType->funcs.Size(); ++funcIndex)
@@ -223,7 +229,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
         }
     }
 
-    for (auto& [_, propInfo] : recordInfo->props)
+    for (const auto& propInfo : recordInfo->props)
     {
         if (!propInfo->isExtra)
         {
@@ -699,7 +705,7 @@ void Red::TweakDBReflection::RegisterDescendants(Red::TweakDBID aParentId,
     }
 }
 
-bool Red::TweakDBReflection::RegisterRecordInfo(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo)
+bool Red::TweakDBReflection::RegisterRecordInfo(RecordInfo aRecordInfo)
 {
     assert(IsValid(aRecordInfo));
     if (!IsValid(aRecordInfo))
@@ -715,15 +721,27 @@ bool Red::TweakDBReflection::RegisterRecordInfo(Core::SharedPtr<Red::TweakDBReco
     return false;
 }
 
-bool Red::TweakDBReflection::RegisterPropertyInfo(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo,
-    Core::SharedPtr<Red::TweakDBPropertyInfo> aPropertyInfo)
+void Red::TweakDBReflection::InheritRecordInfo(RecordInfo aRecordInfo, RecordInfo aParentInfo)
 {
-    assert(IsValid(aPropertyInfo));
+    if (!aParentInfo)
+        return;
 
+    aRecordInfo->parent = aParentInfo->type;
+
+    for (const auto& parentProp : aParentInfo->props)
+        RegisterPropertyInfo(aRecordInfo, parentProp);
+}
+
+
+bool Red::TweakDBReflection::RegisterPropertyInfo(RecordInfo aRecordInfo,
+    PropertyInfo aPropertyInfo)
+{
     if (!IsValid(aPropertyInfo))
         return false;
 
-    aRecordInfo->props[aPropertyInfo->name] = aPropertyInfo;
+    aRecordInfo->props.push_back(aPropertyInfo);
+    aRecordInfo->propsByName[aPropertyInfo->name] = aPropertyInfo;
+    aRecordInfo->propsByFunction[aPropertyInfo->functionName] = aPropertyInfo;
 
     return true;
 }
@@ -760,7 +778,7 @@ Red::TweakDB* Red::TweakDBReflection::GetTweakDB()
     return m_tweakDb;
 }
 
-bool Red::TweakDBReflection::IsValid(Core::SharedPtr<Red::TweakDBPropertyInfo> aPropInfo)
+bool Red::TweakDBReflection::IsValid(PropertyInfo aPropInfo)
 {
     if (aPropInfo->name.IsNone() || !aPropInfo->type ||
         aPropInfo->appendix.length() < 2 || !IsFlatType(aPropInfo->type->GetName()) ||
@@ -813,7 +831,7 @@ bool Red::TweakDBReflection::IsValid(Core::SharedPtr<Red::TweakDBPropertyInfo> a
     }
 }
 
-bool Red::TweakDBReflection::IsValid(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo)
+bool Red::TweakDBReflection::IsValid(RecordInfo aRecordInfo)
 {
     if (aRecordInfo->name.IsNone() || aRecordInfo->aliasName.IsNone() || aRecordInfo->shortName.empty() ||
         !aRecordInfo->type || aRecordInfo->type->GetName() != aRecordInfo->name)
@@ -839,7 +857,7 @@ Red::TweakDBID Red::TweakDBReflection::BuildRTDBID(Red::CName aRecordName, Red::
     return TweakDBID{id};
 }
 
-Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CreateRecordInfo(const char* aName)
+Red::RecordInfo Red::TweakDBReflection::CreateRecordInfo(const char* aName)
 {
     auto recordInfo = Core::MakeShared<Red::TweakDBRecordInfo>();
     recordInfo->name = GetRecordFullName(aName);
@@ -850,7 +868,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CreateRecordInfo
     return recordInfo;
 }
 
-Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CreateRecordInfo(const Red::CClass* aClass)
+Red::RecordInfo Red::TweakDBReflection::CreateRecordInfo(const Red::CClass* aClass)
 {
     auto recordInfo = Core::MakeShared<Red::TweakDBRecordInfo>();
     recordInfo->name = aClass->GetName();
@@ -861,12 +879,12 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CreateRecordInfo
     return recordInfo;
 }
 
-Core::SharedPtr<Red::TweakDBPropertyInfo> Red::TweakDBReflection::CreatePropertyInfo(const char* aName, uint64_t aType)
+Red::PropertyInfo Red::TweakDBReflection::CreatePropertyInfo(const char* aName, uint64_t aType)
 {
     return CreatePropertyInfo(aName, GetFlatType(aType));
 }
 
-Core::SharedPtr<Red::TweakDBPropertyInfo> Red::TweakDBReflection::CreatePropertyInfo(const char* aName, const Red::CBaseRTTIType* aType)
+Red::PropertyInfo Red::TweakDBReflection::CreatePropertyInfo(const char* aName, const Red::CBaseRTTIType* aType)
 {
     auto propInfo = Core::MakeShared<Red::TweakDBPropertyInfo>();
     propInfo->name = CNamePool::Add(aName);

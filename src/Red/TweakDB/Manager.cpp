@@ -495,7 +495,7 @@ bool Red::TweakDBManager::AssignFlat(Red::SortedUniqueArray<Red::TweakDBID>& aFl
 void Red::TweakDBManager::InheritFlats(RED4ext::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aRecordId,
                                        const Red::TweakDBRecordInfo* aRecordInfo)
 {
-    for (const auto& [_, propInfo] : aRecordInfo->props)
+    for (const auto& propInfo : aRecordInfo->props)
     {
         if (propInfo->isExtra)
             continue;
@@ -514,7 +514,7 @@ void Red::TweakDBManager::InheritFlats(RED4ext::SortedUniqueArray<Red::TweakDBID
 {
     std::shared_lock flatLockR(m_tweakDb->mutex00);
 
-    for (const auto& [_, propInfo] : aRecordInfo->props)
+    for (const auto& propInfo : aRecordInfo->props)
     {
         const auto baseId = aSourceId + propInfo->appendix;
         const auto* baseFlat = aFlats.Find(baseId);
@@ -576,7 +576,7 @@ bool Red::TweakDBManager::AssignFlat(const Red::TweakDBManager::BatchPtr& aBatch
 void Red::TweakDBManager::InheritFlats(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId,
                                        const Red::TweakDBRecordInfo* aRecordInfo)
 {
-    for (const auto& [_, propInfo] : aRecordInfo->props)
+    for (const auto& propInfo : aRecordInfo->props)
     {
         if (propInfo->isExtra)
             continue;
@@ -600,7 +600,7 @@ void Red::TweakDBManager::InheritFlats(const Red::TweakDBManager::BatchPtr& aBat
 {
     std::shared_lock flatLockR(m_tweakDb->mutex00);
 
-    for (const auto& [_, propInfo] : aRecordInfo->props)
+    for (const auto& propInfo : aRecordInfo->props)
     {
         const auto baseId = aSourceId + propInfo->appendix;
         const auto baseFlat = aBatch->flats.find(baseId);
@@ -646,7 +646,7 @@ void Red::TweakDBManager::CreateExtraNames(Red::TweakDBID aId, const std::string
 
     std::unique_lock _(m_mutex);
 
-    for (const auto& [propKey, propInfo] : recordInfo->props)
+    for (const auto& propInfo : recordInfo->props)
     {
         const auto propId = aId + propInfo->appendix;
         const auto propName = aName + propInfo->appendix;
@@ -696,7 +696,7 @@ const Core::Set<Red::TweakDBID>& Red::TweakDBManager::GetEnums()
     return m_knownEnums;
 }
 
-bool Red::TweakDBManager::RegisterCustomRecord(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo)
+bool Red::TweakDBManager::RegisterCustomRecord(RecordInfo aRecordInfo)
 {
     if (!aRecordInfo || !aRecordInfo->isCustom)
         return false;
@@ -716,7 +716,7 @@ bool Red::TweakDBManager::RegisterCustomRecord(Core::SharedPtr<Red::TweakDBRecor
     return true;
 }
 
-bool Red::TweakDBManager::DescribeCustomRecord(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo,
+bool Red::TweakDBManager::DescribeCustomRecord(RecordInfo aRecordInfo,
                                                const Red::ScriptingFunction_t<void*> aGetterFunction)
 {
     static auto* customRecordType = m_rtti->GetClass(App::CustomTweakDBRecord::NAME);
@@ -733,7 +733,7 @@ bool Red::TweakDBManager::DescribeCustomRecord(Core::SharedPtr<Red::TweakDBRecor
     else
         cls->parent = customRecordType;
 
-    for (const auto& propInfo : aRecordInfo->props | std::views::values)
+    for (const auto& propInfo : aRecordInfo->props)
     {
         DescribeCustomRecordProperty(cls, propInfo, aGetterFunction);
         InsertPropertyFlat(aRecordInfo->name, propInfo);
@@ -742,9 +742,8 @@ bool Red::TweakDBManager::DescribeCustomRecord(Core::SharedPtr<Red::TweakDBRecor
     return true;
 }
 
-void Red::TweakDBManager::DescribeCustomRecordProperty(CClass* cls,
-                                                       Core::SharedPtr<const Red::TweakDBPropertyInfo> aPropertyInfo,
-                                                       const Red::ScriptingFunction_t<void*> aGetterFunction)
+void Red::TweakDBManager::DescribeCustomRecordProperty(CClass* cls, PropertyInfo aPropertyInfo,
+                                                       Red::ScriptingFunction_t<void*> aGetterFunction)
 {
     auto* function = Red::CClassFunction::Create(cls, aPropertyInfo->functionName.ToString(),
                                                  aPropertyInfo->functionName.ToString(), aGetterFunction);
@@ -752,8 +751,7 @@ void Red::TweakDBManager::DescribeCustomRecordProperty(CClass* cls,
     cls->RegisterFunction(function);
 }
 
-void Red::TweakDBManager::InsertPropertyFlat(CName aRecordName,
-                                             Core::SharedPtr<const Red::TweakDBPropertyInfo> aPropertyInfo)
+void Red::TweakDBManager::InsertPropertyFlat(CName aRecordName, PropertyInfo aPropertyInfo)
 {
     const auto id = m_reflection->BuildRTDBID(aRecordName.ToString(), aPropertyInfo->name.ToString());
     const auto ptr = m_reflection->Construct(aPropertyInfo->type);
@@ -764,10 +762,7 @@ void* Red::TweakDBManager::GetCustomRecordValue(const App::CustomTweakDBRecord* 
 {
     if (const auto* recordInfo = m_reflection->GetCustomRecordInfo(aRecord->GetTweakBaseHash()))
     {
-        std::string propName = functionName.ToString();
-        propName[0] = static_cast<char>(std::tolower(propName[0]));
-
-        if (const auto propertyInfo = recordInfo->GetPropInfo(propName.c_str()))
+        if (const auto propertyInfo = recordInfo->GetPropInfoByFunction(functionName))
         {
             if (const auto flat = GetFlat(aRecord->recordID + propertyInfo->appendix); flat && flat.instance)
             {
