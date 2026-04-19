@@ -44,6 +44,10 @@ void App::TweakService::OnBootstrap()
                 ApplyPatches();
                 LoadTweaks(false);
             }
+
+#ifndef NDEBUG
+            TestCustomRecord();
+#endif
         }
     });
 
@@ -226,12 +230,18 @@ App::TweakChangelog& App::TweakService::GetChangelog()
 
 void App::CustomRecordGetter(Red::IScriptable* aInstance, Red::CStackFrame* aStackFrame, void* aOut, int64_t)
 {
-    const void* value = Core::Resolve<App::TweakService>()->GetManager().GetCustomRecordValue(
-        reinterpret_cast<App::CustomTweakDBRecord*>(aInstance), aStackFrame->func->fullName);
+    aStackFrame->code++;
 
-    if (aOut && value)
+    if (!aStackFrame->func || !aStackFrame->func->returnType || !aOut)
+        return;
+
+    const auto* func = aStackFrame->func;
+    const auto* record = reinterpret_cast<App::CustomTweakDBRecord*>(aInstance);
+
+    if (const auto* value =
+            Core::Resolve<App::TweakService>()->GetManager().GetCustomRecordValue(record, func->shortName))
     {
-        aStackFrame->dataType->Assign(aOut, value);
+        func->returnType->type->Assign(aOut, value);
     }
 }
 
@@ -250,6 +260,48 @@ void App::TweakService::RegisterTestCustomRecord() const
 
     if (!m_manager->DescribeCustomRecord(recordInfo, &CustomRecordGetter))
         LogError("Failed to describe custom TweakDB record type {}.", recordInfo->name.ToString());
+}
+
+void App::TweakService::TestCustomRecord()
+{
+    using recordType = Red::TypeLocator<Red::CName("gamedataTweakXLTest_Record")>;
+    using cnameType = Red::TypeLocator<"CName">;
+
+    static auto recordID = Red::TweakDBID{"test.tweakxl.custom"};
+    static auto fooValue = Red::CNamePool::Add("test foo value");
+    static auto barValue = Red::CNamePool::Add("test bar value");
+    static auto fooAppendix = std::string_view(".foo");
+    static auto barAppendix = std::string_view(".bar");
+
+    assert(m_manager->CreateRecord(recordID, recordType::GetClass()));
+    assert(m_manager->SetFlat(recordID + fooAppendix, cnameType::GetClass(), &fooValue));
+    assert(m_manager->SetFlat(recordID + barAppendix, cnameType::GetClass(), &barValue));
+
+    const auto record = reinterpret_cast<CustomTweakDBRecord*>(m_manager->GetTweakDB()->GetRecord(recordID).instance);
+
+    assert(record);
+
+    {
+        auto* func = recordType::GetClass()->GetFunction("Foo");
+
+        Red::CName result;
+        Red::CStackType ret(func->returnType->type, &result);
+        Red::CStack stack(record, nullptr, 0, &ret);
+
+        assert(Red::CallFunction(func, stack));
+        assert(result && strcmp(result.ToString(), "test foo value") == 0);
+    }
+
+    {
+        auto* func = recordType::GetClass()->GetFunction("Bar");
+
+        Red::CName result;
+        Red::CStackType ret(func->returnType->type, &result);
+        Red::CStack stack(record, nullptr, 0, &ret);
+
+        assert(Red::CallFunction(func, stack));
+        assert(result && strcmp(result.ToString(), "test bar value") == 0);
+    }
 }
 
 #endif

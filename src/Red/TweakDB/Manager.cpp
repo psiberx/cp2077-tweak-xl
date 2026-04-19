@@ -501,12 +501,8 @@ void Red::TweakDBManager::InheritFlats(RED4ext::SortedUniqueArray<Red::TweakDBID
             continue;
 
         auto propFlat = Red::TweakDBID(aRecordId, propInfo->appendix);
-        auto propDefault = propInfo->defaultValue;
-
-        if (propDefault < 0)
-        {
-            propDefault = m_buffer->AllocateDefault(propInfo->type);
-        }
+        auto propDefault = propInfo->defaultValue.has_value() ? propInfo->defaultValue.value()
+                                                              : m_buffer->AllocateDefault(propInfo->type);
 
         propFlat.SetTDBOffset(propDefault);
         aFlats.Emplace(propFlat);
@@ -589,12 +585,8 @@ void Red::TweakDBManager::InheritFlats(const Red::TweakDBManager::BatchPtr& aBat
 
         if (!aBatch->flats.contains(propFlat))
         {
-            auto propDefault = propInfo->defaultValue;
-
-            if (propDefault < 0)
-            {
-                propDefault = m_buffer->AllocateDefault(propInfo->type);
-            }
+            auto propDefault = propInfo->defaultValue.has_value() ? propInfo->defaultValue.value()
+                                                                  : m_buffer->AllocateDefault(propInfo->type);
 
             propFlat.SetTDBOffset(propDefault);
 
@@ -741,7 +733,7 @@ bool Red::TweakDBManager::DescribeCustomRecord(Core::SharedPtr<Red::TweakDBRecor
     else
         cls->parent = customRecordType;
 
-    for (const auto propInfo : aRecordInfo->props | std::views::values)
+    for (const auto& propInfo : aRecordInfo->props | std::views::values)
     {
         DescribeCustomRecordProperty(cls, propInfo, aGetterFunction);
         InsertPropertyFlat(aRecordInfo->name, propInfo);
@@ -756,7 +748,8 @@ void Red::TweakDBManager::DescribeCustomRecordProperty(CClass* cls,
 {
     auto* function = Red::CClassFunction::Create(cls, aPropertyInfo->functionName.ToString(),
                                                  aPropertyInfo->functionName.ToString(), aGetterFunction);
-    function->SetReturnType(aPropertyInfo->name);
+    function->SetReturnType(aPropertyInfo->type->GetName());
+    cls->RegisterFunction(function);
 }
 
 void Red::TweakDBManager::InsertPropertyFlat(CName aRecordName,
@@ -764,7 +757,7 @@ void Red::TweakDBManager::InsertPropertyFlat(CName aRecordName,
 {
     const auto id = m_reflection->BuildRTDBID(aRecordName.ToString(), aPropertyInfo->name.ToString());
     const auto ptr = m_reflection->Construct(aPropertyInfo->type);
-    SetFlat(id, m_reflection->GetFlatType(aPropertyInfo->name), ptr.get());
+    SetFlat(id, aPropertyInfo->type, ptr.get());
 }
 
 void* Red::TweakDBManager::GetCustomRecordValue(const App::CustomTweakDBRecord* aRecord, CName functionName)

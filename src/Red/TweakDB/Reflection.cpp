@@ -40,8 +40,8 @@ const Red::TweakDBRecordInfo* Red::TweakDBReflection::GetRecordInfo(const Red::C
 
     {
         std::shared_lock lockR(m_mutex);
-        auto iter = m_resolved.find(aType->GetName());
-        if (iter != m_resolved.end())
+        auto iter = m_recordInfoByName.find(aType->GetName());
+        if (iter != m_recordInfoByName.end())
             return iter->second.get();
     }
 
@@ -55,8 +55,8 @@ const Red::TweakDBRecordInfo* Red::TweakDBReflection::GetRecordInfo(Red::CName a
 {
     {
         std::shared_lock lockR(m_mutex);
-        auto iter = m_resolved.find(aTypeName);
-        if (iter != m_resolved.end())
+        auto iter = m_recordInfoByName.find(aTypeName);
+        if (iter != m_recordInfoByName.end())
             return iter->second.get();
     }
 
@@ -66,16 +66,17 @@ const Red::TweakDBRecordInfo* Red::TweakDBReflection::GetRecordInfo(Red::CName a
     return nullptr;
 }
 
-const Red::TweakDBRecordInfo* Red::TweakDBReflection::GetCustomRecordInfo(Red::CName aTypeName)
+const Red::TweakDBRecordInfo* Red::TweakDBReflection::GetRecordInfoByHash(const uint32_t aHash)
 {
-    if (const auto* recordInfo = GetRecordInfo(aTypeName, false); recordInfo && recordInfo->isCustom)
-        return recordInfo;
+    std::shared_lock lockR(m_mutex);
+    if (const auto iter = m_recordInfoByHash.find(aHash); iter != m_recordInfoByHash.end())
+        return iter->second.get();
     return nullptr;
 }
 
-const Red::TweakDBRecordInfo* Red::TweakDBReflection::GetCustomRecordInfo(const Red::CClass* aTypeName)
+const Red::TweakDBRecordInfo* Red::TweakDBReflection::GetCustomRecordInfo(const uint32_t aHash)
 {
-    if (const auto* recordInfo = GetRecordInfo(aTypeName, false); recordInfo && recordInfo->isCustom)
+    if (const auto* recordInfo = GetRecordInfoByHash(aHash); recordInfo && recordInfo->isCustom)
         return recordInfo;
     return nullptr;
 }
@@ -217,8 +218,6 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
                     propInfo->isForeignKey = true;
                 }
 
-                propInfo->defaultValue = -1;
-
                 RegisterPropertyInfo(recordInfo, propInfo);
             }
         }
@@ -281,7 +280,7 @@ std::string Red::TweakDBReflection::ResolvePropertyName(Red::TweakDBID aSampleId
     return propName;
 }
 
-int32_t Red::TweakDBReflection::ResolveDefaultValue(const Red::CClass* aType, const std::string& aPropName)
+std::optional<int32_t> Red::TweakDBReflection::ResolveDefaultValue(const Red::CClass* aType, const std::string& aPropName)
 {
     std::string defaultFlatName = TweakSource::SchemaPackage;
     defaultFlatName.append(NameSeparator);
@@ -301,7 +300,7 @@ int32_t Red::TweakDBReflection::ResolveDefaultValue(const Red::CClass* aType, co
     auto defaultFlat = m_tweakDb->flats.Find(defaultFlatId);
 
     if (defaultFlat == m_tweakDb->flats.End())
-        return -1;
+        return std::nullopt;
 
     return defaultFlat->ToTDBOffset();
 }
@@ -707,8 +706,13 @@ bool Red::TweakDBReflection::RegisterRecordInfo(Core::SharedPtr<Red::TweakDBReco
         return false;
 
     std::unique_lock lockRW(m_mutex);
-    const auto& [_, success] = m_resolved.insert({ aRecordInfo->name, aRecordInfo });
-    return success;
+    if (const auto& [_, success] = m_recordInfoByName.insert({ aRecordInfo->name, aRecordInfo }); success)
+    {
+        m_recordInfoByHash[aRecordInfo->typeHash] = aRecordInfo;
+        return true;
+    }
+
+    return false;
 }
 
 bool Red::TweakDBReflection::RegisterPropertyInfo(Core::SharedPtr<Red::TweakDBRecordInfo> aRecordInfo,

@@ -64,6 +64,7 @@ protected:
 
 #ifndef NDEBUG
     void RegisterTestCustomRecord() const;
+    void TestCustomRecord();
 #endif
 };
 

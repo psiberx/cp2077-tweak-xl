@@ -14,10 +14,7 @@ public:
     CustomTweakDBRecord() = default;
     CustomTweakDBRecord(const Red::TweakDBRecordInfo&, Red::TweakDBID);
 
-    void sub_108() override
-    {
-    }
-
+    void sub_108() override;
     [[nodiscard]] uint32_t GetTweakBaseHash() const override;
 
 private:

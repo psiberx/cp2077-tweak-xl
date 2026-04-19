@@ -16,6 +16,10 @@ CustomTweakDBRecord::CustomTweakDBRecord(const TweakDBRecordInfo& aRecordInfo, T
     this->recordID = aTweakDBID;
 }
 
+void CustomTweakDBRecord::sub_108()
+{
+}
+
 uint32_t CustomTweakDBRecord::GetTweakBaseHash() const
 {
     return m_tweakBaseHash;

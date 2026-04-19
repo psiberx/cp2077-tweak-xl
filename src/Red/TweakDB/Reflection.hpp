@@ -48,7 +48,7 @@ struct TweakDBPropertyInfo
     bool isForeignKey;
     bool isExtra;
     std::string appendix; // The name used to build ID of the property
-    int32_t defaultValue; // Offset of the default value in the buffer
+    std::optional<int32_t> defaultValue; // Offset of the default value in the buffer
 };
 
 struct TweakDBRecordInfo
@@ -78,8 +78,8 @@ public:
     const Red::TweakDBRecordInfo* GetRecordInfo(Red::CName aTypeName, bool aCollect = true);
     const Red::TweakDBRecordInfo* GetRecordInfo(const Red::CClass* aType, bool aCollect = true);
 
-    const Red::TweakDBRecordInfo* GetCustomRecordInfo(Red::CName aTypeName);
-    const Red::TweakDBRecordInfo* GetCustomRecordInfo(const Red::CClass* aType);
+    const Red::TweakDBRecordInfo* GetRecordInfoByHash(uint32_t aHash);
+    const Red::TweakDBRecordInfo* GetCustomRecordInfo(uint32_t aHash);
 
     const Red::CBaseRTTIType* GetFlatType(uint64_t aType);
     const Red::CBaseRTTIType* GetFlatType(Red::CName aTypeName);
@@ -172,17 +172,19 @@ private:
     using ParentMap = Core::Map<Red::TweakDBID, Red::TweakDBID>;
     using DescendantMap = Core::Map<Red::TweakDBID, Core::Set<Red::TweakDBID>>;
     using ExtraFlatMap = Core::Map<Red::CName, Core::Vector<ExtraFlat>>;
-    using RecordInfoMap = Core::Map<Red::CName, Core::SharedPtr<Red::TweakDBRecordInfo>>;
+    using RecordInfoByNameMap = Core::Map<Red::CName, Core::SharedPtr<Red::TweakDBRecordInfo>>;
+    using RecordInfoByHashMap = Core::Map<uint32_t, Core::SharedPtr<Red::TweakDBRecordInfo>>;
 
     Core::SharedPtr<Red::TweakDBRecordInfo> CollectRecordInfo(const Red::CClass* aType, Red::TweakDBID aSampleId = {});
     Red::TweakDBID GetRecordSampleId(const Red::CClass* aType);
     uint32_t GetRecordTypeHash(const Red::CClass* aType);
     std::string ResolvePropertyName(Red::TweakDBID aSampleId, Red::CName aGetterName);
-    int32_t ResolveDefaultValue(const Red::CClass* aType, const std::string& aPropName);
+    std::optional<int32_t> ResolveDefaultValue(const Red::CClass* aType, const std::string& aPropName);
 
     Red::TweakDB* m_tweakDb;
     Red::CRTTISystem* m_rtti;
-    RecordInfoMap m_resolved;
+    RecordInfoByNameMap m_recordInfoByName;
+    RecordInfoByNameMap m_recordInfoByHash;
     std::shared_mutex m_mutex;
 
     inline static ParentMap s_parentMap;
