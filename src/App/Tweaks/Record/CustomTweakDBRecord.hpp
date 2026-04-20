@@ -16,15 +16,17 @@ public:
 
     void sub_108() override;
     [[nodiscard]] uint32_t GetTweakBaseHash() const override;
-
-private:
-    const uint32_t m_tweakBaseHash{};
+    [[nodiscard]] RED4ext::CClass* GetType() override;
 
     RTTI_IMPL_TYPEINFO(App::CustomTweakDBRecord);
     RTTI_IMPL_ALLOCATOR();
+
+private:
+    const uint32_t m_tweakBaseHash{};
+    Red::CClass* m_type{};
 };
 
-RED4EXT_ASSERT_SIZE(CustomTweakDBRecord, 0x50);
+RED4EXT_ASSERT_SIZE(CustomTweakDBRecord, 0x58);
 
 } // namespace App
 
