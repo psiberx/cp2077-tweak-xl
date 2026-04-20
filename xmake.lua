@@ -29,7 +29,7 @@ else
     set_runtimes("MD")
 end
 
-add_requires("hopscotch-map", "minhook", "spdlog", "tiltedcore", "yaml-cpp")
+add_requires("hopscotch-map", "minhook", "spdlog", "tiltedcore", "yaml-cpp", "libffi")
 
 target("TweakXL")
     set_default(true)
@@ -40,7 +40,7 @@ target("TweakXL")
     add_headerfiles("src/**.hpp", "lib/**.hpp")
     add_includedirs("src/", "lib/")
     add_deps("RED4ext.SDK", "nameof", "semver", "wil", "pegtl")
-    add_packages("hopscotch-map", "minhook", "spdlog", "tiltedcore", "yaml-cpp")
+    add_packages("hopscotch-map", "minhook", "spdlog", "tiltedcore", "yaml-cpp", "libffi")
     add_syslinks("Version", "User32")
     add_defines("WINVER=0x0601", "WIN32_LEAN_AND_MEAN", "NOMINMAX")
     set_configdir("src")

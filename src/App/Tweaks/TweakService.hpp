@@ -67,7 +67,4 @@ protected:
     void TestCustomRecord();
 #endif
 };
-
-void CustomRecordGetter(Red::IScriptable* aInstance, Red::CStackFrame* aStackFrame, void* aOut, int64_t aType);
-
-}
+} // namespace App

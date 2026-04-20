@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "App/Tweaks/Record/CustomTweakDBRecord.hpp"
 #include "Red/TweakDB/Alias.hpp"
 #include "Red/TweakDB/Buffer.hpp"
@@ -7,6 +9,8 @@
 
 namespace Red
 {
+class CustomGetterClosureRegistry;
+
 class TweakDBManager
 {
 public:
@@ -24,6 +28,7 @@ public:
     TweakDBManager();
     explicit TweakDBManager(Red::TweakDB* aTweakDb);
     explicit TweakDBManager(Core::SharedPtr<Red::TweakDBReflection> aReflection);
+    ~TweakDBManager();
 
     TweakDBManager(const TweakDBManager&) = delete;
     TweakDBManager& operator=(const TweakDBManager&) = delete;
@@ -68,17 +73,16 @@ public:
     Core::SharedPtr<Red::TweakDBReflection>& GetReflection();
 
     bool CreateCustomRecord(Red::TweakDB* aTweakDB, Red::TweakDBID aRecordId, uint32_t aHash) const;
-    bool RegisterCustomRecord(RecordInfo aRecordInfo);
-    bool DescribeCustomRecord(RecordInfo aRecordInfo, Red::ScriptingFunction_t<void*> aGetterFunction);
-    void DescribeCustomRecordProperty(Red::CClass* cls, PropertyInfo aPropertyInfo, Red::ScriptingFunction_t<void*> aGetterFunction);
-    void InsertPropertyFlat(Red::CName aRecordName, PropertyInfo aPropertyInfo);
+    bool RegisterCustomRecord(const Red::RecordInfo& aRecordInfo);
+    bool DescribeCustomRecord(const Red::RecordInfo& aRecordInfo);
+    void DescribeCustomRecordProperty(Red::CClass* cls, const Red::PropertyInfo& aPropertyInfo);
+    void InsertPropertyFlat(Red::CName aRecordName, const PropertyInfo& aPropertyInfo);
     void* GetCustomRecordValue(const App::CustomTweakDBRecord* aRecord, Red::CName functionName);
 
 private:
     template<class SharedLockable>
     inline bool AssignFlat(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aFlatId,
-                           const Red::CBaseRTTIType* aType, Red::Instance aInstance,
-                           SharedLockable& aMutex);
+                           const Red::CBaseRTTIType* aType, Red::Instance aInstance, SharedLockable& aMutex);
     inline void InheritFlats(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aRecordId,
                              const Red::TweakDBRecordInfo* aRecordInfo);
     inline void InheritFlats(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aRecordId,
@@ -98,8 +102,9 @@ private:
     Red::CRTTISystem* m_rtti;
     Core::SharedPtr<Red::TweakDBBuffer> m_buffer;
     Core::SharedPtr<Red::TweakDBReflection> m_reflection;
+    std::unique_ptr<Red::CustomGetterClosureRegistry> m_customGetterClosures;
     Core::Map<Red::TweakDBID, std::string> m_knownNames;
     Core::Set<Red::TweakDBID> m_knownEnums;
     std::shared_mutex m_mutex;
 };
-}
+} // namespace Red

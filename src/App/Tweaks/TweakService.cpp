@@ -3,7 +3,6 @@
 #include "App/Tweaks/Executable/TweakExecutor.hpp"
 #include "App/Tweaks/Metadata/MetadataExporter.hpp"
 #include "App/Tweaks/Metadata/MetadataImporter.hpp"
-#include "Core/Facades/Container.hpp"
 #include "Record/CustomTweakDBRecord.hpp"
 #include "Red/TweakDB/Raws.hpp"
 
@@ -151,8 +150,7 @@ bool App::TweakService::RegisterTweak(std::filesystem::path aPath)
 
     if (!std::filesystem::exists(aPath, error) || !std::filesystem::is_regular_file(aPath, error))
     {
-        LogError("Can't register non-existing tweak \"{}\".",
-                 std::filesystem::relative(aPath, m_gameDir).string());
+        LogError("Can't register non-existing tweak \"{}\".", std::filesystem::relative(aPath, m_gameDir).string());
         return false;
     }
 
@@ -228,23 +226,6 @@ App::TweakChangelog& App::TweakService::GetChangelog()
     return *m_changelog;
 }
 
-void App::CustomRecordGetter(Red::IScriptable* aInstance, Red::CStackFrame* aStackFrame, void* aOut, int64_t)
-{
-    aStackFrame->code++;
-
-    if (!aStackFrame->func || !aStackFrame->func->returnType || !aOut)
-        return;
-
-    const auto* func = aStackFrame->func;
-    const auto* record = reinterpret_cast<App::CustomTweakDBRecord*>(aInstance);
-
-    if (const auto* value =
-            Core::Resolve<App::TweakService>()->GetManager().GetCustomRecordValue(record, func->shortName))
-    {
-        func->returnType->type->Assign(aOut, value);
-    }
-}
-
 #ifndef NDEBUG
 
 void App::TweakService::RegisterTestCustomRecord() const
@@ -258,7 +239,7 @@ void App::TweakService::RegisterTestCustomRecord() const
     if (!m_manager->RegisterCustomRecord(recordInfo))
         LogError("Failed to register custom TweakDB record type {}.", recordInfo->name.ToString());
 
-    if (!m_manager->DescribeCustomRecord(recordInfo, &CustomRecordGetter))
+    if (!m_manager->DescribeCustomRecord(recordInfo))
         LogError("Failed to describe custom TweakDB record type {}.", recordInfo->name.ToString());
 }
 
@@ -283,12 +264,8 @@ void App::TweakService::TestCustomRecord()
 
     {
         auto* func = recordType::GetClass()->GetFunction("Foo");
-
         Red::CName result;
-        Red::CStackType ret(func->returnType->type, &result);
-        Red::CStack stack(record, nullptr, 0, &ret);
-
-        assert(Red::CallFunction(func, stack));
+        assert(Red::ExecuteFunction(record, func, &result));
         assert(result && strcmp(result.ToString(), "test foo value") == 0);
     }
 
@@ -296,10 +273,7 @@ void App::TweakService::TestCustomRecord()
         auto* func = recordType::GetClass()->GetFunction("Bar");
 
         Red::CName result;
-        Red::CStackType ret(func->returnType->type, &result);
-        Red::CStack stack(record, nullptr, 0, &ret);
-
-        assert(Red::CallFunction(func, stack));
+        assert(Red::ExecuteFunction(record, func, &result));
         assert(result && strcmp(result.ToString(), "test bar value") == 0);
     }
 }

@@ -1,8 +1,12 @@
 #include "Manager.hpp"
 
+#include "CustomGetterClosureRegistry.hpp"
+
 #include "App/Tweaks/Record/CustomTweakDBRecord.hpp"
 #include "Core/Facades/Container.hpp"
 #include "Red/TweakDB/Raws.hpp"
+
+#include <spdlog/spdlog.h>
 
 namespace
 {
@@ -14,8 +18,11 @@ Red::TweakDBManager::TweakDBManager(Core::SharedPtr<Red::TweakDBReflection> aRef
     , m_buffer(Core::MakeShared<Red::TweakDBBuffer>(m_tweakDb))
     , m_reflection(std::move(aReflection))
     , m_rtti(Red::CRTTISystem::Get())
+    , m_customGetterClosures(std::make_unique<Red::CustomGetterClosureRegistry>())
 {
 }
+
+Red::TweakDBManager::~TweakDBManager() = default;
 
 Red::Value<> Red::TweakDBManager::GetFlat(Red::TweakDBID aFlatId)
 {
@@ -234,7 +241,8 @@ Red::Value<> Red::TweakDBManager::GetFlat(const Red::TweakDBManager::BatchPtr& a
     return m_buffer->GetValue(flat->ToTDBOffset());
 }
 
-const Red::CClass* Red::TweakDBManager::GetRecordType(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId)
+const Red::CClass* Red::TweakDBManager::GetRecordType(const Red::TweakDBManager::BatchPtr& aBatch,
+                                                      Red::TweakDBID aRecordId)
 {
     auto recordType = GetRecordType(aRecordId);
 
@@ -452,8 +460,7 @@ Core::SharedPtr<Red::TweakDBReflection>& Red::TweakDBManager::GetReflection()
 
 template<class SharedLockable>
 bool Red::TweakDBManager::AssignFlat(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aFlatId,
-                                     const Red::CBaseRTTIType* aType, Red::Instance aInstance,
-                                     SharedLockable& aMutex)
+                                     const Red::CBaseRTTIType* aType, Red::Instance aInstance, SharedLockable& aMutex)
 {
     int32_t offset = -1;
 
@@ -696,7 +703,7 @@ const Core::Set<Red::TweakDBID>& Red::TweakDBManager::GetEnums()
     return m_knownEnums;
 }
 
-bool Red::TweakDBManager::RegisterCustomRecord(RecordInfo aRecordInfo)
+bool Red::TweakDBManager::RegisterCustomRecord(const Red::RecordInfo& aRecordInfo)
 {
     if (!aRecordInfo || !aRecordInfo->isCustom)
         return false;
@@ -716,8 +723,7 @@ bool Red::TweakDBManager::RegisterCustomRecord(RecordInfo aRecordInfo)
     return true;
 }
 
-bool Red::TweakDBManager::DescribeCustomRecord(RecordInfo aRecordInfo,
-                                               const Red::ScriptingFunction_t<void*> aGetterFunction)
+bool Red::TweakDBManager::DescribeCustomRecord(const Red::RecordInfo& aRecordInfo)
 {
     static auto* customRecordType = App::CustomTweakDBRecord::TYPE::GetClass();
 
@@ -735,23 +741,31 @@ bool Red::TweakDBManager::DescribeCustomRecord(RecordInfo aRecordInfo,
 
     for (const auto& propInfo : aRecordInfo->props)
     {
-        DescribeCustomRecordProperty(cls, propInfo, aGetterFunction);
+        DescribeCustomRecordProperty(cls, propInfo);
         InsertPropertyFlat(aRecordInfo->name, propInfo);
     }
 
     return true;
 }
 
-void Red::TweakDBManager::DescribeCustomRecordProperty(CClass* cls, PropertyInfo aPropertyInfo,
-                                                       Red::ScriptingFunction_t<void*> aGetterFunction)
+void Red::TweakDBManager::DescribeCustomRecordProperty(Red::CClass* cls, const Red::PropertyInfo& aPropertyInfo)
 {
+    const auto getterFunction = m_customGetterClosures->CreateGetter(this, aPropertyInfo);
+
+    if (!getterFunction)
+    {
+        spdlog::error("Failed to create custom getter closure for function '{}'.",
+                      aPropertyInfo->functionName.ToString());
+        return;
+    }
+
     auto* function = Red::CClassFunction::Create(cls, aPropertyInfo->functionName.ToString(),
-                                                 aPropertyInfo->functionName.ToString(), aGetterFunction);
+                                                 aPropertyInfo->functionName.ToString(), getterFunction);
     function->SetReturnType(aPropertyInfo->type->GetName());
     cls->RegisterFunction(function);
 }
 
-void Red::TweakDBManager::InsertPropertyFlat(CName aRecordName, PropertyInfo aPropertyInfo)
+void Red::TweakDBManager::InsertPropertyFlat(Red::CName aRecordName, const Red::PropertyInfo& aPropertyInfo)
 {
     const auto id = m_reflection->BuildRTDBID(aRecordName.ToString(), aPropertyInfo->name.ToString());
     const auto ptr = m_reflection->Construct(aPropertyInfo->type);
