@@ -1,10 +1,5 @@
 #include "CustomTweakDBRecord.hpp"
 
-namespace
-{
-constexpr Red::ClassLocator<App::CustomTweakDBRecord> s_CustomTweakDBRecordType;
-} // namespace
-
 namespace App
 {
 

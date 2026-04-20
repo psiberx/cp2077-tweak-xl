@@ -9,7 +9,8 @@ class CustomTweakDBRecord : public Red::gamedataTweakDBRecord
 public:
     static constexpr auto NAME = "gamedataCustomTweakDBRecord";
     static constexpr auto ALIAS = "CustomTweakDBRecord";
-    static constexpr Red::ClassLocator<CustomTweakDBRecord> TYPE;
+
+    using TYPE = Red::ClassLocator<CustomTweakDBRecord>;
 
     CustomTweakDBRecord() = default;
     CustomTweakDBRecord(const Red::TweakDBRecordInfo&, Red::TweakDBID);

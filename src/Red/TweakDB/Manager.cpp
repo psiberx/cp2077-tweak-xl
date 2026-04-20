@@ -719,7 +719,7 @@ bool Red::TweakDBManager::RegisterCustomRecord(RecordInfo aRecordInfo)
 bool Red::TweakDBManager::DescribeCustomRecord(RecordInfo aRecordInfo,
                                                const Red::ScriptingFunction_t<void*> aGetterFunction)
 {
-    static auto* customRecordType = m_rtti->GetClass(App::CustomTweakDBRecord::NAME);
+    static auto* customRecordType = App::CustomTweakDBRecord::TYPE::GetClass();
 
     if (!aRecordInfo || !aRecordInfo->isCustom)
         return false;

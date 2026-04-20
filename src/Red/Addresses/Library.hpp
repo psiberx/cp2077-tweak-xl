@@ -15,5 +15,6 @@ constexpr uint32_t TweakDB_Load = 3602585178; // game::data::TweakDB::LoadOptimi
 constexpr uint32_t TweakDB_TryLoad = 3512345737;
 constexpr uint32_t TweakDB_CreateRecord = 838931066; // game::data::AddRecord
 constexpr uint32_t TweakDB_InsertRecord = 962734065;
+
 constexpr uint32_t TweakDBID_Derive = 326438016;
 }
