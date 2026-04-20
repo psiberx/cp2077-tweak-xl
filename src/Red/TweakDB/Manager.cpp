@@ -98,7 +98,9 @@ bool Red::TweakDBManager::CreateCustomRecord(Red::TweakDB* aTweakDB, TweakDBID a
     {
         if (const auto* cls = recordInfo->type)
         {
-            const auto instance = Red::MakeHandle<Red::CustomTweakDBRecord>(*recordInfo, aRecordId);
+            const auto instance = Red::MakeScriptedHandle<Red::CustomTweakDBRecord>(const_cast<Red::CClass*>(cls));
+            instance->recordID = aRecordId;
+            instance->tweakBaseHash = aHash;
             Raw::InsertRecord(aTweakDB, aRecordId, cls, instance);
             return true;
         }
@@ -708,9 +710,11 @@ bool Red::TweakDBManager::RegisterCustomRecord(const Red::RecordInfo& aRecordInf
     if (!aRecordInfo || !aRecordInfo->isCustom)
         return false;
 
-    m_rtti->CreateScriptedClass(aRecordInfo->name, {}, nullptr);
+    m_rtti->CreateScriptedClass(aRecordInfo->name, {.isScriptedClass = true}, nullptr);
 
-    const auto* cls = m_rtti->GetClass(aRecordInfo->name);
+    auto* cls = m_rtti->GetClass(aRecordInfo->name);
+
+    cls->size = sizeof(Red::CustomTweakDBRecord);
 
     if (!cls)
         return false;
