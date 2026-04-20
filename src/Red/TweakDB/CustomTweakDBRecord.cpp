@@ -1,9 +1,7 @@
-#include "CustomTweakDBRecord.hpp"
+#include "Red/TweakDB/CustomTweakDBRecord.hpp"
 
-namespace App
+namespace Red
 {
-
-using namespace Red;
 
 CustomTweakDBRecord::CustomTweakDBRecord(const TweakDBRecordInfo& aRecordInfo, TweakDBID aTweakDBID)
     : m_tweakBaseHash(aRecordInfo.typeHash)
@@ -26,4 +24,4 @@ uint32_t CustomTweakDBRecord::GetTweakBaseHash() const
     return m_tweakBaseHash;
 }
 
-} // namespace App
+} // namespace Red

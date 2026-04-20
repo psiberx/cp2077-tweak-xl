@@ -2,8 +2,8 @@
 
 #include "CustomGetterClosureRegistry.hpp"
 
-#include "App/Tweaks/Record/CustomTweakDBRecord.hpp"
 #include "Core/Facades/Container.hpp"
+#include "CustomTweakDBRecord.hpp"
 #include "Red/TweakDB/Raws.hpp"
 
 #include <spdlog/spdlog.h>
@@ -98,7 +98,7 @@ bool Red::TweakDBManager::CreateCustomRecord(Red::TweakDB* aTweakDB, TweakDBID a
     {
         if (const auto* cls = recordInfo->type)
         {
-            const auto instance = Red::MakeHandle<App::CustomTweakDBRecord>(*recordInfo, aRecordId);
+            const auto instance = Red::MakeHandle<Red::CustomTweakDBRecord>(*recordInfo, aRecordId);
             Raw::InsertRecord(aTweakDB, aRecordId, cls, instance);
             return true;
         }
@@ -725,7 +725,7 @@ bool Red::TweakDBManager::RegisterCustomRecord(const Red::RecordInfo& aRecordInf
 
 bool Red::TweakDBManager::DescribeCustomRecord(const Red::RecordInfo& aRecordInfo)
 {
-    static auto* customRecordType = App::CustomTweakDBRecord::TYPE::GetClass();
+    static auto* customRecordType = Red::CustomTweakDBRecord::TYPE::GetClass();
 
     if (!aRecordInfo || !aRecordInfo->isCustom)
         return false;
@@ -772,7 +772,7 @@ void Red::TweakDBManager::InsertPropertyFlat(Red::CName aRecordName, const Red::
     SetFlat(id, aPropertyInfo->type, ptr.get());
 }
 
-void* Red::TweakDBManager::GetCustomRecordValue(const App::CustomTweakDBRecord* aRecord, CName functionName)
+void* Red::TweakDBManager::GetCustomRecordValue(const Red::CustomTweakDBRecord* aRecord, CName functionName)
 {
     if (const auto* recordInfo = m_reflection->GetCustomRecordInfo(aRecord->GetTweakBaseHash()))
     {

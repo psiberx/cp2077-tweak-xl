@@ -1,7 +1,8 @@
 #pragma once
+
 #include "Red/TweakDB/Reflection.hpp"
 
-namespace App
+namespace Red
 {
 
 class CustomTweakDBRecord : public Red::gamedataTweakDBRecord
@@ -19,7 +20,7 @@ public:
     [[nodiscard]] uint32_t GetTweakBaseHash() const override;
     [[nodiscard]] RED4ext::CClass* GetType() override;
 
-    RTTI_IMPL_TYPEINFO(App::CustomTweakDBRecord);
+    RTTI_IMPL_TYPEINFO(Red::CustomTweakDBRecord);
     RTTI_IMPL_ALLOCATOR();
 
 private:
@@ -29,9 +30,10 @@ private:
 
 RED4EXT_ASSERT_SIZE(CustomTweakDBRecord, 0x58);
 
-} // namespace App
+} // namespace Red
 
-RTTI_DEFINE_CLASS(App::CustomTweakDBRecord, App::CustomTweakDBRecord::NAME, {
-    RTTI_ALIAS(App::CustomTweakDBRecord::ALIAS);
+RTTI_DEFINE_CLASS(Red::CustomTweakDBRecord, Red::CustomTweakDBRecord::NAME, {
+    // TODO: mark abstract when the CET fix is merged
+    RTTI_ALIAS(Red::CustomTweakDBRecord::ALIAS);
     RTTI_PARENT(Red::gamedataTweakDBRecord);
 });

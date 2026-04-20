@@ -71,7 +71,7 @@ void CustomGetterClosureRegistry::FfiDispatch(ffi_cif* aCif, void* aRet, void** 
 
     stackFrame->code++;
 
-    const auto* record = reinterpret_cast<App::CustomTweakDBRecord*>(instance);
+    const auto* record = reinterpret_cast<Red::CustomTweakDBRecord*>(instance);
 
     if (const auto flat = context->manager->GetFlat(record->recordID + context->property->appendix);
         flat && flat.instance)

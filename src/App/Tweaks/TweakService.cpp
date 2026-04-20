@@ -1,9 +1,9 @@
 #include "TweakService.hpp"
+#include "Red/TweakDB/CustomTweakDBRecord.hpp"
 #include "App/Tweaks/Declarative/TweakImporter.hpp"
 #include "App/Tweaks/Executable/TweakExecutor.hpp"
 #include "App/Tweaks/Metadata/MetadataExporter.hpp"
 #include "App/Tweaks/Metadata/MetadataImporter.hpp"
-#include "Record/CustomTweakDBRecord.hpp"
 #include "Red/TweakDB/Raws.hpp"
 
 App::TweakService::TweakService(const Core::SemvVer& aProductVer, std::filesystem::path aGameDir,
@@ -258,7 +258,8 @@ void App::TweakService::TestCustomRecord()
     assert(m_manager->SetFlat(recordID + fooAppendix, cnameType::GetClass(), &fooValue));
     assert(m_manager->SetFlat(recordID + barAppendix, cnameType::GetClass(), &barValue));
 
-    const auto record = reinterpret_cast<CustomTweakDBRecord*>(m_manager->GetTweakDB()->GetRecord(recordID).instance);
+    const auto record =
+        reinterpret_cast<Red::CustomTweakDBRecord*>(m_manager->GetTweakDB()->GetRecord(recordID).instance);
 
     assert(record);
 

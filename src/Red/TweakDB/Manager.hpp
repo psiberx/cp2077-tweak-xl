@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "App/Tweaks/Record/CustomTweakDBRecord.hpp"
+#include "CustomTweakDBRecord.hpp"
 #include "Red/TweakDB/Alias.hpp"
 #include "Red/TweakDB/Buffer.hpp"
 #include "Red/TweakDB/Reflection.hpp"
@@ -77,7 +77,7 @@ public:
     bool DescribeCustomRecord(const Red::RecordInfo& aRecordInfo);
     void DescribeCustomRecordProperty(Red::CClass* cls, const Red::PropertyInfo& aPropertyInfo);
     void InsertPropertyFlat(Red::CName aRecordName, const PropertyInfo& aPropertyInfo);
-    void* GetCustomRecordValue(const App::CustomTweakDBRecord* aRecord, Red::CName functionName);
+    void* GetCustomRecordValue(const Red::CustomTweakDBRecord* aRecord, Red::CName functionName);
 
 private:
     template<class SharedLockable>
