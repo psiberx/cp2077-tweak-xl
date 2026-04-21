@@ -1,12 +1,7 @@
 #include "Manager.hpp"
 
-#include "CustomGetterClosureRegistry.hpp"
-
-#include "Core/Facades/Container.hpp"
-#include "CustomTweakDBRecord.hpp"
 #include "Red/TweakDB/Raws.hpp"
-
-#include <spdlog/spdlog.h>
+#include "ScriptableTweakDBRecord.hpp"
 
 namespace
 {
@@ -18,11 +13,8 @@ Red::TweakDBManager::TweakDBManager(Core::SharedPtr<Red::TweakDBReflection> aRef
     , m_buffer(Core::MakeShared<Red::TweakDBBuffer>(m_tweakDb))
     , m_reflection(std::move(aReflection))
     , m_rtti(Red::CRTTISystem::Get())
-    , m_customGetterClosures(std::make_unique<Red::CustomGetterClosureRegistry>())
 {
 }
-
-Red::TweakDBManager::~TweakDBManager() = default;
 
 Red::Value<> Red::TweakDBManager::GetFlat(Red::TweakDBID aFlatId)
 {
@@ -92,22 +84,6 @@ bool Red::TweakDBManager::SetFlat(Red::TweakDBID aFlatId, const Red::Value<>& aD
     return SetFlat(aFlatId, aData.type, aData.instance);
 }
 
-bool Red::TweakDBManager::CreateCustomRecord(Red::TweakDB* aTweakDB, TweakDBID aRecordId, const uint32_t aHash) const
-{
-    if (const auto* recordInfo = m_reflection->GetCustomRecordInfo(aHash))
-    {
-        if (const auto* cls = recordInfo->type)
-        {
-            const auto instance = Red::MakeScriptedHandle<Red::CustomTweakDBRecord>(const_cast<Red::CClass*>(cls));
-            instance->recordID = aRecordId;
-            instance->tweakBaseHash = aHash;
-            Raw::InsertRecord(aTweakDB, aRecordId, cls, instance);
-            return true;
-        }
-    }
-    return false;
-}
-
 bool Red::TweakDBManager::CreateRecord(Red::TweakDBID aRecordId, const Red::CClass* aType)
 {
     if (!aRecordId.IsValid() || IsRecordExists(aRecordId))
@@ -130,6 +106,16 @@ bool Red::TweakDBManager::CreateRecord(Red::TweakDBID aRecordId, const Red::CCla
     m_tweakDb->CreateRecord(aRecordId, recordInfo->typeHash);
 
     return true;
+}
+
+bool Red::TweakDBManager::CreateScriptableRecord(Red::TweakDB* aTweakDB, Red::TweakDBID aRecordId, uint32_t aHash)
+{
+    if (const auto instance = m_reflection->ConstructScriptableRecord(aRecordId, aHash))
+    {
+        Raw::InsertRecord(aTweakDB, aRecordId, instance->GetType(), instance);
+        return true;
+    }
+    return false;
 }
 
 bool Red::TweakDBManager::CloneRecord(Red::TweakDBID aRecordId, Red::TweakDBID aSourceId)
@@ -502,9 +488,9 @@ bool Red::TweakDBManager::AssignFlat(Red::SortedUniqueArray<Red::TweakDBID>& aFl
 }
 
 void Red::TweakDBManager::InheritFlats(RED4ext::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aRecordId,
-                                       const Red::TweakDBRecordInfo* aRecordInfo)
+                                       RecordInfo aRecordInfo)
 {
-    for (const auto& propInfo : aRecordInfo->props)
+    for (const auto& propInfo : aRecordInfo->props | std::views::values)
     {
         if (propInfo->isExtra)
             continue;
@@ -519,11 +505,11 @@ void Red::TweakDBManager::InheritFlats(RED4ext::SortedUniqueArray<Red::TweakDBID
 }
 
 void Red::TweakDBManager::InheritFlats(RED4ext::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aRecordId,
-                                       const Red::TweakDBRecordInfo* aRecordInfo, Red::TweakDBID aSourceId)
+                                       RecordInfo aRecordInfo, Red::TweakDBID aSourceId)
 {
     std::shared_lock flatLockR(m_tweakDb->mutex00);
 
-    for (const auto& propInfo : aRecordInfo->props)
+    for (const auto& propInfo : aRecordInfo->props | std::views::values)
     {
         const auto baseId = aSourceId + propInfo->appendix;
         const auto* baseFlat = aFlats.Find(baseId);
@@ -583,9 +569,9 @@ bool Red::TweakDBManager::AssignFlat(const Red::TweakDBManager::BatchPtr& aBatch
 }
 
 void Red::TweakDBManager::InheritFlats(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId,
-                                       const Red::TweakDBRecordInfo* aRecordInfo)
+                                       RecordInfo aRecordInfo)
 {
-    for (const auto& propInfo : aRecordInfo->props)
+    for (const auto& propInfo : aRecordInfo->props | std::views::values)
     {
         if (propInfo->isExtra)
             continue;
@@ -605,11 +591,11 @@ void Red::TweakDBManager::InheritFlats(const Red::TweakDBManager::BatchPtr& aBat
 }
 
 void Red::TweakDBManager::InheritFlats(const Red::TweakDBManager::BatchPtr& aBatch, Red::TweakDBID aRecordId,
-                                       const Red::TweakDBRecordInfo* aRecordInfo, Red::TweakDBID aSourceId)
+                                       RecordInfo aRecordInfo, Red::TweakDBID aSourceId)
 {
     std::shared_lock flatLockR(m_tweakDb->mutex00);
 
-    for (const auto& propInfo : aRecordInfo->props)
+    for (const auto& propInfo : aRecordInfo->props | std::views::values)
     {
         const auto baseId = aSourceId + propInfo->appendix;
         const auto baseFlat = aBatch->flats.find(baseId);
@@ -655,7 +641,7 @@ void Red::TweakDBManager::CreateExtraNames(Red::TweakDBID aId, const std::string
 
     std::unique_lock _(m_mutex);
 
-    for (const auto& propInfo : recordInfo->props)
+    for (const auto& propInfo : recordInfo->props | std::views::values)
     {
         const auto propId = aId + propInfo->appendix;
         const auto propName = aName + propInfo->appendix;
@@ -703,90 +689,4 @@ const Core::Set<Red::TweakDBID>& Red::TweakDBManager::GetEnums()
     std::shared_lock _(m_mutex);
 
     return m_knownEnums;
-}
-
-bool Red::TweakDBManager::RegisterCustomRecord(const Red::RecordInfo& aRecordInfo)
-{
-    if (!aRecordInfo || !aRecordInfo->isCustom)
-        return false;
-
-    m_rtti->CreateScriptedClass(aRecordInfo->name, {.isScriptedClass = true}, nullptr);
-
-    auto* cls = m_rtti->GetClass(aRecordInfo->name);
-
-    cls->size = sizeof(Red::CustomTweakDBRecord);
-
-    if (!cls)
-        return false;
-
-    aRecordInfo->type = cls;
-
-    assert(m_reflection->IsValid(aRecordInfo));
-
-    m_reflection->RegisterRecordInfo(aRecordInfo);
-    return true;
-}
-
-bool Red::TweakDBManager::DescribeCustomRecord(const Red::RecordInfo& aRecordInfo)
-{
-    static auto* customRecordType = Red::CustomTweakDBRecord::TYPE::GetClass();
-
-    if (!aRecordInfo || !aRecordInfo->isCustom)
-        return false;
-
-    auto* cls = m_rtti->GetClass(aRecordInfo->name);
-
-    m_rtti->RegisterScriptName(aRecordInfo->name, aRecordInfo->aliasName);
-
-    if (auto* parent = aRecordInfo->parent; parent && parent->IsA(customRecordType))
-        cls->parent = const_cast<Red::CClass*>(parent);
-    else
-        cls->parent = customRecordType;
-
-    for (const auto& propInfo : aRecordInfo->props)
-    {
-        DescribeCustomRecordProperty(cls, propInfo);
-        InsertPropertyFlat(aRecordInfo->name, propInfo);
-    }
-
-    return true;
-}
-
-void Red::TweakDBManager::DescribeCustomRecordProperty(Red::CClass* cls, const Red::PropertyInfo& aPropertyInfo)
-{
-    const auto getterFunction = m_customGetterClosures->CreateGetter(this, aPropertyInfo);
-
-    if (!getterFunction)
-    {
-        spdlog::error("Failed to create custom getter closure for function '{}'.",
-                      aPropertyInfo->functionName.ToString());
-        return;
-    }
-
-    auto* function = Red::CClassFunction::Create(cls, aPropertyInfo->functionName.ToString(),
-                                                 aPropertyInfo->functionName.ToString(), getterFunction);
-    function->SetReturnType(aPropertyInfo->type->GetName());
-    cls->RegisterFunction(function);
-}
-
-void Red::TweakDBManager::InsertPropertyFlat(Red::CName aRecordName, const Red::PropertyInfo& aPropertyInfo)
-{
-    const auto id = m_reflection->BuildRTDBID(aRecordName.ToString(), aPropertyInfo->name.ToString());
-    const auto ptr = m_reflection->Construct(aPropertyInfo->type);
-    SetFlat(id, aPropertyInfo->type, ptr.get());
-}
-
-void* Red::TweakDBManager::GetCustomRecordValue(const Red::CustomTweakDBRecord* aRecord, CName functionName)
-{
-    if (const auto* recordInfo = m_reflection->GetCustomRecordInfo(aRecord->GetTweakBaseHash()))
-    {
-        if (const auto propertyInfo = recordInfo->GetPropInfoByFunction(functionName))
-        {
-            if (const auto flat = GetFlat(aRecord->recordID + propertyInfo->appendix); flat && flat.instance)
-            {
-                return flat.instance;
-            }
-        }
-    }
-    return nullptr;
 }

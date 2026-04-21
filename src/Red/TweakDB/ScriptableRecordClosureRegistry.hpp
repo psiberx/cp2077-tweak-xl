@@ -7,24 +7,26 @@
 
 #include <ffi.h>
 
-#include "Red/TweakDB/Manager.hpp"
+#include "Red/TweakDB/Types.hpp"
 
 namespace Red
 {
-class CustomGetterClosureRegistry
+class TweakDBReflection;
+
+class ScriptableRecordClosureRegistry
 {
 public:
     using GetterFn = ScriptingFunction_t<void*>;
 
     struct Context
     {
-        TweakDBManager* manager;
+        TweakDBReflection* reflection;
         PropertyInfo property;
     };
 
-    ~CustomGetterClosureRegistry();
+    ~ScriptableRecordClosureRegistry();
 
-    GetterFn CreateGetter(TweakDBManager* aManager, const PropertyInfo& aProperty);
+    GetterFn CreateClosure(TweakDBReflection* aReflection, const PropertyInfo& aProperty);
 
 private:
     static void FfiDispatch(ffi_cif* aCif, void* aRet, void** aArgs, void* aUserData);
@@ -37,7 +39,7 @@ private:
     };
 
     std::mutex m_mutex;
-    std::vector<std::unique_ptr<Entry>> m_entries;
+    Core::Vector<Core::UniquePtr<Entry>> m_entries;
     ffi_cif m_cif{};
     std::array<ffi_type*, 4> m_argTypes{{&ffi_type_pointer, &ffi_type_pointer, &ffi_type_pointer, &ffi_type_sint64}};
     bool m_cifReady = false;

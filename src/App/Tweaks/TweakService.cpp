@@ -1,10 +1,10 @@
 #include "TweakService.hpp"
-#include "Red/TweakDB/CustomTweakDBRecord.hpp"
 #include "App/Tweaks/Declarative/TweakImporter.hpp"
 #include "App/Tweaks/Executable/TweakExecutor.hpp"
 #include "App/Tweaks/Metadata/MetadataExporter.hpp"
 #include "App/Tweaks/Metadata/MetadataImporter.hpp"
 #include "Red/TweakDB/Raws.hpp"
+#include "Red/TweakDB/ScriptableTweakDBRecord.hpp"
 
 App::TweakService::TweakService(const Core::SemvVer& aProductVer, std::filesystem::path aGameDir,
                                 std::filesystem::path aTweaksDir, std::filesystem::path aInheritanceMapPath,
@@ -34,7 +34,7 @@ void App::TweakService::OnBootstrap()
             m_changelog = Core::MakeShared<App::TweakChangelog>();
 
 #ifndef NDEBUG
-            RegisterTestCustomRecord();
+            RegisterTestScriptableRecord();
 #endif
 
             if (ImportMetadata())
@@ -45,7 +45,7 @@ void App::TweakService::OnBootstrap()
             }
 
 #ifndef NDEBUG
-            TestCustomRecord();
+            TestScriptableRecord();
 #endif
         }
     });
@@ -57,8 +57,10 @@ void App::TweakService::OnBootstrap()
 
     HookWrap<Raw::CreateRecord>([&](const CreateRecordFunction aOriginal, Red::TweakDB* aTweakDB,
                                     const uint32_t aTypeHash, const Red::TweakDBID aTweakDBID) {
-        if (!m_manager || !m_manager->CreateCustomRecord(aTweakDB, aTweakDBID, aTypeHash))
+        if (!m_manager || !m_manager->CreateScriptableRecord(aTweakDB, aTweakDBID, aTypeHash))
+        {
             aOriginal(aTweakDB, aTypeHash, aTweakDBID);
+        }
     });
 }
 
@@ -228,27 +230,33 @@ App::TweakChangelog& App::TweakService::GetChangelog()
 
 #ifndef NDEBUG
 
-void App::TweakService::RegisterTestCustomRecord() const
+void App::TweakService::RegisterTestScriptableRecord() const
 {
-    const auto recordInfo = m_reflection->CreateRecordInfo("TweakXLTest");
-    recordInfo->isCustom = true;
+    const auto recordInfo = m_reflection->RegisterScriptableRecordType("TweakXLTest");
 
-    m_reflection->RegisterPropertyInfo(recordInfo, m_reflection->CreatePropertyInfo("foo", Red::ERTDBFlatType::CName));
-    m_reflection->RegisterPropertyInfo(recordInfo, m_reflection->CreatePropertyInfo("bar", Red::ERTDBFlatType::CName));
+    if (!recordInfo)
+    {
+        LogError("Failed to register scriptable TweakDB record type {}.", recordInfo->name.ToString());
+        return;
+    }
 
-    if (!m_manager->RegisterCustomRecord(recordInfo))
-        LogError("Failed to register custom TweakDB record type {}.", recordInfo->name.ToString());
+    if (!m_reflection->RegisterScriptableRecordProperty(recordInfo, "foo", Red::ERTDBFlatType::CName))
+    {
+        LogError("Failed to register scriptable TweakDB record property \"foo\".");
+    }
 
-    if (!m_manager->DescribeCustomRecord(recordInfo))
-        LogError("Failed to describe custom TweakDB record type {}.", recordInfo->name.ToString());
+    if (!m_reflection->RegisterScriptableRecordProperty(recordInfo, "bar", Red::ERTDBFlatType::CName))
+    {
+        LogError("Failed to register scriptable TweakDB record property \"bar\".");
+    }
 }
 
-void App::TweakService::TestCustomRecord()
+void App::TweakService::TestScriptableRecord()
 {
     using recordType = Red::TypeLocator<Red::CName("gamedataTweakXLTest_Record")>;
     using cnameType = Red::TypeLocator<"CName">;
 
-    static auto recordID = Red::TweakDBID{"test.tweakxl.custom"};
+    static auto recordID = Red::TweakDBID{"test.tweakxl.scriptable"};
     static auto fooValue = Red::CNamePool::Add("test foo value");
     static auto barValue = Red::CNamePool::Add("test bar value");
     static auto fooAppendix = std::string_view(".foo");
@@ -259,7 +267,7 @@ void App::TweakService::TestCustomRecord()
     assert(m_manager->SetFlat(recordID + barAppendix, cnameType::GetClass(), &barValue));
 
     const auto record =
-        reinterpret_cast<Red::CustomTweakDBRecord*>(m_manager->GetTweakDB()->GetRecord(recordID).instance);
+        reinterpret_cast<Red::ScriptableTweakDBRecord*>(m_manager->GetTweakDB()->GetRecord(recordID).instance);
 
     assert(record);
 
@@ -267,7 +275,8 @@ void App::TweakService::TestCustomRecord()
         auto* func = recordType::GetClass()->GetFunction("Foo");
         Red::CName result;
         assert(Red::ExecuteFunction(record, func, &result));
-        assert(result && strcmp(result.ToString(), "test foo value") == 0);
+        auto* val = result.ToString();
+        assert(result && strcmp(val, "test foo value") == 0);
     }
 
     {

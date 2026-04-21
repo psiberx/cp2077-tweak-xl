@@ -123,7 +123,7 @@ App::RedReader::GroupStatePtr App::RedReader::HandleGroup(App::TweakChangeset& a
 
     for (const auto& flat : aGroup->flats)
     {
-        const auto propInfo = recordInfo->GetPropInfoByName(flat->name.c_str());
+        const auto propInfo = recordInfo->GetPropInfo(flat->name.c_str());
 
         if (propInfo)
         {
@@ -199,7 +199,7 @@ App::RedReader::GroupStatePtr App::RedReader::HandleInline(App::TweakChangeset& 
 
         for (const auto& flat : aGroup->flats)
         {
-            const auto propInfo = recordInfo->GetPropInfoByName(flat->name.c_str());
+            const auto propInfo = recordInfo->GetPropInfo(flat->name.c_str());
 
             if (propInfo)
             {

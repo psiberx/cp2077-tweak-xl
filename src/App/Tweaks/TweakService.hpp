@@ -63,8 +63,8 @@ protected:
     Core::SharedPtr<App::TweakContext> m_context;
 
 #ifndef NDEBUG
-    void RegisterTestCustomRecord() const;
-    void TestCustomRecord();
+    void RegisterTestScriptableRecord() const;
+    void TestScriptableRecord();
 #endif
 };
 } // namespace App
