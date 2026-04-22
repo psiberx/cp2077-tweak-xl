@@ -240,12 +240,12 @@ void App::TweakService::RegisterTestScriptableRecord() const
         return;
     }
 
-    if (!m_reflection->RegisterScriptableRecordProperty(recordInfo, "foo", Red::ERTDBFlatType::CName))
+    if (!m_reflection->RegisterScriptableProperty(recordInfo, "foo", Red::ERTDBFlatType::CName))
     {
         LogError("Failed to register scriptable TweakDB record property \"foo\".");
     }
 
-    if (!m_reflection->RegisterScriptableRecordProperty(recordInfo, "bar", Red::ERTDBFlatType::CName))
+    if (!m_reflection->RegisterScriptableProperty(recordInfo, "bar", Red::ERTDBFlatType::CName))
     {
         LogError("Failed to register scriptable TweakDB record property \"bar\".");
     }
@@ -275,13 +275,11 @@ void App::TweakService::TestScriptableRecord()
         auto* func = recordType::GetClass()->GetFunction("Foo");
         Red::CName result;
         assert(Red::ExecuteFunction(record, func, &result));
-        auto* val = result.ToString();
-        assert(result && strcmp(val, "test foo value") == 0);
+        assert(result && strcmp(result.ToString(), "test foo value") == 0);
     }
 
     {
         auto* func = recordType::GetClass()->GetFunction("Bar");
-
         Red::CName result;
         assert(Red::ExecuteFunction(record, func, &result));
         assert(result && strcmp(result.ToString(), "test bar value") == 0);

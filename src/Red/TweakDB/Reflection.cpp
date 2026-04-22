@@ -22,6 +22,68 @@ constexpr auto ScriptResRefArrayTypeName = Red::GetTypeName<Red::DynArray<Red::R
 
 constexpr auto NameSeparator = Red::TweakGrammar::Name::Separator;
 constexpr auto PropSeparator = std::string_view(NameSeparator);
+
+struct RecordInfoVisitor
+{
+    // clang-format off
+    explicit RecordInfoVisitor(Red::TweakDBReflection* aReflection) : reflection(aReflection) {}
+    Red::RecordInfo operator()(std::nullptr_t) const { return nullptr; }
+    Red::RecordInfo operator()(const Red::RecordInfo& aRecordInfo) const { return aRecordInfo; }
+    Red::RecordInfo operator()(Red::CName aTypeName) const { return reflection->GetRecordInfo(aTypeName); }
+    Red::TweakDBReflection* reflection;
+    // clang-format on
+};
+
+template<typename T>
+struct NameVisitor;
+
+template<>
+struct NameVisitor<Red::CName>
+{
+    // clang-format off
+    Red::CName operator()(std::nullptr_t) const { return {}; }
+    Red::CName operator()(Red::CName aName) const { return aName; }
+    Red::CName operator()(const std::string& aName) const { return Red::CName(aName.c_str()); }
+    Red::CName operator()(const char* aName) const { return Red::CName(aName); }
+    // clang-format on
+};
+
+template<>
+struct NameVisitor<std::string>
+{
+    // clang-format off
+    std::string operator()(std::nullptr_t) const { return {}; }
+    std::string operator()(Red::CName aName) const { return aName.ToString(); }
+    std::string operator()(const std::string& aName) const { return aName; }
+    std::string operator()(const char* aName) const { return aName; }
+    // clang-format on
+};
+
+struct FlatTypeVisitor
+{
+    // clang-format off
+    explicit FlatTypeVisitor(Red::TweakDBReflection* aReflection) : m_reflection(aReflection) {}
+    const Red::CBaseRTTIType* operator()(const uint64_t aType) const { return m_reflection->GetFlatType(aType); }
+    const Red::CBaseRTTIType* operator()(const Red::CBaseRTTIType* aType) const { return aType; }
+    // clang-format on
+private:
+    Red::TweakDBReflection* m_reflection;
+};
+
+struct ClassVisitor
+{
+    // clang-format off
+    explicit ClassVisitor() : m_rtti(RED4ext::CRTTISystem::Get()) {}
+    Red::CClass* operator()(std::nullptr_t) const { return nullptr; }
+    Red::CClass* operator()(Red::CClass* aClass) const { return aClass; }
+    Red::CClass* operator()(Red::CName aName) const { return m_rtti->GetClass(aName); }
+    Red::CClass* operator()(const std::string& aName) const { return m_rtti->GetClass(aName.c_str()); }
+    Red::CClass* operator()(const char* aName) const { return m_rtti->GetClass(aName); }
+    // clang-format on
+private:
+    Red::CRTTISystem* m_rtti;
+};
+
 } // namespace
 
 Red::TweakDBReflection::TweakDBReflection()
@@ -38,7 +100,7 @@ Red::TweakDBReflection::TweakDBReflection(Red::TweakDB* aTweakDb)
 
 Red::TweakDBReflection::~TweakDBReflection() = default;
 
-Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::GetRecordInfo(Red::CClass* aType, bool aCollect)
+Red::RecordInfo Red::TweakDBReflection::GetRecordInfo(Red::CClass* aType, bool aCollect)
 {
     if (!IsRecordType(aType))
     {
@@ -59,7 +121,12 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::GetRecordInfo(Re
     return nullptr;
 }
 
-Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::GetRecordInfo(Red::CName aTypeName, bool aCollect)
+Red::RecordInfo Red::TweakDBReflection::GetRecordInfo(const std::string& aTypeName, const bool aCollect)
+{
+    return GetRecordInfo(Red::CName(aTypeName.c_str()), aCollect);
+}
+
+Red::RecordInfo Red::TweakDBReflection::GetRecordInfo(Red::CName aTypeName, const bool aCollect)
 {
     {
         std::shared_lock lockR(m_mutex);
@@ -77,12 +144,12 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::GetRecordInfo(Re
     return nullptr;
 }
 
-Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::GetRecordInfo(const Red::CClass* aType, bool aCollect)
+Red::RecordInfo Red::TweakDBReflection::GetRecordInfo(const Red::CClass* aType, const bool aCollect)
 {
     return GetRecordInfo(const_cast<Red::CClass*>(aType), aCollect);
 }
 
-Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::GetRecordInfoByHash(const uint32_t aHash)
+Red::RecordInfo Red::TweakDBReflection::GetRecordInfoByHash(const uint32_t aHash)
 {
     std::shared_lock lockR(m_mutex);
     if (const auto iter = m_recordInfoByHash.find(aHash); iter != m_recordInfoByHash.end())
@@ -92,7 +159,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::GetRecordInfoByH
     return nullptr;
 }
 
-Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::GetScriptableRecordInfo(const uint32_t aHash)
+Red::RecordInfo Red::TweakDBReflection::GetScriptableRecordInfo(const uint32_t aHash)
 {
     if (const auto recordInfo = GetRecordInfoByHash(aHash); recordInfo && recordInfo->isScriptable)
     {
@@ -101,8 +168,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::GetScriptableRec
     return nullptr;
 }
 
-Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInfo(Red::CClass* aType,
-                                                                                  Red::TweakDBID aSampleId)
+Red::RecordInfo Red::TweakDBReflection::CollectRecordInfo(Red::CClass* aType, Red::TweakDBID aSampleId)
 {
     if (!IsRecordType(aType))
     {
@@ -138,7 +204,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
             const auto handleType = reinterpret_cast<Red::CRTTIWeakHandleType*>(arrayType->innerType);
             const auto recordType = reinterpret_cast<Red::CClass*>(handleType->innerType);
 
-            const auto propInfo = CreatePropertyInfo(propName.c_str(), Red::ERTDBFlatType::TweakDBIDArray);
+            const auto propInfo = CreatePropertyInfo(propName, Red::ERTDBFlatType::TweakDBIDArray);
             propInfo->foreignType = recordType;
             RegisterPropertyInfo(recordInfo, propInfo);
 
@@ -174,8 +240,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
             {
                 if (IsResRefTokenArray(returnType))
                 {
-                    RegisterPropertyInfo(recordInfo,
-                                         CreatePropertyInfo(propName.c_str(), Red::ERTDBFlatType::ResRefArray));
+                    RegisterPropertyInfo(recordInfo, CreatePropertyInfo(propName, Red::ERTDBFlatType::ResRefArray));
 
                     // Skip related functions:
                     // func Get[Prop]Count()
@@ -184,7 +249,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
                 }
                 else
                 {
-                    RegisterPropertyInfo(recordInfo, CreatePropertyInfo(propName.c_str(), returnType));
+                    RegisterPropertyInfo(recordInfo, CreatePropertyInfo(propName, returnType));
 
                     // Skip related functions:
                     // func Get[Prop]Count()
@@ -204,7 +269,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
             {
                 if (IsResRefToken(returnType))
                 {
-                    RegisterPropertyInfo(recordInfo, CreatePropertyInfo(propName.c_str(), Red::ERTDBFlatType::ResRef));
+                    RegisterPropertyInfo(recordInfo, CreatePropertyInfo(propName, Red::ERTDBFlatType::ResRef));
                 }
                 else if (returnType->GetType() == Red::ERTTIType::Name)
                 {
@@ -213,11 +278,11 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::CollectRecordInf
                     auto propId = sampleId + PropSeparator + propName;
                     auto flat = m_tweakDb->GetFlatValue(propId);
 
-                    RegisterPropertyInfo(recordInfo, CreatePropertyInfo(propName.c_str(), flat->GetValue().type));
+                    RegisterPropertyInfo(recordInfo, CreatePropertyInfo(propName, flat->GetValue().type));
                 }
                 else
                 {
-                    RegisterPropertyInfo(recordInfo, CreatePropertyInfo(propName.c_str(), returnType));
+                    RegisterPropertyInfo(recordInfo, CreatePropertyInfo(propName, returnType));
                 }
             }
             }
@@ -596,12 +661,12 @@ Red::CName Red::TweakDBReflection::GetElementTypeName(const Red::CBaseRTTIType* 
     return GetElementTypeName(aType->GetName());
 }
 
-Red::CName Red::TweakDBReflection::GetRecordFullName(Red::CName aName)
+Red::CName Red::TweakDBReflection::GetRecordFullName(Red::CName aName, const bool aRegister)
 {
-    return GetRecordFullName(aName.ToString());
+    return GetRecordFullName(aName.ToString(), aRegister);
 }
 
-Red::CName Red::TweakDBReflection::GetRecordFullName(const char* aName)
+Red::CName Red::TweakDBReflection::GetRecordFullName(const char* aName, const bool aRegister)
 {
     std::string finalName = aName;
 
@@ -614,15 +679,15 @@ Red::CName Red::TweakDBReflection::GetRecordFullName(const char* aName)
     if (!finalName.ends_with(RecordTypeSuffix))
         finalName.append(RecordTypeSuffix);
 
-    return CNamePool::Add(finalName.c_str());
+    return aRegister ? CNamePool::Add(finalName.c_str()) : Red::CName(finalName.c_str());
 }
 
-Red::CName Red::TweakDBReflection::GetRecordAliasName(Red::CName aName)
+Red::CName Red::TweakDBReflection::GetRecordAliasName(Red::CName aName, const bool aRegister)
 {
-    return GetRecordAliasName(aName.ToString());
+    return GetRecordAliasName(aName.ToString(), aRegister);
 }
 
-Red::CName Red::TweakDBReflection::GetRecordAliasName(const char* aName)
+Red::CName Red::TweakDBReflection::GetRecordAliasName(const char* aName, const bool aRegister)
 {
     std::string finalName = aName;
 
@@ -635,7 +700,7 @@ Red::CName Red::TweakDBReflection::GetRecordAliasName(const char* aName)
     if (!finalName.ends_with(RecordTypeSuffix))
         finalName.append(RecordTypeSuffix);
 
-    return CNamePool::Add(finalName.c_str());
+    return aRegister ? CNamePool::Add(finalName.c_str()) : Red::CName(finalName.c_str());
 }
 
 std::string Red::TweakDBReflection::GetRecordShortName(Red::CName aName)
@@ -724,10 +789,10 @@ void Red::TweakDBReflection::RegisterDescendants(Red::TweakDBID aParentId,
     }
 }
 
-Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::RegisterScriptableRecordType(
-    const NameVariant& aName, const ClassVariant& aParent)
+Red::RecordInfo Red::TweakDBReflection::RegisterScriptableRecordType(const NameVariant& aName,
+                                                                     const ClassVariant& aParent)
 {
-    const auto name = std::visit(NameVisitor(m_rtti), aName);
+    const auto name = GetRecordFullName(std::visit(NameVisitor<std::string>(), aName).c_str(), true);
 
     if (const auto recordInfo = GetRecordInfo(name))
     {
@@ -742,7 +807,7 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::RegisterScriptab
     // in 2 phases so type inheritance can work correctly. In other words, if
     // class B is registered before class A, and B extends A, class B's parent
     // will not be set correctly.
-    if (auto* parent = std::visit(ClassVisitor(m_rtti), aParent); parent && IsRecordType(parent))
+    if (auto* parent = std::visit(ClassVisitor(), aParent); parent && IsRecordType(parent))
     {
         recordInfo->type->parent = parent;
 
@@ -764,10 +829,10 @@ Core::SharedPtr<Red::TweakDBRecordInfo> Red::TweakDBReflection::RegisterScriptab
     return recordInfo;
 }
 
-Red::PropertyInfo Red::TweakDBReflection::RegisterScriptableRecordProperty(const RecordInfoVariant& aRecord,
-                                                                           const NameVariant& aPropertyName,
-                                                                           const FlatTypeVariant& aType,
-                                                                           ScriptablePropertySpec aSpec)
+Red::PropertyInfo Red::TweakDBReflection::RegisterScriptableProperty(const RecordInfoVariant& aRecord,
+                                                                     const std::string& aPropertyName,
+                                                                     const FlatTypeVariant& aType,
+                                                                     const ClassVariant& aForeignType)
 {
     const auto recordInfo = std::visit(RecordInfoVisitor(this), aRecord);
 
@@ -781,9 +846,7 @@ Red::PropertyInfo Red::TweakDBReflection::RegisterScriptableRecordProperty(const
     // Like parent in the registration of scriptable records, foreignType will not work
     // here due to race conditions. We need to split up registration and description
     // phases so that all types are registered before we try to resolve any foreign keys.
-    propertyInfo->foreignType = std::visit(ClassVisitor(m_rtti), aSpec.foreignType);
-    propertyInfo->isExtra = aSpec.isExtra;
-    propertyInfo->defaultValue = aSpec.defaultValue;
+    propertyInfo->foreignType = std::visit(ClassVisitor(), aForeignType);
 
     const auto closure = m_scriptableRecordClosures->CreateClosure(this, propertyInfo);
 
@@ -847,8 +910,7 @@ bool Red::TweakDBReflection::RegisterRecordInfo(RecordInfo aRecordInfo)
     return false;
 }
 
-void Red::TweakDBReflection::InheritRecordInfo(const RecordInfo& aRecordInfo,
-                                               Core::SharedPtr<Red::TweakDBRecordInfo> aParentInfo)
+void Red::TweakDBReflection::InheritRecordInfo(const RecordInfo& aRecordInfo, Red::RecordInfo aParentInfo)
 {
     if (!aParentInfo)
         return;
@@ -979,11 +1041,21 @@ Red::TweakDBID Red::TweakDBReflection::BuildRTDBID(Red::CName aRecordName, Red::
     return TweakDBID{id};
 }
 
+Red::RecordInfo Red::TweakDBReflection::CreateRecordInfo(const std::string& aName)
+{
+    const auto recordInfo = Core::MakeShared<Red::TweakDBRecordInfo>();
+    recordInfo->name = GetRecordFullName(aName.c_str(), true);
+    recordInfo->aliasName = GetRecordAliasName(recordInfo->name, true);
+    recordInfo->shortName = GetRecordShortName(recordInfo->name);
+    recordInfo->typeHash = GetRecordTypeHash(recordInfo->shortName);
+    return recordInfo;
+}
+
 Red::RecordInfo Red::TweakDBReflection::CreateRecordInfo(Red::CName aName)
 {
     const auto recordInfo = Core::MakeShared<Red::TweakDBRecordInfo>();
-    recordInfo->name = GetRecordFullName(aName);
-    recordInfo->aliasName = GetRecordAliasName(recordInfo->name);
+    recordInfo->name = aName;
+    recordInfo->aliasName = GetRecordAliasName(recordInfo->name, true);
     recordInfo->shortName = GetRecordShortName(recordInfo->name);
     recordInfo->typeHash = GetRecordTypeHash(recordInfo->shortName);
     return recordInfo;
@@ -1000,10 +1072,10 @@ Red::RecordInfo Red::TweakDBReflection::CreateRecordInfo(Red::CClass* aClass)
     return recordInfo;
 }
 
-Red::PropertyInfo Red::TweakDBReflection::CreatePropertyInfo(const NameVariant& aName, const FlatTypeVariant& aType)
+Red::PropertyInfo Red::TweakDBReflection::CreatePropertyInfo(const std::string& aName, const FlatTypeVariant& aType)
 {
     const auto propInfo = Core::MakeShared<Red::TweakDBPropertyInfo>();
-    propInfo->name = std::visit(NameVisitor(m_rtti), aName);
+    propInfo->name = CNamePool::Add(aName);
     propInfo->type = std::visit(FlatTypeVisitor(this), aType);
     propInfo->appendix = PropSeparator;
     propInfo->appendix.append(propInfo->name.ToString());
