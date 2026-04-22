@@ -698,6 +698,10 @@ class ClassDescriptorDefaultImpl : public ClassDescriptor<TClass>
                 CClass::parent->Assign(aLhs, aRhs);
             }
         }
+        else if constexpr (std::is_copy_assignable_v<TClass>)
+        {
+            *reinterpret_cast<TClass*>(aLhs) = *reinterpret_cast<const TClass*>(aRhs);
+        }
         else if constexpr (std::is_copy_constructible_v<TClass>)
         {
             new (aLhs) TClass(*static_cast<const TClass*>(aRhs));
@@ -1022,7 +1026,9 @@ struct ClassDefinition
     {
         constexpr auto name = GetTypeNameStr<TClass>();
 
-        auto* type = new Descriptor();
+        auto* type = Red::Memory::RTTIAllocator::Get()->Alloc<Descriptor>();
+        new (type) Descriptor();
+
         type->name = CNamePool::Add(name.data());
 
         if constexpr (Detail::HasRegisterHandler<Specialization, Descriptor>)
