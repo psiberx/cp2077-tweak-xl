@@ -38,7 +38,7 @@ Red::TweakDBReflection::TweakDBReflection(Red::TweakDB* aTweakDb)
 
 Red::TweakDBReflection::~TweakDBReflection() = default;
 
-Red::RecordInfo Red::TweakDBReflection::GetRecordInfo(Red::CClass* aType, bool aCollect)
+Red::RecordInfo Red::TweakDBReflection::GetRecordInfo(Red::CClass* aType, const bool aCollect)
 {
     if (!IsRecordType(aType))
     {
@@ -61,7 +61,7 @@ Red::RecordInfo Red::TweakDBReflection::GetRecordInfo(Red::CClass* aType, bool a
 
 Red::RecordInfo Red::TweakDBReflection::GetRecordInfo(const std::string& aTypeName, const bool aCollect)
 {
-    return GetRecordInfo(Red::CName(aTypeName.c_str()), aCollect);
+    return GetRecordInfo(GetRecordFullName(aTypeName), aCollect);
 }
 
 Red::RecordInfo Red::TweakDBReflection::GetRecordInfo(Red::CName aTypeName, const bool aCollect)
@@ -620,6 +620,11 @@ Red::CName Red::TweakDBReflection::GetRecordFullName(const char* aName, const bo
     return aRegister ? CNamePool::Add(finalName.c_str()) : Red::CName(finalName.c_str());
 }
 
+Red::CName Red::TweakDBReflection::GetRecordFullName(const std::string& aName, bool aRegister)
+{
+    return GetRecordFullName(aName.c_str(), aRegister);
+}
+
 Red::CName Red::TweakDBReflection::GetRecordAliasName(Red::CName aName, const bool aRegister)
 {
     return GetRecordAliasName(aName.ToString(), aRegister);
@@ -973,11 +978,11 @@ bool Red::TweakDBReflection::IsValid(const RecordInfo& aRecordInfo)
     return true;
 }
 
-Red::TweakDBID Red::TweakDBReflection::BuildRTDBID(Red::CName aRecordName, Red::CName aPropertyName)
+Red::TweakDBID Red::TweakDBReflection::BuildRTDBID(const std::string& aRecordName, Red::CName aPropertyName)
 {
     std::string id = TweakSource::SchemaPackage;
     id.append(NameSeparator);
-    id.append(aRecordName.ToString());
+    id.append(aRecordName);
     id.append(NameSeparator);
     id.append(aPropertyName.ToString());
     return TweakDBID{id};

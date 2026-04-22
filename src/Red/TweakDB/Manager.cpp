@@ -690,3 +690,30 @@ const Core::Set<Red::TweakDBID>& Red::TweakDBManager::GetEnums()
 
     return m_knownEnums;
 }
+
+bool Red::TweakDBManager::RegisterScriptableRecordType(const std::string& aName, Red::CClass* aParent)
+{
+    return m_reflection->RegisterScriptableRecordType(aName, aParent) ? true : false;
+}
+
+bool Red::TweakDBManager::RegisterScriptableProperty(const std::string& aName, const std::string& aPropertyName,
+                                                     const uint64_t aFlatType, const Red::CClass* aForeignType)
+{
+    const auto recordInfo = m_reflection->GetRecordInfo(aName);
+
+    if (!recordInfo)
+        return false;
+
+    const auto propertyInfo =
+        m_reflection->RegisterScriptableProperty(recordInfo, aPropertyName, aFlatType, aForeignType);
+    if (!propertyInfo)
+        return false;
+
+    // TODO: handle populating default values other than "empty"
+    const auto instance = m_reflection->Construct(propertyInfo->type);
+    if (!instance)
+        return false;
+
+    const auto flatId = m_reflection->BuildRTDBID(recordInfo->shortName, propertyInfo->name);
+    return SetFlat(flatId, propertyInfo->type, instance.get());
+}

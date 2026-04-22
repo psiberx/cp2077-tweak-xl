@@ -232,20 +232,20 @@ App::TweakChangelog& App::TweakService::GetChangelog()
 
 void App::TweakService::RegisterTestScriptableRecord() const
 {
-    const auto recordInfo = m_reflection->RegisterScriptableRecordType("TweakXLTest");
+    static constexpr auto recordName = "TweakXLTest";
 
-    if (!recordInfo)
+    if (!m_manager->RegisterScriptableRecordType("TweakXLTest"))
     {
-        LogError("Failed to register scriptable TweakDB record type {}.", recordInfo->name.ToString());
+        LogError("Failed to register scriptable TweakDB record type {}.", recordName);
         return;
     }
 
-    if (!m_reflection->RegisterScriptableProperty(recordInfo, "foo", Red::ERTDBFlatType::CName))
+    if (!m_manager->RegisterScriptableProperty(recordName, "foo", Red::ERTDBFlatType::CName))
     {
         LogError("Failed to register scriptable TweakDB record property \"foo\".");
     }
 
-    if (!m_reflection->RegisterScriptableProperty(recordInfo, "bar", Red::ERTDBFlatType::CName))
+    if (!m_manager->RegisterScriptableProperty(recordName, "bar", Red::ERTDBFlatType::CName))
     {
         LogError("Failed to register scriptable TweakDB record property \"bar\".");
     }

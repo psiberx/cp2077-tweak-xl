@@ -63,6 +63,10 @@ public:
     void RegisterName(const BatchPtr& aBatch, Red::TweakDBID aId, const std::string& aName);
     void CommitBatch(const BatchPtr& aBatch);
 
+    bool RegisterScriptableRecordType(const std::string& aName, Red::CClass* aParent = nullptr);
+    bool RegisterScriptableProperty(const std::string& aName, const std::string& aPropertyName, uint64_t aFlatType,
+                                    const Red::CClass* aForeignType = nullptr);
+
     void Invalidate();
 
     Red::TweakDB* GetTweakDB();

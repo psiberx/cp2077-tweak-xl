@@ -63,6 +63,7 @@ public:
 
     Red::CName GetRecordFullName(Red::CName aName, bool aRegister = false);
     Red::CName GetRecordFullName(const char* aName, bool aRegister = false);
+    Red::CName GetRecordFullName(const std::string& aName, bool aRegister = false);
 
     Red::CName GetRecordAliasName(Red::CName aName, bool aRegister = false);
     Red::CName GetRecordAliasName(const char* aName, bool aRegister = false);
@@ -96,7 +97,7 @@ public:
 
     Red::TweakDB* GetTweakDB();
 
-    Red::TweakDBID BuildRTDBID(Red::CName aRecordName, Red::CName aPropertyName);
+    Red::TweakDBID BuildRTDBID(const std::string& aRecordName, Red::CName aPropertyName);
 
 private:
     struct ExtraFlat
