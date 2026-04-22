@@ -27,6 +27,7 @@ public:
     ~ScriptableRecordClosureRegistry();
 
     GetterFn CreateClosure(TweakDBReflection* aReflection, const PropertyInfo& aProperty);
+    bool DestroyClosure(GetterFn aClosure);
 
 private:
     static void FfiDispatch(ffi_cif* aCif, void* aRet, void** aArgs, void* aUserData);

@@ -22,68 +22,6 @@ constexpr auto ScriptResRefArrayTypeName = Red::GetTypeName<Red::DynArray<Red::R
 
 constexpr auto NameSeparator = Red::TweakGrammar::Name::Separator;
 constexpr auto PropSeparator = std::string_view(NameSeparator);
-
-struct RecordInfoVisitor
-{
-    // clang-format off
-    explicit RecordInfoVisitor(Red::TweakDBReflection* aReflection) : reflection(aReflection) {}
-    Red::RecordInfo operator()(std::nullptr_t) const { return nullptr; }
-    Red::RecordInfo operator()(const Red::RecordInfo& aRecordInfo) const { return aRecordInfo; }
-    Red::RecordInfo operator()(Red::CName aTypeName) const { return reflection->GetRecordInfo(aTypeName); }
-    Red::TweakDBReflection* reflection;
-    // clang-format on
-};
-
-template<typename T>
-struct NameVisitor;
-
-template<>
-struct NameVisitor<Red::CName>
-{
-    // clang-format off
-    Red::CName operator()(std::nullptr_t) const { return {}; }
-    Red::CName operator()(Red::CName aName) const { return aName; }
-    Red::CName operator()(const std::string& aName) const { return Red::CName(aName.c_str()); }
-    Red::CName operator()(const char* aName) const { return Red::CName(aName); }
-    // clang-format on
-};
-
-template<>
-struct NameVisitor<std::string>
-{
-    // clang-format off
-    std::string operator()(std::nullptr_t) const { return {}; }
-    std::string operator()(Red::CName aName) const { return aName.ToString(); }
-    std::string operator()(const std::string& aName) const { return aName; }
-    std::string operator()(const char* aName) const { return aName; }
-    // clang-format on
-};
-
-struct FlatTypeVisitor
-{
-    // clang-format off
-    explicit FlatTypeVisitor(Red::TweakDBReflection* aReflection) : m_reflection(aReflection) {}
-    const Red::CBaseRTTIType* operator()(const uint64_t aType) const { return m_reflection->GetFlatType(aType); }
-    const Red::CBaseRTTIType* operator()(const Red::CBaseRTTIType* aType) const { return aType; }
-    // clang-format on
-private:
-    Red::TweakDBReflection* m_reflection;
-};
-
-struct ClassVisitor
-{
-    // clang-format off
-    explicit ClassVisitor() : m_rtti(RED4ext::CRTTISystem::Get()) {}
-    Red::CClass* operator()(std::nullptr_t) const { return nullptr; }
-    Red::CClass* operator()(Red::CClass* aClass) const { return aClass; }
-    Red::CClass* operator()(Red::CName aName) const { return m_rtti->GetClass(aName); }
-    Red::CClass* operator()(const std::string& aName) const { return m_rtti->GetClass(aName.c_str()); }
-    Red::CClass* operator()(const char* aName) const { return m_rtti->GetClass(aName); }
-    // clang-format on
-private:
-    Red::CRTTISystem* m_rtti;
-};
-
 } // namespace
 
 Red::TweakDBReflection::TweakDBReflection()
@@ -789,10 +727,9 @@ void Red::TweakDBReflection::RegisterDescendants(Red::TweakDBID aParentId,
     }
 }
 
-Red::RecordInfo Red::TweakDBReflection::RegisterScriptableRecordType(const NameVariant& aName,
-                                                                     const ClassVariant& aParent)
+Red::RecordInfo Red::TweakDBReflection::RegisterScriptableRecordType(const std::string& aName, Red::CClass* aParent)
 {
-    const auto name = GetRecordFullName(std::visit(NameVisitor<std::string>(), aName).c_str(), true);
+    const auto name = GetRecordFullName(aName.c_str(), true);
 
     if (const auto recordInfo = GetRecordInfo(name))
     {
@@ -803,15 +740,20 @@ Red::RecordInfo Red::TweakDBReflection::RegisterScriptableRecordType(const NameV
     recordInfo->isScriptable = true;
     recordInfo->type = CreateRecordClass(recordInfo->name, recordInfo->aliasName, recordInfo->typeHash);
 
+    if (!recordInfo->type)
+    {
+        return nullptr;
+    }
+
     // This won't work because class registration and description need to happen
     // in 2 phases so type inheritance can work correctly. In other words, if
     // class B is registered before class A, and B extends A, class B's parent
     // will not be set correctly.
-    if (auto* parent = std::visit(ClassVisitor(), aParent); parent && IsRecordType(parent))
+    if (aParent && IsRecordType(aParent))
     {
-        recordInfo->type->parent = parent;
+        recordInfo->type->parent = aParent;
 
-        if (const auto parentInfo = GetRecordInfo(parent))
+        if (const auto parentInfo = GetRecordInfo(aParent))
         {
             InheritRecordInfo(recordInfo, parentInfo);
         }
@@ -823,30 +765,29 @@ Red::RecordInfo Red::TweakDBReflection::RegisterScriptableRecordType(const NameV
 
     if (!RegisterRecordInfo(recordInfo))
     {
+        m_rtti->UnregisterType(recordInfo->type);
         return nullptr;
     }
 
     return recordInfo;
 }
 
-Red::PropertyInfo Red::TweakDBReflection::RegisterScriptableProperty(const RecordInfoVariant& aRecord,
+Red::PropertyInfo Red::TweakDBReflection::RegisterScriptableProperty(const RecordInfo& aRecord,
                                                                      const std::string& aPropertyName,
-                                                                     const FlatTypeVariant& aType,
-                                                                     const ClassVariant& aForeignType)
+                                                                     const uint64_t aFlatType,
+                                                                     const Red::CClass* aForeignType)
 {
-    const auto recordInfo = std::visit(RecordInfoVisitor(this), aRecord);
-
-    if (!recordInfo)
+    if (!aRecord)
     {
         return nullptr;
     }
 
-    const auto propertyInfo = CreatePropertyInfo(aPropertyName, aType);
+    const auto propertyInfo = CreatePropertyInfo(aPropertyName, aFlatType);
 
     // Like parent in the registration of scriptable records, foreignType will not work
     // here due to race conditions. We need to split up registration and description
     // phases so that all types are registered before we try to resolve any foreign keys.
-    propertyInfo->foreignType = std::visit(ClassVisitor(), aForeignType);
+    propertyInfo->foreignType = aForeignType;
 
     const auto closure = m_scriptableRecordClosures->CreateClosure(this, propertyInfo);
 
@@ -855,13 +796,14 @@ Red::PropertyInfo Red::TweakDBReflection::RegisterScriptableProperty(const Recor
         return nullptr;
     }
 
-    auto* function = Red::CClassFunction::Create(recordInfo->type, propertyInfo->functionName.ToString(),
+    auto* function = Red::CClassFunction::Create(aRecord->type, propertyInfo->functionName.ToString(),
                                                  propertyInfo->functionName.ToString(), closure);
     function->SetReturnType(propertyInfo->type->GetName());
-    recordInfo->type->RegisterFunction(function);
+    aRecord->type->RegisterFunction(function);
 
-    if (!RegisterPropertyInfo(recordInfo, propertyInfo))
+    if (!RegisterPropertyInfo(aRecord, propertyInfo))
     {
+        m_scriptableRecordClosures->DestroyClosure(closure);
         return nullptr;
     }
 
@@ -1041,16 +983,6 @@ Red::TweakDBID Red::TweakDBReflection::BuildRTDBID(Red::CName aRecordName, Red::
     return TweakDBID{id};
 }
 
-Red::RecordInfo Red::TweakDBReflection::CreateRecordInfo(const std::string& aName)
-{
-    const auto recordInfo = Core::MakeShared<Red::TweakDBRecordInfo>();
-    recordInfo->name = GetRecordFullName(aName.c_str(), true);
-    recordInfo->aliasName = GetRecordAliasName(recordInfo->name, true);
-    recordInfo->shortName = GetRecordShortName(recordInfo->name);
-    recordInfo->typeHash = GetRecordTypeHash(recordInfo->shortName);
-    return recordInfo;
-}
-
 Red::RecordInfo Red::TweakDBReflection::CreateRecordInfo(Red::CName aName)
 {
     const auto recordInfo = Core::MakeShared<Red::TweakDBRecordInfo>();
@@ -1072,11 +1004,17 @@ Red::RecordInfo Red::TweakDBReflection::CreateRecordInfo(Red::CClass* aClass)
     return recordInfo;
 }
 
-Red::PropertyInfo Red::TweakDBReflection::CreatePropertyInfo(const std::string& aName, const FlatTypeVariant& aType)
+Red::PropertyInfo Red::TweakDBReflection::CreatePropertyInfo(const std::string& aName, const uint64_t aFlatType)
+{
+    return CreatePropertyInfo(aName, GetFlatType(aFlatType));
+}
+
+Red::PropertyInfo Red::TweakDBReflection::CreatePropertyInfo(const std::string& aName,
+                                                             const Red::CBaseRTTIType* aFlatType)
 {
     const auto propInfo = Core::MakeShared<Red::TweakDBPropertyInfo>();
-    propInfo->name = CNamePool::Add(aName);
-    propInfo->type = std::visit(FlatTypeVisitor(this), aType);
+    propInfo->name = CNamePool::Add(aName.c_str());
+    propInfo->type = aFlatType;
     propInfo->appendix = PropSeparator;
     propInfo->appendix.append(propInfo->name.ToString());
     propInfo->functionName = CNamePool::Add(GetPropertyFunctionName(propInfo->name).c_str());
@@ -1095,12 +1033,36 @@ Red::PropertyInfo Red::TweakDBReflection::CreatePropertyInfo(const std::string& 
     return propInfo;
 }
 
+Red::RecordClass* Red::TweakDBReflection::GetRecordClass(Red::CName aName)
+{
+    std::shared_lock lockR(m_recordClassMutex);
+    if (const auto it = m_scriptableRecordClasses.find(aName); it != m_scriptableRecordClasses.end())
+    {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
 Red::RecordClass* Red::TweakDBReflection::CreateRecordClass(Red::CName aName, Red::CName aAliasName, uint32_t aHash)
 {
+    if (auto* cls = GetRecordClass(aName))
+    {
+        return cls;
+    }
+
+    if (m_rtti->GetClass(aName))
+    {
+        return nullptr;
+    }
+
     const auto cls = Core::MakeShared<RecordClass>(aName, aHash);
     m_rtti->RegisterType(cls.get());
     m_rtti->RegisterScriptName(aName, aAliasName);
 
-    m_scriptableRecordClasses[aName] = cls;
+    {
+        std::unique_lock lockRW(m_recordClassMutex);
+        m_scriptableRecordClasses[aName] = cls;
+    }
+
     return cls.get();
 }

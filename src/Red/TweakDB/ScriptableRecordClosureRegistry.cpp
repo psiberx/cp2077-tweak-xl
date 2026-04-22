@@ -58,6 +58,40 @@ ScriptableRecordClosureRegistry::GetterFn ScriptableRecordClosureRegistry::Creat
     return function;
 }
 
+bool ScriptableRecordClosureRegistry::DestroyClosure(const GetterFn aClosure)
+{
+    if (!aClosure)
+    {
+        return false;
+    }
+
+    std::scoped_lock lock(m_mutex);
+
+    for (auto it = m_entries.begin(); it != m_entries.end(); ++it)
+    {
+        const auto& entry = *it;
+
+        if (!entry || !entry->closure)
+        {
+            continue;
+        }
+
+        if (reinterpret_cast<GetterFn>(entry->executable) != aClosure)
+        {
+            continue;
+        }
+
+        ffi_closure_free(entry->closure);
+        entry->closure = nullptr;
+        entry->executable = nullptr;
+        m_entries.erase(it);
+
+        return true;
+    }
+
+    return false;
+}
+
 void ScriptableRecordClosureRegistry::FfiDispatch(ffi_cif* aCif, void* aRet, void** aArgs, void* aUserData)
 {
     (void)aCif;
