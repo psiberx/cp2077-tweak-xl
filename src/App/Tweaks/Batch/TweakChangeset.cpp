@@ -379,7 +379,7 @@ void App::TweakChangeset::Commit(const Core::SharedPtr<Red::TweakDBManager>& aMa
 
         const auto recordInfo = aManager->GetReflection()->GetRecordInfo(recordEntry.type);
 
-        for (const auto& [_, propInfo] : recordInfo->props)
+        for (const auto& propInfo : recordInfo->props | std::views::values)
         {
             if (propInfo->isArray)
             {

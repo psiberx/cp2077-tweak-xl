@@ -4,6 +4,7 @@
 #include "App/Tweaks/Metadata/MetadataExporter.hpp"
 #include "App/Tweaks/Metadata/MetadataImporter.hpp"
 #include "Red/TweakDB/Raws.hpp"
+#include "Red/TweakDB/ScriptableTweakDBRecord.hpp"
 
 App::TweakService::TweakService(const Core::SemvVer& aProductVer, std::filesystem::path aGameDir,
                                 std::filesystem::path aTweaksDir, std::filesystem::path aInheritanceMapPath,
@@ -25,12 +26,16 @@ void App::TweakService::OnBootstrap()
     HookAfter<Raw::TryLoadTweakDB>([&](bool& aSuccess) {
         if (aSuccess)
         {
-            m_reflection = Core::MakeShared<Red::TweakDBReflection>();
+            m_reflection = Core::MakeShared<Red::TweakDBReflection>(Red::TweakDB::Get());
             m_manager = Core::MakeShared<Red::TweakDBManager>(m_reflection);
             m_context = Core::MakeShared<App::TweakContext>(m_productVer);
             m_importer = Core::MakeShared<App::TweakImporter>(m_manager, m_context);
             m_executor = Core::MakeShared<App::TweakExecutor>(m_manager);
             m_changelog = Core::MakeShared<App::TweakChangelog>();
+
+#ifndef NDEBUG
+            RegisterTestScriptableRecord();
+#endif
 
             if (ImportMetadata())
             {
@@ -38,12 +43,24 @@ void App::TweakService::OnBootstrap()
                 ApplyPatches();
                 LoadTweaks(false);
             }
+
+#ifndef NDEBUG
+            TestScriptableRecord();
+#endif
         }
     });
 
     HookAfter<Raw::InitTweakDB>([&]() {
         EnsureRuntimeAccess();
         CheckForIssues();
+    });
+
+    HookWrap<Raw::CreateRecord>([&](const CreateRecordFunction aOriginal, Red::TweakDB* aTweakDB,
+                                    const uint32_t aTypeHash, const Red::TweakDBID aTweakDBID) {
+        if (!m_manager || !m_manager->CreateScriptableRecord(aTweakDB, aTweakDBID, aTypeHash))
+        {
+            aOriginal(aTweakDB, aTypeHash, aTweakDBID);
+        }
     });
 }
 
@@ -135,8 +152,7 @@ bool App::TweakService::RegisterTweak(std::filesystem::path aPath)
 
     if (!std::filesystem::exists(aPath, error) || !std::filesystem::is_regular_file(aPath, error))
     {
-        LogError("Can't register non-existing tweak \"{}\".",
-                 std::filesystem::relative(aPath, m_gameDir).string());
+        LogError("Can't register non-existing tweak \"{}\".", std::filesystem::relative(aPath, m_gameDir).string());
         return false;
     }
 
@@ -211,3 +227,63 @@ App::TweakChangelog& App::TweakService::GetChangelog()
 {
     return *m_changelog;
 }
+
+#ifndef NDEBUG
+
+void App::TweakService::RegisterTestScriptableRecord() const
+{
+    static constexpr auto recordName = "TweakXLTest";
+
+    if (!m_manager->RegisterScriptableRecordType("TweakXLTest"))
+    {
+        LogError("Failed to register scriptable TweakDB record type {}.", recordName);
+        return;
+    }
+
+    if (!m_manager->RegisterScriptableProperty(recordName, "foo", Red::ERTDBFlatType::CName))
+    {
+        LogError("Failed to register scriptable TweakDB record property \"foo\".");
+    }
+
+    if (!m_manager->RegisterScriptableProperty(recordName, "bar", Red::ERTDBFlatType::CName))
+    {
+        LogError("Failed to register scriptable TweakDB record property \"bar\".");
+    }
+}
+
+void App::TweakService::TestScriptableRecord()
+{
+    using recordType = Red::TypeLocator<Red::CName("gamedataTweakXLTest_Record")>;
+    using cnameType = Red::TypeLocator<"CName">;
+
+    static auto recordID = Red::TweakDBID{"test.tweakxl.scriptable"};
+    static auto fooValue = Red::CNamePool::Add("test foo value");
+    static auto barValue = Red::CNamePool::Add("test bar value");
+    static auto fooAppendix = std::string_view(".foo");
+    static auto barAppendix = std::string_view(".bar");
+
+    assert(m_manager->CreateRecord(recordID, recordType::GetClass()));
+    assert(m_manager->SetFlat(recordID + fooAppendix, cnameType::GetClass(), &fooValue));
+    assert(m_manager->SetFlat(recordID + barAppendix, cnameType::GetClass(), &barValue));
+
+    const auto record =
+        reinterpret_cast<Red::ScriptableTweakDBRecord*>(m_manager->GetTweakDB()->GetRecord(recordID).instance);
+
+    assert(record);
+
+    {
+        auto* func = recordType::GetClass()->GetFunction("Foo");
+        Red::CName result;
+        assert(Red::ExecuteFunction(record, func, &result));
+        assert(result && strcmp(result.ToString(), "test foo value") == 0);
+    }
+
+    {
+        auto* func = recordType::GetClass()->GetFunction("Bar");
+        Red::CName result;
+        assert(Red::ExecuteFunction(record, func, &result));
+        assert(result && strcmp(result.ToString(), "test bar value") == 0);
+    }
+}
+
+#endif
