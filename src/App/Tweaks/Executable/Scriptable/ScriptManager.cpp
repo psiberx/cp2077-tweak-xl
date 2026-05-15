@@ -1,10 +1,14 @@
-#include "App/Tweaks/Executable/Scriptable/ScriptUtils.hpp"
 #include "ScriptManager.hpp"
+#include "App/Tweaks/Executable/Scriptable/ScriptUtils.hpp"
 
-void App::ScriptManager::SetManager(Core::SharedPtr<Red::TweakDBManager> aManager)
+void App::ScriptManager::SetManager(Core::DeferredPtr<Red::TweakDBManager> aManager)
 {
     s_manager = std::move(aManager);
-    s_reflection = s_manager->GetReflection();
+}
+
+void App::ScriptManager::SetReflection(Core::DeferredPtr<Red::TweakDBReflection> aReflection)
+{
+    s_reflection = std::move(aReflection);
 }
 
 void App::ScriptManager::SetFlat(Red::IScriptable*, Red::CStackFrame* aFrame, bool* aRet, void*)
@@ -19,7 +23,7 @@ void App::ScriptManager::SetFlat(Red::IScriptable*, Red::CStackFrame* aFrame, bo
     if (!s_manager || variant.IsEmpty())
         return;
 
-    ConvertScriptValueForFlatValue(variant, s_reflection);
+    ConvertScriptValueForFlatValue(variant);
 
     auto success = s_manager->SetFlat(flatID, variant.GetType(), variant.GetDataPtr());
 
@@ -41,7 +45,7 @@ void App::ScriptManager::CreateRecord(Red::IScriptable*, Red::CStackFrame* aFram
     if (!s_manager)
         return;
 
-    auto recordType = s_reflection->GetRecordType(typeName);
+    auto recordType = Red::GetRecordType(typeName);
 
     if (!recordType)
         return;
@@ -123,5 +127,5 @@ void App::ScriptManager::RegisterEnum(Red::TweakDBID aRecordID)
 
 Red::Handle<App::ScriptBatch> App::ScriptManager::StartBatch()
 {
-    return Red::MakeHandle<ScriptBatch>(s_manager);
+    return Red::MakeHandle<ScriptBatch>(s_manager, s_reflection);
 }

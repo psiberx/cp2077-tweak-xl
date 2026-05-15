@@ -8,3 +8,4 @@
 /src/App/Project.hpp
 /src/App/Version.rc
 CMakeLists.txt
+compile_commands.json

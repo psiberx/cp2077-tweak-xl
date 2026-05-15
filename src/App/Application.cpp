@@ -24,9 +24,9 @@ App::Application::Application(HMODULE aHandle, const RED4ext::v1::Sdk* aSdk)
         ->RegisterScripts(Env::PluginScriptsDir());
     Register<Support::RedLibProvider>();
 
-    Register<App::TweakService>(Env::GameVer(), Env::GameDir(), Env::TweaksDir(),
+    Register<App::TweakService>(Env::GameVer(), Env::GameDir(), Env::TweaksDir(), Env::PluginDir(),
                                 Env::InheritanceMapPath(), Env::ExtraFlatsPath(),
-                                Env::RedModSourcesDir());
+                                Env::RedModSourcesDir(), Env::PluginScriptsDir());
     Register<App::StatService>();
 }
 

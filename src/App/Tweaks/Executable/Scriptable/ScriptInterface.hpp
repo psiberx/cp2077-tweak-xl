@@ -7,7 +7,7 @@ namespace App
 class ScriptInterface : public Red::TweakDBInterface
 {
 public:
-    static void SetReflection(Core::SharedPtr<Red::TweakDBReflection> aReflection);
+    static void SetReflection(Core::DeferredPtr<Red::TweakDBReflection> aReflection);
 
 private:
     using ScriptableHandle = Red::Handle<Red::IScriptable>;
@@ -23,7 +23,7 @@ private:
 
     static RecordArray* FetchRecords(Red::CName aTypeName);
 
-    inline static Core::SharedPtr<Red::TweakDBReflection> s_reflection;
+    inline static Core::DeferredPtr<Red::TweakDBReflection> s_reflection;
 
     RTTI_MEMBER_ACCESS(App::ScriptInterface);
 };

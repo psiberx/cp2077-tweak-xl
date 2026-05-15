@@ -7,12 +7,14 @@ namespace
 {
 constexpr auto ApplyMethodName = "OnApply";
 
-static const Red::ClassLocator<App::ScriptableTweak> s_scriptableTweakType;
-}
+const Red::ClassLocator<App::ScriptableTweak> s_scriptableTweakType;
+} // namespace
 
-App::TweakExecutor::TweakExecutor(Core::SharedPtr<Red::TweakDBManager> aManager)
-    : m_manager(std::move(aManager))
-    , m_rtti(Red::CRTTISystem::Get())
+App::TweakExecutor::TweakExecutor(Core::DeferredPtr<Red::TweakDBManager> aManager,
+                                  Core::DeferredPtr<Red::TweakDBReflection> aReflection)
+    : m_rtti(Red::CRTTISystem::Get())
+    , m_manager(std::move(aManager))
+    , m_reflection(std::move(aReflection))
 {
     InitializeRuntime();
 }
@@ -20,7 +22,8 @@ App::TweakExecutor::TweakExecutor(Core::SharedPtr<Red::TweakDBManager> aManager)
 void App::TweakExecutor::InitializeRuntime()
 {
     ScriptManager::SetManager(m_manager);
-    ScriptInterface::SetReflection(m_manager->GetReflection());
+    ScriptManager::SetReflection(m_reflection);
+    ScriptInterface::SetReflection(m_reflection);
 }
 
 void App::TweakExecutor::ExecuteTweaks()
@@ -64,8 +67,8 @@ void App::TweakExecutor::ExecuteTweak(Red::CName aTweakName)
 
     if (!tweakClass->IsA(s_scriptableTweakType))
     {
-        LogError(R"(Tweak class "{}" must inherit from "{}".)",
-                 aTweakName.ToString(), s_scriptableTweakType->GetName().ToString());
+        LogError(R"(Tweak class "{}" must inherit from "{}".)", aTweakName.ToString(),
+                 s_scriptableTweakType->GetName().ToString());
         return;
     }
 
@@ -92,8 +95,8 @@ bool App::TweakExecutor::Execute(Red::CClass* aTweakClass)
 
         if (!applyCallback || applyCallback->flags.hasUndefinedBody)
         {
-            LogError(R"(Tweak class "{}" doesn't have "{}" method.)",
-                     aTweakClass->GetName().ToString(), ApplyMethodName);
+            LogError(R"(Tweak class "{}" doesn't have "{}" method.)", aTweakClass->GetName().ToString(),
+                     ApplyMethodName);
             return false;
         }
 
@@ -101,8 +104,7 @@ bool App::TweakExecutor::Execute(Red::CClass* aTweakClass)
 
         if (!tweakHandle)
         {
-            LogError(R"(Tweak instance "{}" cannot be constructed.)",
-                     aTweakClass->GetName().ToString());
+            LogError(R"(Tweak instance "{}" cannot be constructed.)", aTweakClass->GetName().ToString());
             return false;
         }
 

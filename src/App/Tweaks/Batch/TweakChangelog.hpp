@@ -23,8 +23,8 @@ public:
     void ForgetResourcePath(Red::ResourcePath aPath);
     void ForgetResourcePaths();
 
-    void CheckForIssues(const Core::SharedPtr<Red::TweakDBManager>& aManager);
-    void RevertChanges(const Core::SharedPtr<Red::TweakDBManager>& aManager);
+    void CheckForIssues(const Core::DeferredPtr<Red::TweakDBManager>& aManager);
+    void RevertChanges(const Core::DeferredPtr<Red::TweakDBManager>& aManager);
 
     [[nodiscard]] const Core::Set<Red::TweakDBID>& GetAffectedRecords() const;
     [[nodiscard]] bool IsEmpty() const;
@@ -49,4 +49,4 @@ private:
     Core::Map<Red::ResourcePath, Red::TweakDBID> m_resourcePaths;
     Core::Set<Red::TweakDBID> m_ownedKeys;
 };
-}
+} // namespace App

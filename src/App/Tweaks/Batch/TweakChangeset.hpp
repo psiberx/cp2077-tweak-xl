@@ -83,7 +83,7 @@ public:
 
     bool IsEmpty();
 
-    void Commit(const Core::SharedPtr<Red::TweakDBManager>& aManager,
+    void Commit(const Core::DeferredPtr<Red::TweakDBManager>& aManager,
                 const Core::SharedPtr<App::TweakChangelog>& aChangelog);
 
 private:

@@ -7,7 +7,7 @@ namespace App
 struct ScriptBatch : Red::IScriptable
 {
     ScriptBatch() = default;
-    ScriptBatch(Core::SharedPtr<Red::TweakDBManager> aManager);
+    ScriptBatch(Core::DeferredPtr<Red::TweakDBManager> aManager, Core::DeferredPtr<Red::TweakDBReflection> aReflection);
 
     bool SetFlat(Red::TweakDBID aFlatID, Red::Variant& aVariant) const;
     bool CreateRecord(Red::TweakDBID aRecordID, Red::CName aTypeName) const;
@@ -17,9 +17,9 @@ struct ScriptBatch : Red::IScriptable
     bool RegisterName(Red::CName aName) const;
     void Commit() const;
 
-    Core::SharedPtr<Red::TweakDBManager> m_manager;
+    Core::DeferredPtr<Red::TweakDBManager> m_manager;
     Core::SharedPtr<Red::TweakDBManager::Batch> m_batch;
-    Core::SharedPtr<Red::TweakDBReflection> m_reflection;
+    Core::DeferredPtr<Red::TweakDBReflection> m_reflection;
 
     RTTI_IMPL_TYPEINFO(App::ScriptBatch);
     RTTI_IMPL_ALLOCATOR();

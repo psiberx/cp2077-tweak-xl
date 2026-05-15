@@ -8,7 +8,8 @@ namespace App
 class TweakExecutor : Core::LoggingAgent
 {
 public:
-    explicit TweakExecutor(Core::SharedPtr<Red::TweakDBManager> aManager);
+    explicit TweakExecutor(Core::DeferredPtr<Red::TweakDBManager> aManager,
+                           Core::DeferredPtr<Red::TweakDBReflection> aReflection);
 
     void InitializeRuntime();
 
@@ -19,6 +20,7 @@ private:
     bool Execute(Red::CClass* aTweakClass);
 
     Red::CRTTISystem* m_rtti;
-    Core::SharedPtr<Red::TweakDBManager> m_manager;
+    Core::DeferredPtr<Red::TweakDBManager> m_manager;
+    Core::DeferredPtr<Red::TweakDBReflection> m_reflection;
 };
-}
+} // namespace App

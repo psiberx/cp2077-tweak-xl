@@ -1,7 +1,7 @@
 #include "TweakChangelog.hpp"
 #include "Red/TweakDB/Source/Source.hpp"
 
-bool App::TweakChangelog::RegisterRecord(Red::TweakDBID aRecordId)
+bool App::TweakChangelog::RegisterRecord(const Red::TweakDBID aRecordId)
 {
     if (!aRecordId.IsValid())
         return false;
@@ -23,10 +23,11 @@ bool App::TweakChangelog::RegisterAssignment(Red::TweakDBID aFlatId, Red::Instan
     entry.previous = aOldValue;
     entry.current = aNewValue;
 
-    return false;
+    return true;
 }
 
-bool App::TweakChangelog::RegisterInsertion(Red::TweakDBID aFlatId, int32_t aIndex, const Red::InstancePtr<>& aInstance)
+bool App::TweakChangelog::RegisterInsertion(Red::TweakDBID aFlatId, const int32_t aIndex,
+                                            const Red::InstancePtr<>& aInstance)
 {
     if (!aFlatId.IsValid() || !aInstance)
         return false;
@@ -40,7 +41,8 @@ bool App::TweakChangelog::RegisterInsertion(Red::TweakDBID aFlatId, int32_t aInd
     return true;
 }
 
-bool App::TweakChangelog::RegisterDeletion(Red::TweakDBID aFlatId, int32_t aIndex, const Red::InstancePtr<>& aInstance)
+bool App::TweakChangelog::RegisterDeletion(Red::TweakDBID aFlatId, const int32_t aIndex,
+                                           const Red::InstancePtr<>& aInstance)
 {
     if (!aFlatId.IsValid() || !aInstance)
         return false;
@@ -64,7 +66,7 @@ void App::TweakChangelog::ForgetChanges(Red::TweakDBID aFlatId)
     m_mutations.erase(aFlatId);
 }
 
-void App::TweakChangelog::RegisterForeignKey(Red::TweakDBID aForeignKey, Red::TweakDBID aFlatId)
+void App::TweakChangelog::RegisterForeignKey(const Red::TweakDBID aForeignKey, const Red::TweakDBID aFlatId)
 {
     if (aForeignKey.IsValid())
     {
@@ -72,7 +74,7 @@ void App::TweakChangelog::RegisterForeignKey(Red::TweakDBID aForeignKey, Red::Tw
     }
 }
 
-void App::TweakChangelog::ForgetForeignKey(Red::TweakDBID aForeignKey)
+void App::TweakChangelog::ForgetForeignKey(const Red::TweakDBID aForeignKey)
 {
     if (aForeignKey.IsValid())
     {
@@ -85,7 +87,7 @@ void App::TweakChangelog::ForgetForeignKeys()
     m_foreignKeys.clear();
 }
 
-void App::TweakChangelog::RegisterResourcePath(Red::ResourcePath aPath, Red::TweakDBID aFlatId)
+void App::TweakChangelog::RegisterResourcePath(const Red::ResourcePath aPath, const Red::TweakDBID aFlatId)
 {
     if (aPath)
     {
@@ -93,7 +95,7 @@ void App::TweakChangelog::RegisterResourcePath(Red::ResourcePath aPath, Red::Twe
     }
 }
 
-void App::TweakChangelog::ForgetResourcePath(Red::ResourcePath aPath)
+void App::TweakChangelog::ForgetResourcePath(const Red::ResourcePath aPath)
 {
     if (aPath)
     {
@@ -106,7 +108,7 @@ void App::TweakChangelog::ForgetResourcePaths()
     m_resourcePaths.clear();
 }
 
-void App::TweakChangelog::CheckForIssues(const Core::SharedPtr<Red::TweakDBManager>& aManager)
+void App::TweakChangelog::CheckForIssues(const Core::DeferredPtr<Red::TweakDBManager>& aManager)
 {
     {
         Core::Map<Red::TweakDBID, Core::Set<Red::TweakDBID>> brokenRefs;
@@ -136,7 +138,7 @@ void App::TweakChangelog::CheckForIssues(const Core::SharedPtr<Red::TweakDBManag
     {
         Core::Set<Red::TweakDBID> brokenRefIds;
 
-        auto depot = Red::ResourceDepot::Get();
+        const auto depot = Red::ResourceDepot::Get();
         for (const auto& [resourcePath, flatId] : m_resourcePaths)
         {
             if (!depot->ResourceExists(resourcePath))
@@ -152,7 +154,7 @@ void App::TweakChangelog::CheckForIssues(const Core::SharedPtr<Red::TweakDBManag
     }
 }
 
-void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManager>& aManager)
+void App::TweakChangelog::RevertChanges(const Core::DeferredPtr<Red::TweakDBManager>& aManager)
 {
     Core::Set<Red::TweakDBID> updates;
 
@@ -172,12 +174,12 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
             continue;
         }
 
-        auto arrayType = reinterpret_cast<const Red::CRTTIArrayType*>(flatData.type);
-        auto elementType = arrayType->innerType;
+        const auto arrayType = Red::ToArrayType(flatData.type);
+        const auto elementType = arrayType->innerType;
         auto canRestore = true;
 
         {
-            auto currentArray = flatData.instance;
+            const auto currentArray = flatData.instance;
             auto currentSize = arrayType->GetLength(currentArray);
 
             for (const auto& [insertionIndex, insertionValue] : mutation.insertions)
@@ -200,7 +202,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
             currentSize -= mutation.insertions.size();
             currentSize += mutation.deletions.size();
 
-            for (const auto& [deletionIndex, deletionValue] : mutation.deletions)
+            for (const auto& deletionIndex : mutation.deletions | std::views::keys)
             {
                 if (deletionIndex >= currentSize)
                 {
@@ -216,7 +218,7 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
             continue;
         }
 
-        auto restoredArray = aManager->GetReflection()->Construct(arrayType);
+        auto restoredArray = Red::ConstructFlatInstance(arrayType);
         arrayType->Assign(restoredArray.get(), flatData.instance);
 
         for (const auto& [insertionIndex, insertionValue] : mutation.insertions | std::views::reverse)
@@ -230,12 +232,9 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
             elementType->Assign(arrayType->GetElement(restoredArray.get(), deletionIndex), deletionValue.get());
         }
 
-        const auto success = aManager->SetFlat(flatId, arrayType, restoredArray.get());
-
-        if (!success)
+        if (!aManager->SetFlat(flatId, arrayType, restoredArray.get()))
         {
             LogError("Cannot restore {}, failed to assign the value.", aManager->GetName(flatId));
-            continue;
         }
     }
 
@@ -255,20 +254,15 @@ void App::TweakChangelog::RevertChanges(const Core::SharedPtr<Red::TweakDBManage
             continue;
         }
 
-        const auto success = aManager->SetFlat(flatId, flatData.type, assignment.previous);
-
-        if (!success)
+        if (!aManager->SetFlat(flatId, flatData.type, assignment.previous))
         {
             LogError("Cannot restore {}, failed to assign the value.", aManager->GetName(flatId));
-            continue;
         }
     }
 
     for (const auto recordId : m_records)
     {
-        const auto success = aManager->UpdateRecord(recordId);
-
-        if (!success)
+        if (!aManager->UpdateRecord(recordId))
         {
             LogError("Cannot restore {}, failed to update the record.", aManager->GetName(recordId));
         }

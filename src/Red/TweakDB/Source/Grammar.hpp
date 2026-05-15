@@ -141,14 +141,14 @@ struct flat_decl_continue : seq<flat_name, _, flat_op, _, flat_value, _, flat_en
 /* Complete source */
 
 struct source_with_package_member : if_then_else<flat_decl_start, flat_decl_continue, group_stmt> {};
-struct source_with_package_body : star<not_at<eof>, source_with_package_member, _> {};
+struct source_with_package_body : star<not_at<internal::eof>, source_with_package_member, _> {};
 struct source_with_package : seq<package_stmt, _, opt<using_stmt, _>, source_with_package_body> {};
 
 struct source_no_package_member : group_stmt {};
-struct source_no_package_body : star<not_at<eof>, source_no_package_member, _> {};
+struct source_no_package_body : star<not_at<internal::eof>, source_no_package_member, _> {};
 struct source_no_package : seq<not_at<package_stmt>, source_no_package_body> {};
 
-struct source : seq<_, sor<source_with_package, source_no_package>, eof> {};
+struct source : seq<_, sor<source_with_package, source_no_package>, internal::eof> {};
 
 /* Constants */
 

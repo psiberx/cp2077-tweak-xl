@@ -4,23 +4,26 @@ set_project("TweakXL")
 set_version("1.11.3", {build = "%y%m%d%H%M"})
 
 set_arch("x64")
-set_languages("cxx2a")
+set_languages("cxx20")
 add_cxxflags("/MP /GR- /EHsc")
 
 if is_mode("debug") then
     set_symbols("debug")
     set_optimize("none")
     add_cxxflags("/Od /Ob0 /Zi /RTC1")
+    add_requires("catch2")
 elseif is_mode("release") then
     set_symbols("hidden")
     set_strip("all")
     set_optimize("fastest")
     add_cxxflags("/Ob2")
+    add_defines("NDEBUG")
 elseif is_mode("releasedbg") then
     set_symbols("debug")
     set_strip("all")
     set_optimize("fastest")
     add_cxxflags("/Ob1 /Zi")
+    add_defines("NDEBUG")
 end
 
 if is_mode("debug") then
@@ -29,7 +32,7 @@ else
     set_runtimes("MD")
 end
 
-add_requires("hopscotch-map", "minhook", "spdlog", "tiltedcore", "yaml-cpp")
+add_requires("hopscotch-map", "inja", "minhook", "nlohmann_json", "spdlog", "tiltedcore", "yaml-cpp")
 
 target("TweakXL")
     set_default(true)
@@ -40,7 +43,7 @@ target("TweakXL")
     add_headerfiles("src/**.hpp", "lib/**.hpp")
     add_includedirs("src/", "lib/")
     add_deps("RED4ext.SDK", "nameof", "semver", "wil", "pegtl")
-    add_packages("hopscotch-map", "minhook", "spdlog", "tiltedcore", "yaml-cpp")
+    add_packages("hopscotch-map", "inja", "minhook", "nlohmann_json", "spdlog", "tiltedcore", "yaml-cpp")
     add_syslinks("Version", "User32")
     add_defines("WINVER=0x0601", "WIN32_LEAN_AND_MEAN", "NOMINMAX")
     set_configdir("src")
@@ -49,39 +52,44 @@ target("TweakXL")
     set_configvar("AUTHOR", "psiberx")
     set_configvar("NAME", "TweakXL")
 
+    if is_mode("debug") then
+        add_packages("catch2")
+    end
+
 target("RED4ext.SDK")
     set_default(false)
-    set_kind("static")
+    set_kind("headeronly")
     set_group("vendor")
     add_headerfiles("vendor/RED4ext.SDK/include/**.hpp")
     add_includedirs("vendor/RED4ext.SDK/include/", { public = true })
 
 target("nameof")
     set_default(false)
-    set_kind("static")
+    set_kind("headeronly")
     set_group("vendor")
     add_headerfiles("vendor/nameof/include/**.hpp")
     add_includedirs("vendor/nameof/include/", { public = true })
 
 target("semver")
     set_default(false)
-    set_kind("static")
+    set_kind("headeronly")
     set_group("vendor")
     add_headerfiles("vendor/semver/include/**.hpp")
     add_includedirs("vendor/semver/include/", { public = true })
 
 target("pegtl")
     set_default(false)
-    set_kind("static")
+    set_kind("headeronly")
     set_group("vendor")
     add_headerfiles("vendor/pegtl/include/**.hpp")
     add_includedirs("vendor/pegtl/include/", { public = true })
 
 target("wil")
     set_default(false)
-    set_kind("static")
+    set_kind("headeronly")
     set_group("vendor")
     add_headerfiles("vendor/wil/include/**.h")
     add_includedirs("vendor/wil/include/", { public = true })
 
 add_rules("plugin.vsxmake.autoupdate")
+add_rules("plugin.compile_commands.autoupdate")

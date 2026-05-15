@@ -1,6 +1,5 @@
 #pragma once
 
-#include "App/Tweaks/Declarative/Red/RedReader.hpp"
 #include "Core/Logging/LoggingAgent.hpp"
 #include "Red/TweakDB/Manager.hpp"
 #include "Red/TweakDB/Source/Parser.hpp"
@@ -10,7 +9,8 @@ namespace App
 class MetadataExporter : Core::LoggingAgent
 {
 public:
-    MetadataExporter(Core::SharedPtr<Red::TweakDBManager> aManager);
+    MetadataExporter(Core::DeferredPtr<Red::TweakDBManager> aManager,
+                     Core::DeferredPtr<Red::TweakDBReflection> aReflection);
 
     bool LoadSource(const std::filesystem::path& aSourceDir);
 
@@ -23,11 +23,11 @@ private:
 
     static bool IsDebugGroup(const Red::TweakGroupPtr& aGroup);
 
-    Core::SharedPtr<Red::TweakDBManager> m_manager;
-    Core::SharedPtr<Red::TweakDBReflection> m_reflection;
+    Core::DeferredPtr<Red::TweakDBManager> m_manager;
+    Core::DeferredPtr<Red::TweakDBReflection> m_reflection;
     Core::Vector<Red::TweakSourcePtr> m_sources;
     Core::Map<std::string, Red::TweakGroupPtr> m_groups;
     Core::Map<std::string, std::string> m_records;
     bool m_resolved;
 };
-}
+} // namespace App

@@ -20,9 +20,7 @@ public:
 
     using BatchPtr = Core::SharedPtr<Batch>;
 
-    TweakDBManager();
-    explicit TweakDBManager(Red::TweakDB* aTweakDb);
-    explicit TweakDBManager(Core::SharedPtr<Red::TweakDBReflection> aReflection);
+    explicit TweakDBManager(Core::DeferredPtr<TweakDBReflection> aReflection);
 
     TweakDBManager(const TweakDBManager&) = delete;
     TweakDBManager& operator=(const TweakDBManager&) = delete;
@@ -44,7 +42,6 @@ public:
     void RegisterName(Red::TweakDBID aId, const std::string& aName, const Red::CClass* aType = nullptr);
     const Core::Set<Red::TweakDBID>& GetEnums();
     std::string_view GetName(Red::TweakDBID aId);
-
     BatchPtr StartBatch();
     const Core::Set<Red::TweakDBID>& GetFlats(const BatchPtr& aBatch);
     Red::Value<> GetFlat(const BatchPtr& aBatch, Red::TweakDBID aFlatId);
@@ -64,13 +61,12 @@ public:
     void Invalidate();
 
     Red::TweakDB* GetTweakDB();
-    Core::SharedPtr<Red::TweakDBReflection>& GetReflection();
+    Core::DeferredPtr<Red::TweakDBReflection>& GetReflection();
 
 private:
     template<class SharedLockable>
     inline bool AssignFlat(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aFlatId,
-                           const Red::CBaseRTTIType* aType, Red::Instance aInstance,
-                           SharedLockable& aMutex);
+                           const Red::CBaseRTTIType* aType, Red::Instance aInstance, SharedLockable& aMutex);
     inline void InheritFlats(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aRecordId,
                              const Red::TweakDBRecordInfo* aRecordInfo);
     inline void InheritFlats(Red::SortedUniqueArray<Red::TweakDBID>& aFlats, Red::TweakDBID aRecordId,
@@ -88,9 +84,10 @@ private:
 
     Red::TweakDB* m_tweakDb;
     Core::SharedPtr<Red::TweakDBBuffer> m_buffer;
-    Core::SharedPtr<Red::TweakDBReflection> m_reflection;
+    Core::DeferredPtr<Red::TweakDBReflection> m_reflection;
     Core::Map<Red::TweakDBID, std::string> m_knownNames;
     Core::Set<Red::TweakDBID> m_knownEnums;
     std::shared_mutex m_mutex;
 };
-}
+
+} // namespace Red

@@ -1,6 +1,6 @@
 #include "ScriptInterface.hpp"
 
-void App::ScriptInterface::SetReflection(Core::SharedPtr<Red::TweakDBReflection> aReflection)
+void App::ScriptInterface::SetReflection(Core::DeferredPtr<Red::TweakDBReflection> aReflection)
 {
     s_reflection = std::move(aReflection);
 }
@@ -73,7 +73,7 @@ void App::ScriptInterface::GetRecords(Red::IScriptable*, Red::CStackFrame* aFram
     if (!aRet)
         return;
 
-    auto records = FetchRecords(s_reflection->GetRecordFullName(recordTypeName));
+    auto records = FetchRecords(Red::GetRecordFullName<Red::CName>(recordTypeName));
 
     if (!records || records->IsEmpty())
         return;
