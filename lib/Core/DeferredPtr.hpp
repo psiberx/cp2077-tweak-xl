@@ -89,6 +89,46 @@ public:
     }
 
     /**
+     * @brief Provides access to the shared pointer contained within this DeferredPtr. This allows for direct
+     * manipulation of the shared pointer, such as assigning a new shared pointer or modifying the existing one. Any
+     * changes made to the shared pointer through this reference will be reflected across all DeferredPtr instances that
+     * share ownership of the same pointer. This function can be used to assign a new instance to the DeferredPtr after
+     * it has been constructed, or to modify the existing instance in place.
+     *
+     * @return A reference to the shared pointer contained within this DeferredPtr, allowing for direct manipulation of
+     * the underlying pointer.
+     */
+    [[nodiscard]] SharedPtr<T>& GetShared() noexcept
+    {
+        return *m_slot;
+    }
+
+    /**
+     * @brief Provides read-only access to the shared pointer contained within this DeferredPtr. This allows for
+     * checking the state of the shared pointer or accessing its members without modifying it. Any changes made to the
+     * shared pointer through other DeferredPtr instances that share ownership of the same pointer will still be
+     * reflected when accessing the shared pointer through this const reference.
+     *
+     * @return A const reference to the shared pointer contained within this DeferredPtr, allowing for read-only access
+     * to the underlying pointer.
+     */
+    [[nodiscard]] const SharedPtr<T>& GetShared() const noexcept
+    {
+        return *m_slot;
+    }
+
+    /**
+     * @brief Provides access to the underlying pointer contained within the shared pointer of this DeferredPtr. This
+     * allows for convenient syntax such as `ptr.Get()->member` to access members of the underlying pointer. If this
+     * DeferredPtr does not currently have a non-null pointer assigned, this function will return @c nullptr.
+     * @return
+     */
+    [[nodiscard]] T* Get() const noexcept
+    {
+        return m_slot->get();
+    }
+
+    /**
      * @brief Provides an explicit conversion operator to bool that checks whether this DeferredPtr instance currently
      * has a non-null pointer assigned. This allows for convenient syntax such as `if (ptr) { ... }` to check for the
      * presence of an instance in the DeferredPtr.
@@ -106,7 +146,7 @@ public:
      */
     T* operator->() const noexcept
     {
-        return m_slot->get();
+        return Get();
     }
 
     /**
@@ -116,7 +156,7 @@ public:
      */
     operator SharedPtr<T>() const noexcept
     {
-        return *m_slot;
+        return GetShared();
     }
 
     /**
