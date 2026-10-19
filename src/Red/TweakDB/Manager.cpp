@@ -663,7 +663,7 @@ void Red::TweakDBManager::CreateExtraNames(Red::TweakDBID aId, const std::string
         {
             Raw::CreateTweakDBID(&aId, &propId, propInfo->appendix.c_str());
         }
-        else
+        else if (IsFlatExists(propId))
         {
             Red::TweakDBID empty;
             Raw::CreateTweakDBID(&empty, &propId, propName.c_str());
