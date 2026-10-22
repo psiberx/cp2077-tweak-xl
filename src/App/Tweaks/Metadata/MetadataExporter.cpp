@@ -178,6 +178,17 @@ void App::MetadataExporter::ResolveInlines(const Red::TweakGroupPtr& aOwner, con
                 }
             }
 
+            // The sources (REDmod's tools/redmod/tweaks) need not match the loaded TweakDB element for element: on
+            // game 2.5 they describe the editor build, and an array index past the live array hit DynArray's assert
+            // (aIndex < m_size) during the export. Such an inline name is unresolvable, not fatal.
+            if (flat->isArray && offset + i >= flatValue.As<Red::DynArray<Red::TweakDBID>>().Size())
+            {
+                LogWarning("Can't resolve inline name for {}{}{}[{}]: the loaded array has only {} elements.",
+                           aParent->name, NameSeparator, flat->name, offset + i,
+                           flatValue.As<Red::DynArray<Red::TweakDBID>>().Size());
+                break;
+            }
+
             auto resolvedID = flat->isArray
                 ? flatValue.As<Red::DynArray<Red::TweakDBID>>()[offset + i]
                 : flatValue.As<Red::TweakDBID>();
