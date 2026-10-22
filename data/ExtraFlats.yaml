@@ -516,6 +516,8 @@ IPrereq:
     flatType: String
   isInState:
     flatType: Bool
+  weaponRequiredTag:
+    flatType: CName
   attachmentSlot:
     flatType: TweakDBID
     foreignType: AttachmentSlot
@@ -610,6 +612,8 @@ IPrereq:
     flatType: String
   percentage:
     flatType: Float
+  listenedWeapons:
+    flatType: array:String
   minimumQuality:
     flatType: Int32
   visualTag:
@@ -736,6 +740,9 @@ HitPrereqCondition:
     flatType: String
   attackType:
     flatType: String
+  attachmentSlot:
+    flatType: TweakDBID
+    foreignType: AttachmentSlot
   isMoving:
     flatType: Bool
   npcType:
@@ -748,6 +755,9 @@ HitPrereqCondition:
     flatType: Float
   attackTag:
     flatType: CName
+  weaponRecordID:
+    flatType: TweakDBID
+    foreignType: WeaponItem
   checkType:
     flatType: TweakDBID
     foreignType: CheckType
@@ -770,12 +780,12 @@ HitPrereqCondition:
     foreignType: TriggerMode
   instigatorType:
     flatType: CName
-  ratioToCompare:
-    flatType: Float
-  effectName:
-    flatType: CName
   tagToCheck:
     flatType: CName
+  effectName:
+    flatType: CName
+  ratioToCompare:
+    flatType: Float
   objectToCheck:
     flatType: CName
   attackSubtype:
@@ -818,6 +828,8 @@ GameplayLogicPackage:
 Effector:
   stopActiveSfxOnDeactivate:
     flatType: Bool
+  weapon:
+    flatType: CName
   percentToRefund:
     flatType: Float
   isBlockingCompletely:
@@ -1042,6 +1054,8 @@ Effector:
     flatType: String
   isPercentage:
     flatType: Bool
+  countToRefund:
+    flatType: Int32
   overrideMaterialName:
     flatType: CName
   statForValue:
