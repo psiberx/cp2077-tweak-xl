@@ -10,11 +10,11 @@ constexpr auto InitTweakDB = Core::RawFunc<
 
 constexpr auto LoadTweakDB = Core::RawFunc<
     /* addr = */ Red::AddressLib::TweakDB_Load,
-    /* type = */ void (*)(Red::TweakDB*, Red::CString&)>();
+    /* type = */ void (*)(Red::TweakDB*, bool a2, Red::CString&)>();
 
 constexpr auto TryLoadTweakDB = Core::RawFunc<
     /* addr = */ Red::AddressLib::TweakDB_TryLoad,
-    /* type = */ bool (*)(void* a1, Red::TweakDB*, Red::CString&, void* a4)>();
+    /* type = */ bool (*)(void* a1, Red::TweakDB*, Red::CString&, void* a4, bool a5)>();
 
 constexpr auto CreateRecord = Core::RawFunc<
     /* addr = */ Red::AddressLib::TweakDB_CreateRecord,
