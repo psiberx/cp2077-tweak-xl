@@ -32,4 +32,5 @@ RTTI_MAP_TYPE_PREFIX(CurveData, "curveData:");
 
 RTTI_MAP_TYPE_NAME(char, "Uint8");
 RTTI_MAP_TYPE_NAME(ResourcePath, "redResourceReferenceScriptToken");
+RTTI_MAP_TYPE_WRAPPER(TDataBuffer, DataBuffer);
 }
