@@ -46,9 +46,8 @@
 
 #include "Red/Alias.hpp"
 #include "Red/Engine.hpp"
-#include "Red/TypeInfo.hpp"
+#include "Red/Shared/AddressLib.hpp"
 #include "Red/Specializations.hpp"
+#include "Red/TypeInfo.hpp"
 #include "Red/Utils.hpp"
 #include "Red/Value.hpp"
-
-#include "Red/Addresses/Library.hpp"
